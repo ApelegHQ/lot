@@ -1,0 +1,52 @@
+{
+  "name": "@exact-realty/ecmascript-sandbox",
+  "version": "0.0.1",
+  "description": "Sandbox for isolating ECMAScript code",
+  "main": "dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.js"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lintFix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "build": "tsc --emitDeclarationOnly --declarationMap && node esbuild.mjs",
+    "test": "npm run build && mocha",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "postinstall": "exit 0",
+    "version": "npm run lint && git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Exact-Realty/ecmascript-sandbox.git"
+  },
+  "author": "Exact Realty Limited",
+  "license": "ISC",
+  "devDependencies": {
+    "@exact-realty/esbuild-plugin-inline-js": "^1.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/selenium-webdriver": "^4.1.14",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "chromedriver": "^113.0.0",
+    "esbuild": "^0.17.14",
+    "esbuild-plugin-node-externals": "^1.0.1",
+    "eslint": "^8.36.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "geckodriver": "^3.2.0",
+    "mocha": "^10.2.0",
+    "prettier": "^2.8.7",
+    "selenium-webdriver": "^4.9.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.2"
+  },
+  "keywords": []
+}
