@@ -27,7 +27,11 @@ const listener = (event: MessageEvent) => {
 
 	Logger.info('Received SANDBOX_READY from parent. Creating sandbox.');
 	self.removeEventListener('message', listener, false);
-	workerSandboxInner(event.data[1], event.data[2]);
+	Function.prototype.apply.call(
+		workerSandboxInner,
+		null,
+		event.data.slice(1),
+	);
 };
 
 Logger.info('Worker started, registering event listener');

@@ -16,9 +16,12 @@
 import { EMessageTypes } from '../EMessageTypes.js';
 import createErrorEventListenerFactory from '../lib/createErrorEventEventListenerFactory.js';
 import createMessageEventListenerFactory from '../lib/createMessageEventListenerFactory.js';
+import { reconstructErrorInformation } from '../lib/errorModem.js';
 import getRandomSecret from '../lib/getRandomSecret.js';
 import getRandomUuid from '../lib/getRandomUuid.js';
 import * as Logger from '../lib/Logger.js';
+import performTaskFactory from '../lib/performTaskFactory.js';
+import requestHandler from '../lib/requestHandler.js';
 import workerSandboxManager from './workerSandboxManager.js';
 
 // Timeout for worker initialisation (in ms)
@@ -26,14 +29,13 @@ const ERROR_TIMEOUT = 4000;
 
 const workerSandbox = async (
 	script: string,
-	allowedGlobals: string[] | undefined,
+	allowedGlobals: string[] | undefined | null,
+	externalMethods?: Record<string, typeof Function.prototype> | null,
 	abort?: AbortSignal,
 ) => {
 	const secret = getRandomSecret();
 	const originIncoming = 'urn:uuid:' + getRandomUuid();
 	const originOutgoing = 'urn:uuid:' + getRandomUuid();
-	const pendingTasks: Record<string, (typeof Function.prototype)[]> =
-		Object.create(null);
 
 	const eventTargetIncoming = new EventTarget();
 	const eventTargetOutgoing = new EventTarget();
@@ -71,61 +73,58 @@ const workerSandbox = async (
 		postMessageIncoming,
 	);
 
+	const [performTask, resultHandler, destroyTaskPerformer] =
+		performTaskFactory(postMessageOutgoing);
+
 	const eventListener = (event: MessageEvent) => {
 		if (
 			event.origin !== originIncoming ||
 			!Array.isArray(event.data) ||
-			event.data[0] !== secret ||
-			![EMessageTypes.RESULT, EMessageTypes.ERROR].includes(
-				event.data[1],
-			) ||
-			!Object.prototype.hasOwnProperty.call(pendingTasks, event.data[2])
+			event.data[0] !== secret
 		)
 			return;
 
-		Logger.debug(
-			'Received ' +
-				(event.data[1] === EMessageTypes.RESULT ? 'RESULT' : 'ERROR') +
-				' from executing task [' +
-				event.data[2] +
-				']',
-		);
+		if (event.data[1] === EMessageTypes.REQUEST) {
+			Logger.debug(
+				'Received REQUEST for task [' +
+					event.data[2] +
+					'] ' +
+					event.data[3],
+			);
 
-		const thisTask = pendingTasks[event.data[2]];
+			if (!externalMethods) {
+				// This situation should not be possible
+				Logger.debug(
+					'Received REQUEST for task [' +
+						event.data[2] +
+						'] ' +
+						event.data[3] +
+						', but there are no external methods configured',
+				);
+				return;
+			}
 
-		delete pendingTasks[event.data[2]];
-
-		thisTask[event.data[1] === EMessageTypes.RESULT ? 0 : 1](event.data[3]);
+			requestHandler(
+				postMessageOutgoing,
+				externalMethods,
+				event.data[2],
+				event.data[3],
+				event.data[4],
+			);
+		} else {
+			resultHandler(event.data.slice(1));
+		}
 	};
-
-	const performTask = async (op: string, ...args: unknown[]) => {
-		const taskId = getRandomSecret();
-
-		Logger.debug('Sending REQUEST for task [' + taskId + '] ' + op);
-
-		postMessageOutgoing([EMessageTypes.REQUEST, taskId, op, ...args]);
-
-		pendingTasks[taskId] = [];
-
-		const taskPromise = new Promise((resolve, reject) => {
-			pendingTasks[taskId].push(resolve, reject);
-		});
-
-		return taskPromise;
-	};
-
-	const performTaskProxy = Proxy.revocable(performTask, {});
 
 	abort?.addEventListener(
 		'abort',
 		() => {
-			performTaskProxy.revoke();
+			destroyTaskPerformer();
 			eventTargetIncoming.removeEventListener(
 				'message',
 				eventListener as { (event: Event): void },
 				false,
 			);
-			Object.keys(pendingTasks).forEach((id) => delete pendingTasks[id]);
 			postMessageOutgoing([EMessageTypes.DESTROY]);
 		},
 		false,
@@ -150,7 +149,7 @@ const workerSandbox = async (
 			resolved = true;
 
 			onInitResult();
-			resolve_(performTaskProxy.proxy);
+			resolve_(performTask);
 		};
 
 		const reject = (e: unknown) => {
@@ -160,7 +159,7 @@ const workerSandbox = async (
 			onInitResult();
 			reject_(e);
 
-			performTaskProxy.revoke();
+			destroyTaskPerformer();
 			postMessageOutgoing([EMessageTypes.DESTROY]);
 		};
 
@@ -192,7 +191,7 @@ const workerSandbox = async (
 
 				resolve();
 			} else {
-				reject(event.data[2]);
+				reject(reconstructErrorInformation(event.data[2]));
 			}
 		};
 
@@ -207,6 +206,7 @@ const workerSandbox = async (
 		workerSandboxManager(
 			script,
 			allowedGlobals,
+			externalMethods && Object.keys(externalMethods),
 			createMessageEventListener,
 			createErrorEventListener,
 			postMessageIncoming,

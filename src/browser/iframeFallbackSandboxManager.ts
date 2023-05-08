@@ -17,10 +17,12 @@ import { EMessageTypes } from '../EMessageTypes.js';
 import createSandboxedHandler from '../lib/createSandboxedHandler.js';
 import { disableURLStaticMethods } from '../lib/hardenGlobals.js';
 import * as Logger from '../lib/Logger.js';
+import tightenCsp from '../lib/tightenCsp.js';
 
 const iframeFallbackSandboxManager = async (
 	script: string,
-	allowedGlobals: string[] | undefined,
+	allowedGlobals: string[] | undefined | null,
+	externalMethodsList: string[] | undefined | null,
 	createMessageEventListener: {
 		(handler: { (data: unknown[]): void }): { (): void };
 	},
@@ -34,10 +36,18 @@ const iframeFallbackSandboxManager = async (
 	disableURLStaticMethods();
 
 	const revokeRootMessageEventListener = createMessageEventListener(
-		createSandboxedHandler(script, allowedGlobals, postMessage, () => {
-			revokeRootMessageEventListener();
-			revokeRootErrorEventListener();
-		}),
+		createSandboxedHandler(
+			script,
+			allowedGlobals,
+			externalMethodsList,
+			postMessage,
+			tightenCsp,
+			() => {
+				revokeRootMessageEventListener();
+				revokeRootErrorEventListener();
+				self.close();
+			},
+		),
 	);
 	const revokeRootErrorEventListener = createErrorEventListener();
 

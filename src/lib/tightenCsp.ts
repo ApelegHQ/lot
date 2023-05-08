@@ -13,21 +13,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-const extractErrorInformation = (e: unknown) => {
-	if (!['object', 'function'].includes(typeof e)) {
-		return e;
-	} else if (
-		e instanceof Error ||
-		Object.prototype.hasOwnProperty.call(e, 'stack')
-	) {
-		return [
-			(e as Error).name,
-			(e as Error).message,
-			(e as Error).stack,
-		].map(String);
-	} else {
-		return String(e);
-	}
+// This CSP will prevent loading any new scripts or dynamically executing code
+// such as by using Function(), eval(), etc.
+// Once this strict CSP is set, it cannot be removed
+const tightenCsp = () => {
+	const metaCsp = document.createElement('meta');
+	metaCsp.httpEquiv = 'content-security-policy';
+	metaCsp.content = "default-src 'none'";
+	document.head.append(metaCsp);
 };
 
-export default extractErrorInformation;
+export default tightenCsp;

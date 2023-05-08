@@ -14,139 +14,99 @@
  */
 
 import { EMessageTypes } from '../EMessageTypes.js';
-import extractErrorInformation from './extractErrorInformation.js';
+import { extractErrorInformation } from './errorModem.js';
 import genericSandbox from './genericSandbox.js';
 import * as Logger from './Logger.js';
+import performTaskFactory from './performTaskFactory.js';
+import requestHandler from './requestHandler.js';
 
 const FERAL_FUNCTION = Function;
 
 const createSandboxedHandler = (
 	script: string,
-	allowedGlobals: string[] | undefined,
+	allowedGlobals: string[] | undefined | null,
+	externalMethodsList: string[] | undefined | null,
 	postMessage: { (data: unknown[]): void },
+	preInit: { (): void },
 	cleanup: { (): void },
 ) => {
-	const sandbox = genericSandbox(script, allowedGlobals, FERAL_FUNCTION);
+	const performTaskMethods =
+		Array.isArray(externalMethodsList) && externalMethodsList.length
+			? performTaskFactory(postMessage)
+			: undefined;
+
+	const sandbox = genericSandbox(
+		script,
+		allowedGlobals,
+		FERAL_FUNCTION,
+		performTaskMethods && performTaskMethods[0],
+		externalMethodsList,
+	);
 
 	const ctx = sandbox.sandboxWrapperThis;
 
-	const promise =
-		typeof Promise === 'function'
-			? Promise
-			: (function () {
-					/* empty*/
-			  } as unknown as { new <T>(): Promise<T> });
-
 	const handler = (data: unknown[]) => {
 		if (
-			![EMessageTypes.REQUEST, EMessageTypes.DESTROY].includes(
-				data[0] as EMessageTypes,
-			)
+			![
+				EMessageTypes.REQUEST,
+				EMessageTypes.DESTROY,
+				EMessageTypes.RESULT,
+				EMessageTypes.ERROR,
+			].includes(data[0] as EMessageTypes)
 		) {
 			return;
 		}
 
-		if (data[0] === EMessageTypes.DESTROY) {
-			Logger.debug('Received DESTROY from parent');
+		switch (data[0]) {
+			case EMessageTypes.DESTROY: {
+				Logger.debug('Received DESTROY from parent');
 
-			sandbox.sandboxWrapperRevoke();
-			postMessage = Boolean;
+				sandbox.sandboxWrapperRevoke();
+				postMessage = Boolean;
 
-			cleanup();
+				performTaskMethods && performTaskMethods[2]();
 
-			return;
-		}
+				cleanup();
 
-		Logger.debug('Received REQUEST for task [' + data[1] + '] ' + data[2]);
-
-		try {
-			if (
-				!ctx ||
-				!ctx['module'] ||
-				!ctx['module']['exports'] ||
-				!Object.prototype.hasOwnProperty.call(
-					ctx['module']['exports'],
-					data[2] as PropertyKey,
-				)
-			) {
-				throw new ReferenceError(`${data[2]} is not defined`);
+				return;
 			}
+			case EMessageTypes.REQUEST: {
+				Logger.debug(
+					'Received REQUEST for task [' + data[1] + '] ' + data[2],
+				);
 
-			const fn = ctx['module']['exports'][data[2] as PropertyKey];
-
-			if (typeof fn !== 'function') {
-				throw new TypeError(`${data[2]} is not a function`);
-			}
-
-			const result = Function.prototype.apply.call(
-				fn,
-				null,
-				data.slice(3),
-			);
-
-			if (result instanceof promise) {
-				result
-					.then((r) => {
-						Logger.debug(
-							'Sending RESULT from executing task [' +
-								data[1] +
-								'] ' +
-								data[2] +
-								' (async)',
-						);
-
-						postMessage([EMessageTypes.RESULT, data[1], r]);
-					})
-					.catch((e) => {
-						Logger.debug(
-							'Sending ERROR from executing task [' +
-								data[1] +
-								'] ' +
-								data[2] +
-								' (async)',
-						);
-
+				if (!ctx || !ctx['module'] || !ctx['module']['exports']) {
+					try {
 						postMessage([
 							EMessageTypes.ERROR,
 							data[1],
-							extractErrorInformation(e),
+							extractErrorInformation(
+								new ReferenceError(`${data[2]} is not defined`),
+							),
 						]);
-					});
-			} else {
-				Logger.debug(
-					'Sending RESULT from executing task [' +
-						data[1] +
-						'] ' +
-						data[2] +
-						' (sync)',
-				);
-
-				try {
-					postMessage([EMessageTypes.RESULT, data[1], result]);
-				} catch (e) {
-					postMessage([
-						EMessageTypes.ERROR,
-						data[1],
-						extractErrorInformation(e),
-					]);
+					} catch {
+						// empty
+					}
+					return;
 				}
-			}
-		} catch (e) {
-			Logger.debug(
-				'Sending ERROR from executing task [' +
-					data[1] +
-					'] ' +
-					data[2] +
-					' (sync)',
-			);
 
-			postMessage([
-				EMessageTypes.ERROR,
-				data[1],
-				extractErrorInformation(e),
-			]);
+				requestHandler(
+					postMessage,
+					ctx['module']['exports'],
+					data[1],
+					data[2],
+					data[3],
+				);
+			}
+			// eslint-disable-next-line no-fallthrough
+			case EMessageTypes.RESULT:
+			case EMessageTypes.ERROR: {
+				performTaskMethods && performTaskMethods[1](data);
+			}
 		}
 	};
+
+	preInit();
 
 	sandbox.sandboxWrapperFn();
 

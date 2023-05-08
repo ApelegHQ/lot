@@ -16,18 +16,23 @@
 import { EMessageTypes } from '../EMessageTypes.js';
 import createErrorEventListenerFactory from '../lib/createErrorEventEventListenerFactory.js';
 import createMessageEventListenerFactory from '../lib/createMessageEventListenerFactory.js';
+import { extractErrorInformation } from '../lib/errorModem.js';
 import hardenGlobals from '../lib/hardenGlobals.js';
 import * as Logger from '../lib/Logger.js';
+import tightenCsp from '../lib/tightenCsp.js';
 import workerSandboxManager from '../worker/workerSandboxManager.js';
 import iframeFallbackSandboxManager from './iframeFallbackSandboxManager.js';
 
 const iframeSandboxInner = async (
 	script: string,
-	allowedGlobals: string[] | undefined,
+	allowedGlobals: string[] | undefined | null,
+	externalMethodsList: string[] | undefined | null,
 	origin: string,
 	secret: string,
 ): Promise<void> => {
 	Logger.info('Iframe created, setting up worker');
+
+	let error: unknown;
 
 	const parent = self.parent;
 	// Disable accessing parent.
@@ -97,15 +102,17 @@ const iframeSandboxInner = async (
 			return await workerSandboxManager(
 				script,
 				allowedGlobals,
+				externalMethodsList,
 				createMessageEventListener,
 				createErrorEventListener,
 				postMessage,
-			);
+			).then(tightenCsp);
 		} catch (e) {
 			Logger.warn(
 				'Error setting up worker, falling back to direct execution',
 				e,
 			);
+			error = e;
 		}
 	}
 
@@ -113,15 +120,22 @@ const iframeSandboxInner = async (
 		return await iframeFallbackSandboxManager(
 			script,
 			allowedGlobals,
+			externalMethodsList,
 			createMessageEventListener,
 			createErrorEventListener,
 			postMessage,
 		);
 	} catch (e) {
 		Logger.warn('Error setting up fallback', e);
+		error = e;
 	}
 
-	postMessage([EMessageTypes.GLOBAL_ERROR]);
+	const returnError = new Error('Error setting up iframe');
+	if (error) {
+		(returnError as Error & { cause: unknown }).cause = error;
+	}
+
+	postMessage([EMessageTypes.GLOBAL_ERROR, extractErrorInformation(error)]);
 };
 
 export default iframeSandboxInner;

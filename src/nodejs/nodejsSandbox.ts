@@ -57,16 +57,32 @@ const nativeNodejsProxy = (<T extends object>(o: T, revocable?: boolean) => {
 	const handler: ProxyHandler<typeof o> = {
 		['apply'](o, thisArg, argArray) {
 			if (typeof o === 'function' && o !== Function) {
-				return Reflect.apply(o, thisArg, argArray);
+				try {
+					return Reflect.apply(o, thisArg, argArray);
+				} catch (e) {
+					if (!(e instanceof Object)) throw e;
+
+					throw nativeNodejsProxy(e);
+				}
 			} else {
-				throw new EvalError('Access to Function.prototype blocked');
+				throw nativeNodejsProxy(
+					new EvalError('Access to Function.prototype blocked'),
+				);
 			}
 		},
 		['construct'](o, argArray, newTarget) {
 			if (typeof o === 'function' && o !== Function) {
-				return Reflect.construct(o, argArray, newTarget);
+				try {
+					return Reflect.construct(o, argArray, newTarget);
+				} catch (e) {
+					if (!(e instanceof Object)) throw e;
+
+					throw nativeNodejsProxy(e);
+				}
 			} else {
-				throw new EvalError('Access to Function.prototype blocked');
+				throw nativeNodejsProxy(
+					new EvalError('Access to Function.prototype blocked'),
+				);
 			}
 		},
 		['setPrototypeOf'](o, v) {
@@ -136,10 +152,32 @@ const nativeNodejsProxy = (<T extends object>(o: T, revocable?: boolean) => {
 
 const nodejsSandbox = async (
 	script: string,
-	allowedGlobals?: string[],
+	allowedGlobals?: string[] | null,
+	externalMethods?: Record<string, typeof Function.prototype> | null,
 	signal?: AbortSignal,
 ) => {
-	const rawContext = createContext(allowedGlobals);
+	const rawContext = createContext(
+		allowedGlobals,
+		externalMethods &&
+			(async (op: string, ...args: unknown[]) => {
+				if (
+					!Object.prototype.hasOwnProperty.call(externalMethods, op)
+				) {
+					throw new ReferenceError(`${op} is not defined`);
+				}
+
+				const fn = externalMethods[op];
+
+				if (typeof fn !== 'function') {
+					throw new TypeError(`${op} is not a function`);
+				}
+
+				return JSON.parse(
+					JSON.stringify(await externalMethods[op](...args)),
+				);
+			}),
+		externalMethods && Object.keys(externalMethods),
+	);
 	const wrapperFn = createWrapperFn(script, String);
 
 	const builtinsList = new Set(

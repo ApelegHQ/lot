@@ -15,8 +15,8 @@
 
 const helper = (v: number) => v.toString(16).padStart(4, '0');
 
-const getRandomUuid = globalThis.crypto?.randomUUID
-	? globalThis.crypto.randomUUID
+const getRandomUuid = self.crypto?.randomUUID
+	? self.crypto.randomUUID
 	: () => {
 			const uuid = self.crypto.getRandomValues(new Uint16Array(8));
 			uuid[3] = (uuid[3] & 0x0fff) | 0x4000;

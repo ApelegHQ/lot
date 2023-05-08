@@ -15,8 +15,12 @@
 
 import * as iframeSandboxInit from 'inline:./iframeSandboxInit.inline.js';
 import { EMessageTypes } from '../EMessageTypes.js';
+import { reconstructErrorInformation } from '../lib/errorModem.js';
 import getRandomSecret from '../lib/getRandomSecret.js';
 import * as Logger from '../lib/Logger.js';
+import performTaskFactory from '../lib/performTaskFactory.js';
+import requestHandler from '../lib/requestHandler.js';
+import type iframeSandboxInner from './iframeSandboxInner.js';
 
 // Timeout for worker initialisation (in ms)
 const ERROR_TIMEOUT = 4000;
@@ -24,6 +28,7 @@ const ERROR_TIMEOUT = 4000;
 const browserSandbox = async (
 	script: string,
 	allowedGlobals: string[] | undefined,
+	externalMethods?: Record<string, typeof Function.prototype> | null,
 	abort?: AbortSignal,
 ) => {
 	const secret = getRandomSecret();
@@ -34,9 +39,10 @@ const browserSandbox = async (
 		[
 			String(script),
 			allowedGlobals?.map(String),
+			externalMethods && Object.keys(externalMethods),
 			self.location.origin,
 			secret,
-		],
+		] as Parameters<typeof iframeSandboxInner>,
 	)
 		.split('&')
 		.join('\\u0026')
@@ -52,10 +58,20 @@ const browserSandbox = async (
 	const iframe = document.createElement('iframe');
 	const blob = new Blob([html], { type: 'application/xhtml+xml' });
 
+	// Request that the iframe be isolated from its parent, with the ability
+	// to run scripts.
 	iframe.setAttribute('sandbox', 'allow-scripts');
+	// CSP for iframe set to trust the given loader script and any subsequent
+	// scripts it might load, which is necessary for the fallback mechanism in
+	// case the worker could not be started.
+	// This CSP is further adjusted dynamically once the sandbox is created to
+	// entirely prohibit new scripts.
+	// TODO: If the fallback mechanism is disabled, then it's possible to
+	// remove the 'unsafe-inline' (used as a fallback for older browsers that
+	// don't support CSP 3) and 'strict-dynamic' parts (used for newer browsers)
 	iframe.setAttribute(
 		'csp',
-		`default-src 'none'; script-src 'unsafe-inline' 'nonce-${nonce}'; worker-src blob:`,
+		`default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src blob:`,
 	);
 	const iframeSrcUrl = self.URL.createObjectURL(blob);
 	iframe.setAttribute('src', iframeSrcUrl + '#' + sourceScriptElementId);
@@ -77,8 +93,11 @@ const browserSandbox = async (
 
 	const sandboxIframeCW = iframe.contentWindow;
 
-	const pendingTasks: Record<string, (typeof Function.prototype)[]> =
-		Object.create(null);
+	const postMessageOutgoing = (data: unknown[]) =>
+		sandboxIframeCW.postMessage([secret, ...data], '*');
+
+	const [performTask, resultHandler, destroyTaskPerformer] =
+		performTaskFactory(postMessageOutgoing);
 
 	const eventListener = (event: MessageEvent) => {
 		if (
@@ -86,57 +105,48 @@ const browserSandbox = async (
 			event.origin !== 'null' ||
 			event.source !== sandboxIframeCW ||
 			!Array.isArray(event.data) ||
-			event.data[0] !== secret ||
-			![EMessageTypes.RESULT, EMessageTypes.ERROR].includes(
-				event.data[1],
-			) ||
-			!Object.prototype.hasOwnProperty.call(pendingTasks, event.data[2])
+			event.data[0] !== secret
 		)
 			return;
 
-		Logger.debug(
-			'Received ' +
-				(event.data[1] === EMessageTypes.RESULT ? 'RESULT' : 'ERROR') +
-				' from executing task [' +
-				event.data[2] +
-				']',
-		);
+		if (event.data[1] === EMessageTypes.REQUEST) {
+			Logger.debug(
+				'Received REQUEST for task [' +
+					event.data[2] +
+					'] ' +
+					event.data[3],
+			);
 
-		const thisTask = pendingTasks[event.data[2]];
+			if (!externalMethods) {
+				// This situation should not be possible
+				Logger.debug(
+					'Received REQUEST for task [' +
+						event.data[2] +
+						'] ' +
+						event.data[3] +
+						', but there are no external methods configured',
+				);
+				return;
+			}
 
-		delete pendingTasks[event.data[2]];
-
-		thisTask[event.data[1] === EMessageTypes.RESULT ? 0 : 1](event.data[3]);
+			requestHandler(
+				postMessageOutgoing,
+				externalMethods,
+				event.data[2],
+				event.data[3],
+				event.data[4],
+			);
+		} else {
+			resultHandler(event.data.slice(1));
+		}
 	};
-
-	const performTask = async (op: string, ...args: unknown[]) => {
-		const taskId = getRandomSecret();
-
-		Logger.debug('Sending REQUEST for task [' + taskId + '] ' + op);
-
-		sandboxIframeCW.postMessage(
-			[secret, EMessageTypes.REQUEST, taskId, op, ...args],
-			'*',
-		);
-
-		pendingTasks[taskId] = [];
-
-		const taskPromise = new Promise((resolve, reject) => {
-			pendingTasks[taskId].push(resolve, reject);
-		});
-
-		return taskPromise;
-	};
-
-	const performTaskProxy = Proxy.revocable(performTask, {});
 
 	abort?.addEventListener(
 		'abort',
 		() => {
-			performTaskProxy.revoke();
+			destroyTaskPerformer();
 			setTimeout(HTMLIFrameElement.prototype.remove.bind(iframe), 1000);
 			self.removeEventListener('message', eventListener, false);
-			Object.keys(pendingTasks).forEach((id) => delete pendingTasks[id]);
 			sandboxIframeCW.postMessage([secret, EMessageTypes.DESTROY], '*');
 		},
 		false,
@@ -158,7 +168,7 @@ const browserSandbox = async (
 			resolved = true;
 
 			onInitResult();
-			resolve_(performTaskProxy.proxy);
+			resolve_(performTask);
 		};
 
 		const reject = (e: unknown) => {
@@ -167,6 +177,7 @@ const browserSandbox = async (
 
 			onInitResult();
 			reject_(e);
+			destroyTaskPerformer();
 			iframe.remove();
 		};
 
@@ -194,7 +205,9 @@ const browserSandbox = async (
 
 				resolve();
 			} else {
-				reject(event.data[2]);
+				console.log('calling reject on event.data');
+				console.log(event.data);
+				reject(reconstructErrorInformation(event.data[2]));
 			}
 		};
 

@@ -26,7 +26,11 @@ const createMessageEventListener = (() => {
 			if (
 				!event.isTrusted ||
 				!Array.isArray(event.data) ||
-				event.data[0] !== EMessageTypes.REQUEST
+				![
+					EMessageTypes.REQUEST,
+					EMessageTypes.RESULT,
+					EMessageTypes.ERROR,
+				].includes(event.data[0] as EMessageTypes)
 			) {
 				return;
 			}
@@ -42,10 +46,15 @@ const createMessageEventListener = (() => {
 	};
 })();
 
-const workerSandboxInner = (script: string, allowedGlobals: string[]) => {
+const workerSandboxInner = (
+	script: string,
+	allowedGlobals: string[] | undefined | null,
+	externalMethodsList: string[] | undefined | null,
+) => {
 	Logger.info('Setting up worker sandbox.');
 
 	// Remove methods from DedicatedWorkerGlobalScope
+	// TODO: Seemingly not working
 	const selfPrototype = Object.getPrototypeOf(self);
 	const postMessage = self.postMessage.bind(self);
 	const close = self.close.bind(self);
@@ -56,10 +65,17 @@ const workerSandboxInner = (script: string, allowedGlobals: string[]) => {
 	disableURLStaticMethods();
 
 	const revokeRootMessageEventListener = createMessageEventListener(
-		createSandboxedHandler(script, allowedGlobals, postMessage, () => {
-			revokeRootMessageEventListener();
-			close();
-		}),
+		createSandboxedHandler(
+			script,
+			allowedGlobals,
+			externalMethodsList,
+			postMessage,
+			Boolean,
+			() => {
+				revokeRootMessageEventListener();
+				close();
+			},
+		),
 	);
 
 	Logger.info(

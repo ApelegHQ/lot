@@ -16,19 +16,29 @@
 import * as workerSandboxInit from 'inline:../worker/workerSandboxInit.inline.js';
 import { EMessageTypes } from '../EMessageTypes.js';
 import * as Logger from '../lib/Logger.js';
+import type workerSandboxInner from './workerSandboxInner.js';
 
 // Timeout for worker initialisation (in ms)
 const ERROR_TIMEOUT = 1500;
 
 const createWorker = (
 	script: string,
-	allowedGlobals: string[] | undefined,
+	allowedGlobals: string[] | undefined | null,
+	externalMethodsList: string[] | undefined | null,
 ): [Worker, { (): void }] => {
 	const blob = new Blob([workerSandboxInit.default]);
 	const workerSrcUrl = self.URL.createObjectURL(blob);
 	const worker = new Worker(workerSrcUrl);
 
-	worker.postMessage([EMessageTypes.SANDBOX_READY, script, allowedGlobals]);
+	worker.postMessage([
+		EMessageTypes.SANDBOX_READY,
+		script,
+		allowedGlobals,
+		externalMethodsList,
+	] as [
+		EMessageTypes.SANDBOX_READY,
+		...Parameters<typeof workerSandboxInner>,
+	]);
 
 	const revokeWorkerSrcUrl = self.URL.revokeObjectURL.bind(
 		null,
@@ -40,7 +50,8 @@ const createWorker = (
 
 const workerSandboxManager = async (
 	script: string,
-	allowedGlobals: string[] | undefined,
+	allowedGlobals: string[] | undefined | null,
+	externalMethodsList: string[] | undefined | null,
 	createMessageEventListener: {
 		(handler: { (data: unknown[]): void }, worker?: Worker): { (): void };
 	},
@@ -59,13 +70,31 @@ const workerSandboxManager = async (
 
 		const revokeRootMessageEventListener = createMessageEventListener(
 			(data: unknown[]) => {
-				if (data[0] === EMessageTypes.REQUEST) {
-					Logger.debug(
-						'Forwarding REQUEST from parent to worker for task [' +
-							data[1] +
-							'] ' +
-							data[2],
-					);
+				if (
+					[
+						EMessageTypes.REQUEST,
+						EMessageTypes.RESULT,
+						EMessageTypes.ERROR,
+					].includes(data[0] as EMessageTypes)
+				) {
+					if (data[0] === EMessageTypes.REQUEST) {
+						Logger.debug(
+							'Forwarding REQUEST from parent to worker for task [' +
+								data[1] +
+								'] ' +
+								data[2],
+						);
+					} else {
+						Logger.debug(
+							'Forwarding ' +
+								(data[0] === EMessageTypes.RESULT
+									? 'RESULT'
+									: 'ERROR') +
+								' from parent to worker for task [' +
+								data[1] +
+								']',
+						);
+					}
 
 					worker.postMessage(data);
 				} else if (data[0] === EMessageTypes.DESTROY) {
@@ -91,21 +120,32 @@ const workerSandboxManager = async (
 		const revokeWorkerMessageEventListener = createMessageEventListener(
 			(data: unknown[]) => {
 				if (
-					![EMessageTypes.RESULT, EMessageTypes.ERROR].includes(
-						data[0] as EMessageTypes,
-					)
+					![
+						EMessageTypes.REQUEST,
+						EMessageTypes.RESULT,
+						EMessageTypes.ERROR,
+					].includes(data[0] as EMessageTypes)
 				)
 					return;
 
-				Logger.debug(
-					'Forwarding ' +
-						(data[0] === EMessageTypes.RESULT
-							? 'RESULT'
-							: 'ERROR') +
-						' from worker to parent from executing task [' +
-						data[1] +
-						'] ',
-				);
+				if (data[0] === EMessageTypes.REQUEST) {
+					Logger.debug(
+						'Forwarding REQUEST from worker to parent for executing task [' +
+							data[1] +
+							'] ' +
+							data[2],
+					);
+				} else {
+					Logger.debug(
+						'Forwarding ' +
+							(data[0] === EMessageTypes.RESULT
+								? 'RESULT'
+								: 'ERROR') +
+							' from worker to parent from executing task [' +
+							data[1] +
+							']',
+					);
+				}
 
 				postMessage(data);
 			},
@@ -122,7 +162,11 @@ const workerSandboxManager = async (
 	};
 
 	const startWorker = new Promise<Worker>((resolve_, reject_) => {
-		const workerSandbox = createWorker(script, allowedGlobals);
+		const workerSandbox = createWorker(
+			script,
+			allowedGlobals,
+			externalMethodsList,
+		);
 
 		let errorTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 		let resolved = false;

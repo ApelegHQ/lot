@@ -14,6 +14,7 @@
  */
 
 import * as fixGlobalTypes from 'inline:./fixGlobalTypes.inline.js';
+import type performTaskFactory from './performTaskFactory';
 
 const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	script: string,
@@ -42,7 +43,11 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	return sandboxWrapperFn;
 };
 
-const createContext = (allowedGlobals?: string[] | undefined) => {
+const createContext = (
+	allowedGlobals?: string[] | undefined | null,
+	externalCallMethod?: ReturnType<typeof performTaskFactory>[0] | null,
+	externalMethodsList?: string[] | null,
+) => {
 	const allowedProps = (Array.isArray(allowedGlobals) && allowedGlobals) || [
 		'Object',
 		'Function',
@@ -148,6 +153,7 @@ const createContext = (allowedGlobals?: string[] | undefined) => {
 		'DecompressionStream',
 		// DOMParser
 		'DOMParser',
+		'EventTarget',
 	];
 
 	const sandboxWrapperThis = Object.create(
@@ -181,15 +187,38 @@ const createContext = (allowedGlobals?: string[] | undefined) => {
 		},
 	});
 
+	if (externalCallMethod && Array.isArray(externalMethodsList)) {
+		Object.defineProperties(
+			sandboxWrapperThis,
+			Object.fromEntries(
+				externalMethodsList.map((external) => [
+					external,
+					{
+						configurable: true,
+						writable: false,
+						enumerable: true,
+						value: externalCallMethod.bind(null, external),
+					},
+				]),
+			),
+		);
+	}
+
 	return sandboxWrapperThis;
 };
 
 const genericSandbox = (
 	script: string,
-	allowedGlobals: string[] | undefined,
+	allowedGlobals: string[] | undefined | null,
 	Function: (typeof globalThis)['Function'],
+	externalCallMethod?: ReturnType<typeof performTaskFactory>[0] | null,
+	externalMethodsList?: string[] | null,
 ) => {
-	const sandboxWrapperThis = createContext(allowedGlobals);
+	const sandboxWrapperThis = createContext(
+		allowedGlobals,
+		externalCallMethod,
+		externalMethodsList,
+	);
 
 	const sandboxWrapperThisProxy = Proxy.revocable(sandboxWrapperThis, {
 		['get'](o, p) {

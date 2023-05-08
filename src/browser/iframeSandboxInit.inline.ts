@@ -55,7 +55,7 @@ const onLoadHandler = Proxy.revocable(() => {
 	if (!(el instanceof HTMLScriptElement)) throw Error();
 	el.remove();
 	const args = JSON.parse(el.text);
-	if (!Array.isArray(args) || args.length !== 4) throw Error();
+	if (!Array.isArray(args) || args.length !== 5) throw Error();
 	iframeSandboxInner.apply(
 		globalThis,
 		args as Parameters<typeof iframeSandboxInner>,
