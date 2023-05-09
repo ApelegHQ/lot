@@ -13,16 +13,22 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-const { debug, trace, info, log, warn, error } =
+const { trace, debug, info, log } =
+	__buildtimeSettings__.buildType === 'debug' && typeof console === 'object'
+		? console
+		: {
+				trace: /* @__PURE__ */ Boolean,
+				debug: /* @__PURE__ */ Boolean,
+				info: /* @__PURE__ */ Boolean,
+				log: /* @__PURE__ */ Boolean,
+		  };
+
+const { warn, error } =
 	typeof console === 'object'
 		? console
 		: {
-				debug: Boolean,
-				trace: Boolean,
-				info: Boolean,
-				log: Boolean,
-				warn: Boolean,
-				error: Boolean,
+				warn: /* @__PURE__ */ Boolean,
+				error: /* @__PURE__ */ Boolean,
 		  };
 
-export { debug, trace, info, log, warn, error };
+export { trace, debug, info, log, warn, error };

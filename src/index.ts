@@ -13,6 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default as browserSandbox } from './browser/browserSandbox.js';
-export { default as nodejsSandbox } from './nodejs/nodejsSandbox.js';
-export { default as workerSandbox } from './worker/workerSandbox.js';
+export { default as browserSandbox } from './impl/browser/browserSandbox.js';
+export { default as nodejsSandbox } from './impl/nodejs/nodejsSandbox.js';
+export { default as workerSandbox } from './impl/worker/workerSandbox.js';

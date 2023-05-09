@@ -21,3 +21,5 @@ export const enum EMessageTypes {
 	ERROR,
 	GLOBAL_ERROR,
 }
+
+export default EMessageTypes;

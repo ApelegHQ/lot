@@ -13,15 +13,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { EMessageTypes } from '../EMessageTypes.js';
-import createErrorEventListenerFactory from '../lib/createErrorEventEventListenerFactory.js';
-import createMessageEventListenerFactory from '../lib/createMessageEventListenerFactory.js';
-import { extractErrorInformation } from '../lib/errorModem.js';
-import hardenGlobals from '../lib/hardenGlobals.js';
-import * as Logger from '../lib/Logger.js';
-import tightenCsp from '../lib/tightenCsp.js';
+import EMessageTypes from '../../EMessageTypes.js';
+import createErrorEventListenerFactory from '../../lib/createErrorEventEventListenerFactory.js';
+import createMessageEventListenerFactory from '../../lib/createMessageEventListenerFactory.js';
+import { extractErrorInformation } from '../../lib/errorModem.js';
+import hardenGlobals from '../../lib/hardenGlobals.js';
+import * as Logger from '../../lib/Logger.js';
+import tightenCsp from '../../lib/tightenCsp.js';
 import workerSandboxManager from '../worker/workerSandboxManager.js';
-import iframeFallbackSandboxManager from './iframeFallbackSandboxManager.js';
+import iframeSoleSandboxManager from './iframeSoleSandboxManager.js';
 
 const iframeSandboxInner = async (
 	script: string,
@@ -97,37 +97,49 @@ const iframeSandboxInner = async (
 		postMessage,
 	);
 
-	if (typeof Worker === 'function') {
+	if (__buildtimeSettings__.isolationStategyIframeWorker) {
+		if (typeof Worker === 'function') {
+			try {
+				return await workerSandboxManager(
+					script,
+					allowedGlobals,
+					externalMethodsList,
+					createMessageEventListener,
+					createErrorEventListener,
+					postMessage,
+				).then(tightenCsp);
+			} catch (e) {
+				Logger.warn(
+					'Error setting up worker, falling back to direct execution if enabled',
+					e,
+				);
+				error = e;
+			}
+		} else {
+			error = new TypeError('Worker is not a function');
+			Logger.info(
+				'`Worker` undefined, falling back to direct execution if enabled',
+			);
+		}
+	}
+
+	if (__buildtimeSettings__.isolationStategyIframeSole) {
+		if (error) {
+			Logger.info('Falling back to direct execution');
+		}
 		try {
-			return await workerSandboxManager(
+			return await iframeSoleSandboxManager(
 				script,
 				allowedGlobals,
 				externalMethodsList,
 				createMessageEventListener,
 				createErrorEventListener,
 				postMessage,
-			).then(tightenCsp);
-		} catch (e) {
-			Logger.warn(
-				'Error setting up worker, falling back to direct execution',
-				e,
 			);
+		} catch (e) {
+			Logger.warn('Error setting up direct execution sandbox', e);
 			error = e;
 		}
-	}
-
-	try {
-		return await iframeFallbackSandboxManager(
-			script,
-			allowedGlobals,
-			externalMethodsList,
-			createMessageEventListener,
-			createErrorEventListener,
-			postMessage,
-		);
-	} catch (e) {
-		Logger.warn('Error setting up fallback', e);
-		error = e;
 	}
 
 	const returnError = new Error('Error setting up iframe');

@@ -5,15 +5,30 @@
   "main": "dist/index.js",
   "module": "./dist/index.mjs",
   "exports": {
-    "import": "./dist/index.mjs",
-    "require": "./dist/index.js"
+    ".": {
+      "deno": "./dist/exports/worker.mjs",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./browser": {
+      "import": "./dist/exports/browser.mjs",
+      "require": "./dist/exports/browser.js"
+    },
+    "./nodejs": {
+      "import": "./dist/exports/nodejs.mjs",
+      "require": "./dist/exports/nodejs.js"
+    },
+    "./worker": {
+      "import": "./dist/exports/worker.mjs",
+      "require": "./dist/exports/worker.js"
+    }
   },
   "files": [
     "dist/**/*"
   ],
   "scripts": {
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "lintFix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "build": "tsc --emitDeclarationOnly --declarationMap && node esbuild.mjs",
     "test": "npm run build && mocha",
     "prepare": "npm run build",

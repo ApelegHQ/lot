@@ -14,12 +14,12 @@
  */
 
 import * as workerSandboxInit from 'inline:../worker/workerSandboxInit.inline.js';
-import { EMessageTypes } from '../EMessageTypes.js';
-import * as Logger from '../lib/Logger.js';
+import EMessageTypes from '../../EMessageTypes.js';
+import * as Logger from '../../lib/Logger.js';
 import type workerSandboxInner from './workerSandboxInner.js';
 
 // Timeout for worker initialisation (in ms)
-const ERROR_TIMEOUT = 1500;
+const ERROR_TIMEOUT = __buildtimeSettings__.innerSandboxInitDeadlineInMs;
 
 const createWorker = (
 	script: string,

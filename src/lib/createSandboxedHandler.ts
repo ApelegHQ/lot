@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { EMessageTypes } from '../EMessageTypes.js';
+import EMessageTypes from '../EMessageTypes.js';
 import { extractErrorInformation } from './errorModem.js';
 import genericSandbox from './genericSandbox.js';
 import * as Logger from './Logger.js';
@@ -31,7 +31,9 @@ const createSandboxedHandler = (
 	cleanup: { (): void },
 ) => {
 	const performTaskMethods =
-		Array.isArray(externalMethodsList) && externalMethodsList.length
+		__buildtimeSettings__.bidirectionalMessaging &&
+		Array.isArray(externalMethodsList) &&
+		externalMethodsList.length
 			? performTaskFactory(postMessage)
 			: undefined;
 
@@ -43,16 +45,20 @@ const createSandboxedHandler = (
 		externalMethodsList,
 	);
 
-	const ctx = sandbox.sandboxWrapperThis;
+	const ctx = sandbox.ctx;
 
 	const handler = (data: unknown[]) => {
 		if (
-			![
-				EMessageTypes.REQUEST,
-				EMessageTypes.DESTROY,
-				EMessageTypes.RESULT,
-				EMessageTypes.ERROR,
-			].includes(data[0] as EMessageTypes)
+			!(
+				__buildtimeSettings__.bidirectionalMessaging
+					? [
+							EMessageTypes.REQUEST,
+							EMessageTypes.DESTROY,
+							EMessageTypes.RESULT,
+							EMessageTypes.ERROR,
+					  ]
+					: [EMessageTypes.REQUEST, EMessageTypes.DESTROY]
+			).includes(data[0] as EMessageTypes)
 		) {
 			return;
 		}
@@ -61,10 +67,12 @@ const createSandboxedHandler = (
 			case EMessageTypes.DESTROY: {
 				Logger.debug('Received DESTROY from parent');
 
-				sandbox.sandboxWrapperRevoke();
+				sandbox.revoke();
 				postMessage = Boolean;
 
-				performTaskMethods && performTaskMethods[2]();
+				if (__buildtimeSettings__.bidirectionalMessaging) {
+					performTaskMethods && performTaskMethods[2]();
+				}
 
 				cleanup();
 
@@ -101,14 +109,16 @@ const createSandboxedHandler = (
 			// eslint-disable-next-line no-fallthrough
 			case EMessageTypes.RESULT:
 			case EMessageTypes.ERROR: {
-				performTaskMethods && performTaskMethods[1](data);
+				if (__buildtimeSettings__.bidirectionalMessaging) {
+					performTaskMethods && performTaskMethods[1](data);
+				}
 			}
 		}
 	};
 
 	preInit();
 
-	sandbox.sandboxWrapperFn();
+	sandbox.fn();
 
 	return handler;
 };

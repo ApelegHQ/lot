@@ -13,19 +13,26 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import global from './global.js';
+import EMessageTypes from '../../EMessageTypes.js';
+import * as Logger from '../../lib/Logger.js';
+import workerSandboxInner from './workerSandboxInner.js';
 
-const bufferToHex = (buffer: Uint8Array) =>
-	Array.prototype.map
-		.call(buffer, (v) =>
-			String.fromCharCode(
-				1 + (0x40 | ((v >> 4) & 0x0f)),
-				1 + (0x40 | ((v >> 0) & 0x0f)),
-			),
-		)
-		.join('');
+const listener = (event: MessageEvent) => {
+	if (
+		!event.isTrusted ||
+		!Array.isArray(event.data) ||
+		event.data[0] !== EMessageTypes.SANDBOX_READY
+	)
+		return;
 
-const getRandomSecret = (): string =>
-	bufferToHex(global.crypto.getRandomValues(new Uint8Array(16)));
+	Logger.info('Received SANDBOX_READY from parent. Creating sandbox.');
+	self.removeEventListener('message', listener, false);
+	Function.prototype.apply.call(
+		workerSandboxInner,
+		null,
+		event.data.slice(1),
+	);
+};
 
-export default getRandomSecret;
+Logger.info('Worker started, registering event listener');
+self.addEventListener('message', listener, false);

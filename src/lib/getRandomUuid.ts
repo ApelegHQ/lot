@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* Copyright © 2023 Exact Realty Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -13,17 +14,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import global from './global.js';
+
 const helper = (v: number) => v.toString(16).padStart(4, '0');
 
-const getRandomUuid = self.crypto?.randomUUID
-	? self.crypto.randomUUID
+const getRandomUuid: typeof global.crypto.randomUUID = global.crypto?.randomUUID
+	? global.crypto.randomUUID.bind(global.crypto)
 	: () => {
-			const uuid = self.crypto.getRandomValues(new Uint16Array(8));
+			const uuid = global.crypto.getRandomValues(new Uint16Array(8));
 			uuid[3] = (uuid[3] & 0x0fff) | 0x4000;
 			uuid[4] = (uuid[4] & 0x3fff) | 0x8000;
 			return [[0, 1], [2], [3], [4], [5, 6, 7]]
 				.map((p) => p.map((i) => helper(uuid[i])).join(''))
-				.join('-');
+				.join('-') as `${string}-${string}-${string}-${string}-${string}`;
 	  };
 
 export default getRandomUuid;

@@ -15,4 +15,4 @@
 
 import fixGlobalTypes from './fixGlobalTypes.js';
 
-fixGlobalTypes();
+__buildtimeSettings__.fixGlobalTypes && fixGlobalTypes();

@@ -14,18 +14,19 @@
  */
 
 import * as fixGlobalTypes from 'inline:./fixGlobalTypes.inline.js';
-import type performTaskFactory from './performTaskFactory';
+import { IPerformTask, TContext } from '../types/index.js';
+import global from './global.js';
 
 const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	script: string,
 	Function: T,
-) => {
+): ReturnType<T> => {
 	// It is possible for a malicious script to escape the
 	// with block by ending with `});} { <code here >; ({`
 	// This is imperfectly mitigated by adding a random number of
 	// braces
 	const guardCount =
-		(globalThis.crypto?.getRandomValues(new Uint16Array(1))[0] ??
+		(global.crypto?.getRandomValues(new Uint16Array(1))[0] ??
 			(Math.random() * 65536) | 0) & 0x7ff;
 	const sandboxWrapperFn = Function(
 		'with(this){' +
@@ -45,116 +46,12 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 
 const createContext = (
 	allowedGlobals?: string[] | undefined | null,
-	externalCallMethod?: ReturnType<typeof performTaskFactory>[0] | null,
+	externalCallMethod?: IPerformTask | null,
 	externalMethodsList?: string[] | null,
-) => {
-	const allowedProps = (Array.isArray(allowedGlobals) && allowedGlobals) || [
-		'Object',
-		'Function',
-		'Array',
-		'Number',
-		'parseFloat',
-		'parseInt',
-		'Infinity',
-		'NaN',
-		'undefined',
-		'Boolean',
-		'String',
-		'Symbol',
-		'Date',
-		'Promise',
-		'RegExp',
-		'Error',
-		'AggregateError',
-		'EvalError',
-		'RangeError',
-		'ReferenceError',
-		'SyntaxError',
-		'TypeError',
-		'URIError',
-		'JSON',
-		'Math',
-		'Intl',
-		'ArrayBuffer',
-		'Uint8Array',
-		'Int8Array',
-		'Uint16Array',
-		'Int16Array',
-		'Uint32Array',
-		'Int32Array',
-		'Float32Array',
-		'Float64Array',
-		'Uint8ClampedArray',
-		'BigUint64Array',
-		'BigInt64Array',
-		'DataView',
-		'Map',
-		'BigInt',
-		'Set',
-		'WeakMap',
-		'WeakSet',
-		'Proxy',
-		'Reflect',
-		'FinalizationRegistry',
-		'WeakRef',
-		'decodeURI',
-		'decodeURIComponent',
-		'encodeURI',
-		'encodeURIComponent',
-		'escape',
-		'unescape',
-		// 'eval', // no eval
-		'isFinite',
-		'isNaN',
-		'console',
-		'SharedArrayBuffer',
-		'Atomics',
-		// setTimeout & setInterval
-		'clearInterval',
-		'clearTimeout',
-		'setInterval',
-		'setTimeout',
-		// Crypto API
-		'Crypto',
-		'SubtleCrypto',
-		'crypto',
-		// Base64 encoding
-		'atob',
-		'btoa',
-		// Text encoding
-		'TextDecoder',
-		'TextDecoderStream',
-		'TextEncoder',
-		'TextEncoderStream',
-		// URL tools
-		'URL', // disableURLStaticMethods should be called
-		'URLSearchParams',
-		'FormData',
-		'Blob',
-		'File',
-		// Fetch API (not fetch)
-		'Request',
-		'Response',
-		'Headers',
-		// Streams
-		'ReadableStream',
-		'ReadableStreamBYOBReader',
-		'ReadableStreamBYOBRequest',
-		'ReadableStreamDefaultController',
-		'ReadableStreamDefaultReader',
-		'TransformStream',
-		'TransformStreamDefaultController',
-		'WritableStream',
-		'WritableStreamDefaultController',
-		'WritableStreamDefaultWriter',
-		'ByteLengthQueuingStrategy',
-		'CountQueuingStrategy',
-		'CompressionStream',
-		'DecompressionStream',
-		// DOMParser
-		'DOMParser',
-		'EventTarget',
-	];
+): TContext => {
+	const allowedProps =
+		(Array.isArray(allowedGlobals) && allowedGlobals) ||
+		__buildtimeSettings__.defaultAllowedGlobalProps;
 
 	const sandboxWrapperThis = Object.create(
 		null,
@@ -162,22 +59,31 @@ const createContext = (
 			allowedProps
 				.map((prop) => [
 					prop,
-					Object.getOwnPropertyDescriptor(globalThis, prop),
+					Object.getOwnPropertyDescriptor(global, prop),
 				])
 				.filter(([, d]) => !!d),
 		),
 	);
 
 	Object.defineProperties(sandboxWrapperThis, {
-		globalThis: {
+		['global']: {
 			writable: true,
 			configurable: true,
 			value: sandboxWrapperThis,
 		},
-		self: { writable: true, configurable: true, value: sandboxWrapperThis },
-		module: {
+		['globalThis']: {
+			writable: true,
+			configurable: true,
+			value: sandboxWrapperThis,
+		},
+		['self']: {
+			writable: true,
+			configurable: true,
+			value: sandboxWrapperThis,
+		},
+		['module']: {
 			value: Object.create(null, {
-				exports: {
+				['exports']: {
 					value: Object.create(null),
 					writable: true,
 					enumerable: true,
@@ -210,10 +116,19 @@ const createContext = (
 const genericSandbox = (
 	script: string,
 	allowedGlobals: string[] | undefined | null,
-	Function: (typeof globalThis)['Function'],
-	externalCallMethod?: ReturnType<typeof performTaskFactory>[0] | null,
+	Function: (typeof global)['Function'],
+	externalCallMethod?: IPerformTask | null,
 	externalMethodsList?: string[] | null,
-) => {
+): { fn: { (): void }; ctx: TContext; revoke: { (): void } } => {
+	if (
+		!__buildtimeSettings__.bidirectionalMessaging &&
+		(externalCallMethod || externalMethodsList)
+	) {
+		throw new TypeError(
+			'Invalid value for externalCallMethod or externalMethodsList. Bidirectional messaging is disabled',
+		);
+	}
+
 	const sandboxWrapperThis = createContext(
 		allowedGlobals,
 		externalCallMethod,
@@ -232,9 +147,9 @@ const genericSandbox = (
 	const sandboxWrapperFn = createWrapperFn(script, Function);
 
 	return {
-		sandboxWrapperFn: sandboxWrapperFn.bind(sandboxWrapperThisProxy.proxy),
-		sandboxWrapperThis: sandboxWrapperThisProxy.proxy,
-		sandboxWrapperRevoke: sandboxWrapperThisProxy.revoke,
+		fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy.proxy),
+		ctx: sandboxWrapperThisProxy.proxy,
+		revoke: sandboxWrapperThisProxy.revoke,
 	};
 };
 

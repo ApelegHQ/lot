@@ -13,26 +13,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { EMessageTypes } from '../EMessageTypes.js';
-import * as Logger from '../lib/Logger.js';
-import workerSandboxInner from './workerSandboxInner.js';
-
-const listener = (event: MessageEvent) => {
-	if (
-		!event.isTrusted ||
-		!Array.isArray(event.data) ||
-		event.data[0] !== EMessageTypes.SANDBOX_READY
-	)
-		return;
-
-	Logger.info('Received SANDBOX_READY from parent. Creating sandbox.');
-	self.removeEventListener('message', listener, false);
-	Function.prototype.apply.call(
-		workerSandboxInner,
-		null,
-		event.data.slice(1),
-	);
-};
-
-Logger.info('Worker started, registering event listener');
-self.addEventListener('message', listener, false);
+declare namespace __buildtimeSettings__ {
+	const buildTarget: 'browser' | 'generic' | 'nodejs' | 'worker';
+	const buildType: 'release' | 'debug';
+	const defaultAllowedGlobalProps: string[];
+	const sandboxInitDeadlineInMs: number;
+	const innerSandboxInitDeadlineInMs: number;
+	const isolationStategyIframeWorker: boolean;
+	const isolationStategyIframeSole: boolean;
+	const bidirectionalMessaging: boolean;
+	const fixGlobalTypes: boolean;
+}

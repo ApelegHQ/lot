@@ -14,6 +14,8 @@
  */
 
 const fixGlobalTypes = () => {
+	if (!__buildtimeSettings__.fixGlobalTypes) return;
+
 	// Fix global types
 	if (typeof Object !== 'function' || {}.constructor !== Object) {
 		(({}).constructor as typeof Object).defineProperty(
@@ -25,6 +27,13 @@ const fixGlobalTypes = () => {
 				value: {}.constructor,
 			},
 		);
+	}
+	if (typeof Array !== 'function' || [].constructor !== Array) {
+		Object.defineProperty(globalThis, 'Array', {
+			configurable: true,
+			writable: true,
+			value: [].constructor,
+		});
 	}
 	if (typeof String !== 'function' || ''.constructor !== String) {
 		Object.defineProperty(globalThis, 'String', {
@@ -51,7 +60,7 @@ const fixGlobalTypes = () => {
 		typeof Function !== 'function' ||
 		function () {
 			/* empty */
-		}.constructor !== Boolean
+		}.constructor !== Function
 	) {
 		Object.defineProperty(globalThis, 'Function', {
 			configurable: true,
@@ -83,6 +92,38 @@ const fixGlobalTypes = () => {
 			value: Symbol().constructor,
 		});
 	}
+
+	try {
+		[].constructor(-1);
+	} catch (e) {
+		if (e) {
+			if (
+				typeof RangeError !== 'function' ||
+				!(e instanceof RangeError)
+			) {
+				Object.defineProperty(globalThis, 'RangeError', {
+					configurable: true,
+					writable: true,
+					value: (e as RangeError).constructor,
+				});
+			}
+		}
+	}
+
+	try {
+		typeof decodeURI === 'function' && decodeURI('%');
+	} catch (e) {
+		if (e) {
+			if (typeof URIError !== 'function' || !(e instanceof URIError)) {
+				Object.defineProperty(globalThis, 'URIError', {
+					configurable: true,
+					writable: true,
+					value: (e as URIError).constructor,
+				});
+			}
+		}
+	}
+	// Missing: AggregateError, ReferenceError, EvalError, SyntaxError
 };
 
 export default fixGlobalTypes;

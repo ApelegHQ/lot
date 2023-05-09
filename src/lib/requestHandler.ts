@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { EMessageTypes } from '../EMessageTypes.js';
+import EMessageTypes from '../EMessageTypes.js';
 import { extractErrorInformation } from './errorModem.js';
 import * as Logger from './Logger.js';
 

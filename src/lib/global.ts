@@ -13,6 +13,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import hardenGlobals from '../lib/hardenGlobals.js';
+const g =
+	typeof globalThis !== 'undefined'
+		? globalThis
+		: typeof self !== 'undefined'
+		? self
+		: typeof global !== 'undefined'
+		? global
+		: ({} as unknown as typeof globalThis);
 
-hardenGlobals();
+export default g;

@@ -13,6 +13,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import global from './global.js';
+
 const inertConstructorProperty = (
 	prototype: typeof Function.prototype,
 	errorFnName: string,
@@ -20,7 +22,7 @@ const inertConstructorProperty = (
 	const inertConstructor = function () {
 		throw new EvalError(`call to ${errorFnName}() blocked by CSP`);
 	};
-	const boundInertConstructor = inertConstructor.bind(globalThis);
+	const boundInertConstructor = inertConstructor.bind(global);
 	defineProperty(boundInertConstructor, 'name', {
 		['value']: prototype.constructor.name,
 		['writable']: false,
@@ -40,16 +42,19 @@ const inertConstructorProperty = (
 };
 
 const tameSetFns = (f: 'setTimeout' | 'setInterval') => {
-	const feralFn = globalThis[f];
+	const feralFn = global[f];
+
+	if (typeof feralFn !== 'function') return;
+
 	const tamedFn = function (...args: Parameters<typeof feralFn>) {
 		if (typeof args[0] !== 'function') {
 			throw new EvalError(`call to eval() blocked by CSP`);
 		}
-		feralFn.apply(globalThis, args);
+		feralFn.apply(global, args);
 	};
 	tamedFn.name = feralFn.name;
 
-	defineProperty(globalThis, f, {
+	defineProperty(global, f, {
 		value: tamedFn.bind(null),
 	});
 };
@@ -63,7 +68,7 @@ const {
 } = Object;
 
 const hardenGlobals = () => {
-	const FERAL_FUNCTION = Function;
+	const FERAL_FUNCTION = hardenGlobals.constructor;
 
 	const list = [
 		'(function(){})',
@@ -106,13 +111,13 @@ const hardenGlobals = () => {
 					);
 				}
 
-				// Replace globalThis['Function'], etc.
+				// Replace global['Function'], etc.
 				if (
-					getOwnPropertyDescriptor(globalThis, origConstructor.name)
+					getOwnPropertyDescriptor(global, origConstructor.name)
 						?.value === origConstructor
 				) {
 					defineProperty(
-						globalThis,
+						global,
 						origConstructor.name,
 						constructorDescriptor,
 					);
@@ -123,11 +128,12 @@ const hardenGlobals = () => {
 			}
 		});
 
-		defineProperty(
-			globalThis,
-			'eval',
-			inertConstructorProperty(getPrototypeOf(eval), 'eval'),
-		);
+		typeof eval === 'function' &&
+			defineProperty(
+				global,
+				'eval',
+				inertConstructorProperty(getPrototypeOf(eval), 'eval'),
+			);
 		tameSetFns('setTimeout');
 		tameSetFns('setInterval');
 		freeze(getPrototypeOf(Object));
@@ -141,20 +147,21 @@ const hardenGlobals = () => {
 };
 
 const disableURLStaticMethods = () => {
-	Object.defineProperties(self.URL, {
-		['createObjectURL']: {
-			writable: true,
-			enumerable: true,
-			configurable: true,
-			value: String.bind(null),
-		},
-		['revokeObjectURL']: {
-			writable: true,
-			enumerable: true,
-			configurable: true,
-			value: String.prototype.at.bind(''),
-		},
-	});
+	global.URL &&
+		Object.defineProperties(global.URL, {
+			['createObjectURL']: {
+				writable: true,
+				enumerable: true,
+				configurable: true,
+				value: String.bind(null),
+			},
+			['revokeObjectURL']: {
+				writable: true,
+				enumerable: true,
+				configurable: true,
+				value: String.prototype.at.bind(''),
+			},
+		});
 };
 
 export default hardenGlobals;

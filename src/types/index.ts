@@ -13,19 +13,22 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import global from './global.js';
+export interface IPerformTask {
+	(op: string, ...args: unknown[]): Promise<unknown>;
+}
 
-const bufferToHex = (buffer: Uint8Array) =>
-	Array.prototype.map
-		.call(buffer, (v) =>
-			String.fromCharCode(
-				1 + (0x40 | ((v >> 4) & 0x0f)),
-				1 + (0x40 | ((v >> 0) & 0x0f)),
-			),
-		)
-		.join('');
+export interface ISandbox {
+	(
+		script: string,
+		allowedGlobals?: string[] | undefined | null,
+		externalMethods?: Record<string, typeof Function.prototype> | null,
+		abort?: AbortSignal,
+	): Promise<IPerformTask>;
+}
 
-const getRandomSecret = (): string =>
-	bufferToHex(global.crypto.getRandomValues(new Uint8Array(16)));
-
-export default getRandomSecret;
+export type TContext = Record<PropertyKey, unknown> & {
+	global: TContext;
+	globalThis: TContext;
+	self: TContext;
+	module: { exports: unknown };
+};

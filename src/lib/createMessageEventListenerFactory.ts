@@ -20,7 +20,7 @@ const createMessageEventListenerFactory =
 		defaultEventTarget: EventTarget,
 		parentOrigin: string,
 		parent: MessageEventSource | null,
-		secret: string,
+		secret: string | undefined,
 		allowUntrusted: boolean,
 	) =>
 	(
@@ -53,7 +53,7 @@ const createMessageEventListenerFactory =
 						event.origin !== parentOrigin ||
 						event.source !== parent ||
 						!Array.isArray(event.data) ||
-						event.data[0] !== secret
+						(secret && event.data[0] !== secret)
 					)
 						return;
 

@@ -13,12 +13,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { EMessageTypes } from '../EMessageTypes.js';
-import createSandboxedHandler from '../lib/createSandboxedHandler.js';
+import EMessageTypes from '../../EMessageTypes.js';
+import createSandboxedHandler from '../../lib/createSandboxedHandler.js';
+import { extractErrorInformation } from '../../lib/errorModem.js';
 import hardenGlobals, {
 	disableURLStaticMethods,
-} from '../lib/hardenGlobals.js';
-import * as Logger from '../lib/Logger.js';
+} from '../../lib/hardenGlobals.js';
+import * as Logger from '../../lib/Logger.js';
 
 const createMessageEventListener = (() => {
 	return (handler: { (data: unknown[]): void }) => {
@@ -51,37 +52,48 @@ const workerSandboxInner = (
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 ) => {
-	Logger.info('Setting up worker sandbox.');
+	try {
+		Logger.info('Setting up worker sandbox.');
 
-	// Remove methods from DedicatedWorkerGlobalScope
-	// TODO: Seemingly not working
-	const selfPrototype = Object.getPrototypeOf(self);
-	const postMessage = self.postMessage.bind(self);
-	const close = self.close.bind(self);
-	delete selfPrototype.postMessage;
-	delete selfPrototype.close;
+		// Remove methods from DedicatedWorkerGlobalScope
+		// TODO: Seemingly not working
+		const selfPrototype = Object.getPrototypeOf(self);
+		const postMessage = self.postMessage.bind(self);
+		const close = self.close.bind(self);
+		delete selfPrototype.postMessage;
+		delete selfPrototype.close;
 
-	hardenGlobals();
-	disableURLStaticMethods();
+		void hardenGlobals;
+		void disableURLStaticMethods;
+		hardenGlobals();
+		disableURLStaticMethods();
 
-	const revokeRootMessageEventListener = createMessageEventListener(
-		createSandboxedHandler(
-			script,
-			allowedGlobals,
-			externalMethodsList,
-			postMessage,
-			Boolean,
-			() => {
-				revokeRootMessageEventListener();
-				close();
-			},
-		),
-	);
+		const revokeRootMessageEventListener = createMessageEventListener(
+			createSandboxedHandler(
+				script,
+				allowedGlobals,
+				externalMethodsList,
+				postMessage,
+				Boolean,
+				() => {
+					revokeRootMessageEventListener();
+					close();
+				},
+			),
+		);
 
-	Logger.info(
-		'Finished setting up worker sandbox. Sending SANDBOX_READY to parent.',
-	);
-	postMessage([EMessageTypes.SANDBOX_READY]);
+		Logger.info(
+			'Finished setting up worker sandbox. Sending SANDBOX_READY to parent.',
+		);
+		postMessage([EMessageTypes.SANDBOX_READY]);
+	} catch (e) {
+		console.log(e);
+		Logger.warn(
+			'Error setting up worker sandbox. Sending GLOBAL_ERROR to parent.',
+		);
+
+		postMessage([EMessageTypes.GLOBAL_ERROR, extractErrorInformation(e)]);
+	}
 };
 
 export default workerSandboxInner;

@@ -13,18 +13,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { EMessageTypes } from '../EMessageTypes';
-import { reconstructErrorInformation } from './errorModem';
+import EMessageTypes from '../EMessageTypes.js';
+import type { IPerformTask } from '../types/index.js';
+import { reconstructErrorInformation } from './errorModem.js';
 import getRandomSecret from './getRandomSecret.js';
 import * as Logger from './Logger.js';
 
 const performTaskFactory = (postMessageOutgoing: {
 	(data: unknown[]): void;
-}): [
-	{ (op: string, ...args: unknown[]): Promise<unknown> },
-	{ (data: unknown[]): void },
-	{ (): void },
-] => {
+}): [IPerformTask, { (data: unknown[]): void }, { (): void }] => {
 	const pendingTasks: Record<string, (typeof Function.prototype)[]> =
 		Object.create(null);
 
@@ -61,18 +58,22 @@ const performTaskFactory = (postMessageOutgoing: {
 		}
 	};
 
-	const performTask = async (op: string, ...args: unknown[]) => {
+	const performTask: IPerformTask = async (op, ...args) => {
 		const taskId = getRandomSecret();
 
 		Logger.debug('Sending REQUEST for task [' + taskId + '] ' + op);
-
-		postMessageOutgoing([EMessageTypes.REQUEST, taskId, op, ...args]);
 
 		pendingTasks[taskId] = [];
 
 		const taskPromise = new Promise((resolve, reject) => {
 			pendingTasks[taskId].push(resolve, reject);
 		});
+
+		try {
+			postMessageOutgoing([EMessageTypes.REQUEST, taskId, op, ...args]);
+		} catch (e) {
+			pendingTasks[taskId][1](e);
+		}
 
 		return taskPromise;
 	};
