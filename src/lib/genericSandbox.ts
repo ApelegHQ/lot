@@ -53,14 +53,40 @@ const createContext = (
 		(Array.isArray(allowedGlobals) && allowedGlobals) ||
 		__buildtimeSettings__.defaultAllowedGlobalProps;
 
+	const globalPrototypeChain = [global];
+
+	for (;;) {
+		const p = Object.getPrototypeOf(
+			globalPrototypeChain[globalPrototypeChain.length - 1],
+		);
+		if (p === null) break;
+		globalPrototypeChain.push(p);
+	}
+
+	const getGlobalPropertyDescriptor = (prop: string) => {
+		for (const p of globalPrototypeChain) {
+			const descriptor = Object.getOwnPropertyDescriptor(p, prop);
+
+			if (descriptor) {
+				return descriptor;
+			}
+		}
+
+		if (global[prop as 'Boolean']) {
+			return {
+				enumerable: false,
+				writable: false,
+				configurable: true,
+				value: global[prop as 'Boolean'],
+			};
+		}
+	};
+
 	const sandboxWrapperThis = Object.create(
 		null,
 		Object.fromEntries(
 			allowedProps
-				.map((prop) => [
-					prop,
-					Object.getOwnPropertyDescriptor(global, prop),
-				])
+				.map((prop) => [prop, getGlobalPropertyDescriptor(prop)])
 				.filter(([, d]) => !!d),
 		),
 	);
@@ -135,9 +161,48 @@ const genericSandbox = (
 		externalMethodsList,
 	);
 
-	const sandboxWrapperThisProxy = Proxy.revocable(sandboxWrapperThis, {
+	// This proxy is needed to keep global functions that expect to be bound to
+	// globalThis working (e.g., clearTimeout)
+	const createFunctionProxy = (fn: typeof Function.prototype) => {
+		return new Proxy(fn, {
+			['apply'](o, thisArg, argArray) {
+				if (typeof o === 'function') {
+					return Function.prototype.apply.call(
+						o,
+						thisArg === sandboxWrapperThisProxy.proxy
+							? global
+							: thisArg,
+						argArray,
+					);
+				}
+
+				throw new TypeError('Not a function');
+			},
+		});
+	};
+
+	// eslint-disable-next-line prefer-const
+	let sandboxWrapperThisProxy: {
+		proxy: typeof sandboxWrapperThis;
+		revoke: { (): void };
+	};
+
+	sandboxWrapperThisProxy = Proxy.revocable(sandboxWrapperThis, {
+		// TODO: Should we trap getOwnPropertyDescriptor as well?
+		// That allows detecting the sandbox and potentially breaks code
+		// calling functions this way.
 		['get'](o, p) {
-			return o[p];
+			const op = o[p];
+			if (
+				typeof op === 'function' &&
+				!Object.prototype.hasOwnProperty.call(global, p)
+			) {
+				return createFunctionProxy(op);
+			}
+			if (op === sandboxWrapperThis) {
+				return sandboxWrapperThisProxy.proxy;
+			}
+			return op;
 		},
 		['has']() {
 			return true;
