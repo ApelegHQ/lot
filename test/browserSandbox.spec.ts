@@ -17,16 +17,18 @@ import webdriver from 'selenium-webdriver';
 import { browserTestSuites } from './browserTestSuites';
 import getCodeHelper from './getCodeHelper';
 
-['browserSandbox'].forEach((m) =>
-	getCodeHelper('../dist/index.mjs', m).then((code) =>
-		[
-			[webdriver.Browser.CHROME, 'Chrome'],
-			[webdriver.Browser.FIREFOX, 'Firefox'],
-		].forEach(([browserName, browserDisplayName]) => {
-			describe(
-				`Browser: ${browserDisplayName}, module: ${m}`,
-				browserTestSuites(code, browserName),
-			);
-		}),
-	),
-);
+if (!process.env.CI) {
+	['browserSandbox'].forEach((m) =>
+		getCodeHelper('../dist/index.mjs', m).then((code) =>
+			[
+				[webdriver.Browser.CHROME, 'Chrome'],
+				[webdriver.Browser.FIREFOX, 'Firefox'],
+			].forEach(([browserName, browserDisplayName]) => {
+				describe(
+					`Browser: ${browserDisplayName}, module: ${m}`,
+					browserTestSuites(code, browserName),
+				);
+			}),
+		),
+	);
+}

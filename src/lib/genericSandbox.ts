@@ -15,6 +15,7 @@
 
 import * as fixGlobalTypes from 'inline:./fixGlobalTypes.inline.js';
 import { IPerformTask, TContext } from '../types/index.js';
+import getRandomSecret from './getRandomSecret.js';
 import global from './global.js';
 
 const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
@@ -26,20 +27,40 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	// This is imperfectly mitigated by adding a random number of
 	// braces
 	const guardCount =
-		(global.crypto?.getRandomValues(new Uint8Array(1))[0] ??
-			(Math.random() * 256) | 0) & 0xff;
+		((global.crypto?.getRandomValues(new Uint8Array(1))[0] ??
+			(Math.random() * 256) | 0) &
+			0xff) +
+		1;
+	const canary = getRandomSecret();
+	const canaryStart = canary.slice(0, canary.length / 2);
+	const canaryEnd = canary.slice(canary.length / 2);
 	const sandboxWrapperFn = Function(
+		// The 'with' block restricts access to the global scope
 		'with(this){' +
 			`~function(){${fixGlobalTypes.default}}();` +
-			'(function(){' +
+			`(function(__canary$${canaryStart}__){` +
 			"'use strict';" +
+			// The canary is an additional mechanism to ensure that if the code
+			// after 'script' is skipped, it will throw because it doesn't know
+			// the variable name or its contents, even if it managed to guess the
+			// guardCount variable
+			`__canary$${canaryStart}__="${canaryEnd}";` +
+			// The guard makes it difficult for the script to execute code outside
+			// of the 'with' block by having it guess the correct number of
+			// parentheses it needs to inject. Since guardCount is random, it
+			// cannot be guessed deterministically.
 			'('.repeat(guardCount) +
-			'function(){' +
+			// Function argument to shadow canary value
+			`function(__canary$${canaryStart}__){` +
 			script +
+			// Prevent the script from excluding the following code via comments
+			// or template strings
 			'\r\n/*`*/' +
 			'}' +
 			')'.repeat(guardCount) +
-			'()' +
+			'();' +
+			`if("${canaryEnd}"!==__canary$${canaryStart}__)throw "__canary$_";` +
+			`__canary$${canaryStart}__=void 0;` +
 			'})();' +
 			'}',
 	);

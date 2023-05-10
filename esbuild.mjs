@@ -15,116 +15,99 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import esbuild from 'esbuild';
 import inlineScripts from '@exact-realty/esbuild-plugin-inline-js';
+import esbuild from 'esbuild';
+import googleClosureCompiler from 'google-closure-compiler';
+import fs from 'node:fs/promises';
+// import path from 'node:path';
+import defaultAllowedGlobalProps from './defaultAllowedGlobalProps.config.mjs';
 
-const defaultAllowedGlobalProps = [
-	'Object',
-	'Function',
-	'Array',
-	'Number',
-	'parseFloat',
-	'parseInt',
-	'Infinity',
-	'NaN',
-	'undefined',
-	'Boolean',
-	'String',
-	'Symbol',
-	'Date',
-	'Promise',
-	'RegExp',
-	'Error',
-	'AggregateError',
-	'EvalError',
-	'RangeError',
-	'ReferenceError',
-	'SyntaxError',
-	'TypeError',
-	'URIError',
-	'JSON',
-	'Math',
-	'Intl',
-	'ArrayBuffer',
-	'Uint8Array',
-	'Int8Array',
-	'Uint16Array',
-	'Int16Array',
-	'Uint32Array',
-	'Int32Array',
-	'Float32Array',
-	'Float64Array',
-	'Uint8ClampedArray',
-	'BigUint64Array',
-	'BigInt64Array',
-	'DataView',
-	'Map',
-	'BigInt',
-	'Set',
-	'WeakMap',
-	'WeakSet',
-	'Proxy',
-	'Reflect',
-	'FinalizationRegistry',
-	'WeakRef',
-	'decodeURI',
-	'decodeURIComponent',
-	'encodeURI',
-	'encodeURIComponent',
-	'escape',
-	'unescape',
-	// 'eval', // no eval
-	'isFinite',
-	'isNaN',
-	'console',
-	'SharedArrayBuffer',
-	'Atomics',
-	// setTimeout & setInterval
-	'clearInterval',
-	'clearTimeout',
-	'setInterval',
-	'setTimeout',
-	// Crypto API
-	'Crypto',
-	'SubtleCrypto',
-	'crypto',
-	// Base64 encoding
-	'atob',
-	'btoa',
-	// Text encoding
-	'TextDecoder',
-	'TextDecoderStream',
-	'TextEncoder',
-	'TextEncoderStream',
-	// URL tools
-	'URL', // disableURLStaticMethods should be called
-	'URLSearchParams',
-	'FormData',
-	'Blob',
-	'File',
-	// Fetch API (not fetch)
-	'Request',
-	'Response',
-	'Headers',
-	// Streams
-	'ReadableStream',
-	'ReadableStreamBYOBReader',
-	'ReadableStreamBYOBRequest',
-	'ReadableStreamDefaultController',
-	'ReadableStreamDefaultReader',
-	'TransformStream',
-	'TransformStreamDefaultController',
-	'WritableStream',
-	'WritableStreamDefaultController',
-	'WritableStreamDefaultWriter',
-	'ByteLengthQueuingStrategy',
-	'CountQueuingStrategy',
-	'CompressionStream',
-	'DecompressionStream',
-	// DOMParser
-	'DOMParser',
-	'EventTarget',
-];
+/**
+ * @type {esbuild.Plugin}
+ **/
+const exactRealtyClosureBuilderPlugin = {
+	name: '@exact-realty/closure-compiler',
+	setup(build) {
+		const origTarget = build.initialOptions.target;
+
+		void origTarget;
+
+		Object.assign(build.initialOptions, {
+			target: 'es2020',
+			write: false,
+		});
+
+		build.onEnd(async (result) => {
+			const outputFiles = await Promise.all(
+				result.outputFiles?.map((o) => {
+					if (o.path.endsWith('.js') || o.path.endsWith('.mjs')) {
+						const compiler = new googleClosureCompiler.compiler({
+							js_output_file: o.path,
+							compilation_level: 'ADVANCED',
+							language_in: 'ECMASCRIPT_2020',
+							language_out: 'ECMASCRIPT_2020',
+							rewrite_polyfills: false,
+							process_closure_primitives: false,
+							apply_input_source_maps: false,
+							warning_level: 'QUIET',
+							chunk_output_type:
+								build.initialOptions.format === 'esm'
+									? 'ES_MODULES'
+									: 'GLOBAL_NAMESPACE',
+							env: 'BROWSER',
+						});
+						return new Promise((resolve, reject) => {
+							const process = compiler.run(
+								(exitCode, _stdout, stderr) => {
+									if (exitCode === 0) {
+										// TODO: Warnings
+										resolve(
+											fs
+												.readFile(o.path)
+												.then((contents) => ({
+													path: o.path,
+													contents: contents,
+													text: contents.toString(),
+													_written: true,
+												})),
+										);
+									} else {
+										return reject(stderr);
+									}
+								},
+							);
+
+							process.stdin.write(o.text);
+							process.stdin.end();
+						});
+					}
+
+					return o;
+				}),
+			);
+
+			/* if (outputFiles.length) {
+				await Promise.all(
+					Array.from(
+						new Set(
+							outputFiles
+								.filter((o) => !o._written)
+								.map((file) => path.dirname(file.path)),
+						),
+					).map((dir) => fs.mkdir(dir, { recursive: true })),
+				);
+
+				await Promise.all(
+					outputFiles
+						.filter((o) => !o._written)
+						.map((file) => fs.writeFile(file.path, file.contents)),
+				);
+			} */
+
+			result.outputFiles = outputFiles;
+		});
+	},
+};
 
 const options = {
 	target: 'es2015',
@@ -156,7 +139,10 @@ const options = {
 	},
 };
 
-const plugins = [];
+void exactRealtyClosureBuilderPlugin;
+
+// TODO: Use Google Closure Compiler
+const plugins = isNaN(0) ? [exactRealtyClosureBuilderPlugin] : [];
 
 plugins.push(
 	inlineScripts({
