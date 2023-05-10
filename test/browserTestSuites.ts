@@ -15,6 +15,14 @@
 
 import assert from 'node:assert/strict';
 import webdriver from 'selenium-webdriver';
+import { Options as ChromeOptions } from 'selenium-webdriver/chrome';
+import { Options as FirefoxOptions } from 'selenium-webdriver/firefox';
+
+const chromeOptions = new ChromeOptions();
+chromeOptions.addArguments('--headless=new');
+
+const firefoxOptions = new FirefoxOptions();
+firefoxOptions.headless();
 
 export const browserTestSuites = (code: string, browserName: string) => () => {
 	let driver: webdriver.WebDriver;
@@ -22,7 +30,11 @@ export const browserTestSuites = (code: string, browserName: string) => () => {
 	before(async function () {
 		this.timeout(10e3);
 
-		driver = await new webdriver.Builder().forBrowser(browserName).build();
+		driver = await new webdriver.Builder()
+			.forBrowser(browserName)
+			.setChromeOptions(chromeOptions)
+			.setFirefoxOptions(firefoxOptions)
+			.build();
 
 		await driver.get('about:blank');
 		await driver.executeScript(
