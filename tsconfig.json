@@ -14,7 +14,9 @@
 		"resolveJsonModule": false,
 		"lib": ["es6", "dom"],
 		"typeRoots": ["./node_modules/@types", "./@types"],
-		"declaration": true
+		"declaration": true,
+		"allowJs": true,
+		"checkJs": false
 	},
 	"include": ["src/**/*"],
 	"exclude": [

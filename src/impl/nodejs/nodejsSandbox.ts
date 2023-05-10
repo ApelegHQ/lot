@@ -66,7 +66,16 @@ const nodejsSandbox: ISandbox = async (
 
 	eventTargetOutgoing.dispatchEvent(new MessageEvent('message', { data: 1 }));
 
-	const postMessageOutgoing = postMessageFactory(eventTargetOutgoing);
+	const postMessageOutgoingUnsafe = postMessageFactory(eventTargetOutgoing);
+	// Messages are forced through JSON.parse(JSON.stringify()) to avoid some attack
+	// vectors that involve indirect references
+	const postMessageOutgoing: typeof postMessageOutgoingUnsafe = (...args) => {
+		postMessageOutgoingUnsafe.apply.call(
+			postMessageOutgoingUnsafe,
+			null,
+			JSON.parse(JSON.stringify(args)),
+		);
+	};
 
 	Object.defineProperties(context, {
 		// We expect the sandbox to call 'Function' exactly once
@@ -149,7 +158,7 @@ const nodejsSandbox: ISandbox = async (
 	});
 
 	vm.runInContext(
-		`void function(){var _init=function(){${nodejsSandboxInit.default}};self.wrapperFn=function(){var _init;${wrapperFn}};~function(){var f=_init;_init=void 0;f();}();}.call(Object.create(null));`,
+		`void function(){var _init=function(){${nodejsSandboxInit.default}};self.wrapperFn=function(){var _init;${wrapperFn}};~function(){var f=_init;_init=void 0;f();}();}.call({});`,
 		context,
 		{
 			displayErrors: process.env['NODE_ENV'] !== 'production',

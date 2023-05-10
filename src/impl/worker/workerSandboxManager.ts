@@ -15,6 +15,9 @@
 
 import * as workerSandboxInit from 'inline:../worker/workerSandboxInit.inline.js';
 import EMessageTypes from '../../EMessageTypes.js';
+import type createErrorEventListenerFactory from '../../lib/createErrorEventEventListenerFactory.js';
+import type createMessageEventListenerFactory from '../../lib/createMessageEventListenerFactory.js';
+import { reconstructErrorInformation } from '../../lib/errorModem.js';
 import * as Logger from '../../lib/Logger.js';
 import type workerSandboxInner from './workerSandboxInner.js';
 
@@ -52,17 +55,12 @@ const workerSandboxManager = async (
 	script: string,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
-	createMessageEventListener: {
-		(handler: { (data: unknown[]): void }, worker?: Worker): { (): void };
-	},
-	createErrorEventListener: {
-		(
-			handler?: {
-				(): void;
-			},
-			worker?: Worker,
-		): { (): void };
-	},
+	createMessageEventListener: ReturnType<
+		typeof createMessageEventListenerFactory
+	>,
+	createErrorEventListener: ReturnType<
+		typeof createErrorEventListenerFactory
+	>,
 	postMessage: { (data: unknown[]): void },
 ): Promise<void> => {
 	const postInitSetup = (worker: Worker) => {
@@ -206,11 +204,23 @@ const workerSandboxManager = async (
 
 		const revokeWorkerInitMessageEventListener = createMessageEventListener(
 			(data: unknown[]) => {
-				if (data[0] !== EMessageTypes.SANDBOX_READY) return;
+				if (
+					![
+						EMessageTypes.SANDBOX_READY,
+						EMessageTypes.GLOBAL_ERROR,
+					].includes(data[0] as EMessageTypes)
+				)
+					return;
 
-				Logger.info('Received SANDBOX_READY from worker');
+				if (data[0] === EMessageTypes.SANDBOX_READY) {
+					Logger.info('Received SANDBOX_READY from worker');
 
-				resolve();
+					resolve();
+				} else {
+					Logger.info('Received GLOBAL_ERROR from worker');
+
+					reject(reconstructErrorInformation(data[1]));
+				}
 			},
 			workerSandbox[0],
 		);

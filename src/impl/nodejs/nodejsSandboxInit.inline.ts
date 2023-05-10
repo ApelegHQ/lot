@@ -81,18 +81,90 @@ const nativeWrapperFactory =
 		});
 	};
 
-[
-	'addEventListener',
-	'removeEventListener',
-	'postMessage',
-	'close',
-	'atob',
-	'btoa',
-].forEach(
+['close', 'atob', 'btoa'].forEach(
 	nativeWrapperFactory(
 		self as unknown as Parameters<typeof nativeWrapperFactory>[0],
 	),
 );
+
+// Messages are forced through JSON.parse(JSON.stringify()) to avoid some attack
+// vectors that involve indirect references
+(() => {
+	const aEL = self.addEventListener;
+	const rEL = self.removeEventListener;
+
+	const eventMap = new WeakMap<
+		typeof Function.prototype,
+		typeof Function.prototype
+	>();
+
+	self.addEventListener = (
+		((...args: Parameters<typeof aEL>) => {
+			const [type, listener] = args;
+			if (
+				type !== 'message' ||
+				typeof listener !== 'function' ||
+				eventMap.has(listener)
+			)
+				return;
+
+			const wrappedListener = (ev: Event) => {
+				if (ev.type !== 'message') return;
+
+				Object.defineProperty(ev, 'data', {
+					value: JSON.parse(
+						JSON.stringify((ev as MessageEvent).data),
+					),
+				});
+				listener(ev);
+			};
+
+			eventMap.set(listener, wrappedListener);
+			try {
+				aEL.call(self, type, wrappedListener, false);
+			} catch (e) {
+				eventMap.delete(listener);
+				throw recreateError(e);
+			}
+		}) as typeof aEL
+	).bind(self);
+
+	self.removeEventListener = (
+		((...args: Parameters<typeof rEL>) => {
+			const [type, listener] = args;
+			if (type !== 'message' || typeof listener !== 'function') return;
+			const wrappedListener = eventMap.get(listener);
+			if (wrappedListener) {
+				try {
+					rEL.call(
+						self,
+						type,
+						wrappedListener as unknown as typeof listener,
+						false,
+					);
+				} catch (e) {
+					throw recreateError(e);
+				}
+				eventMap.delete(listener);
+			}
+		}) as typeof rEL
+	).bind(self);
+})();
+
+// Messages are forced through JSON.parse(JSON.stringify()) to avoid some attack
+// vectors that involve proxies
+(() => {
+	const pm = self.postMessage;
+	self.postMessage = (
+		((...args) => {
+			try {
+				pm.apply(self, JSON.parse(JSON.stringify(args)));
+			} catch (e) {
+				throw recreateError(e);
+			}
+		}) as typeof pm
+	).bind(self);
+})();
 
 (() => {
 	const grv = self.crypto.getRandomValues;

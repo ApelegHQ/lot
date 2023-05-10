@@ -69,11 +69,13 @@ const browserSandbox: ISandbox = async (
 	// If the fallback mechanism is disabled, then it's possible to
 	// remove the 'unsafe-inline' (used as a fallback for older browsers that
 	// don't support CSP 3) and 'strict-dynamic' parts (used for newer browsers)
+	// TODO: Improve CSP. Seems like unsafe-eval is required with newer Chrome
+	// to be able to call Function
 	iframe.setAttribute(
 		'csp',
 		__buildtimeSettings__.isolationStategyIframeSole
-			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src blob:`
-			: `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}'; script-src-attr 'none'; worker-src blob:`,
+			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src blob:`
+			: `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval'; script-src-attr 'none'; worker-src blob:`,
 	);
 	const iframeSrcUrl = self.URL.createObjectURL(blob);
 	iframe.setAttribute('src', iframeSrcUrl + '#' + sourceScriptElementId);

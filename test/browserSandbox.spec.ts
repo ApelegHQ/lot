@@ -14,147 +14,19 @@
  */
 
 import webdriver from 'selenium-webdriver';
-//import { browserSandbox as m } from '../dist/index';
-
-// import assert from 'node:assert/strict';
+import { browserTestSuites } from './browserTestSuites';
 import getCodeHelper from './getCodeHelper';
 
-getCodeHelper('../dist/index.mjs', 'browserSandbox').then((code) =>
-	Promise.all(
+['browserSandbox'].forEach((m) =>
+	getCodeHelper('../dist/index.mjs', m).then((code) =>
 		[
-			// [webdriver.Browser.CHROME, 'Chrome'],
+			[webdriver.Browser.CHROME, 'Chrome'],
 			[webdriver.Browser.FIREFOX, 'Firefox'],
-		].map(async ([browserName, browserDisplayName]) => {
-			const driver = new webdriver.Builder()
-				.forBrowser(browserName)
-				.build();
-
-			console.info(browserDisplayName);
-
-			await driver.get('about:blank');
-			await driver.executeScript('console.info("PRE")');
-			await driver.executeScript(code);
-			await driver.executeScript('console.info("POST")');
-
-			if (isNaN(NaN)) return;
-
-			/* describe('Browser: ' + browserDisplayName, () => {
-				describe('Can run tasks', () => {
-					it('should return result for sync task', async () => {
-						const sandbox = await m(
-							'module.exports={foo:()=>"bar"}',
-						);
-						const result = await sandbox('foo');
-						assert.equal(result, 'bar');
-					});
-
-					it('should return result for async task', async () => {
-						const sandbox = await m(
-							'module.exports={foo:()=>Promise.resolve("bar")}',
-						);
-						const result = await sandbox('foo');
-						assert.equal(result, 'bar');
-					});
-				});
-				describe('Error conditions', () => {
-					it('invalid syntax causes error', async () => {
-						const sandbox = m('%');
-						assert.rejects(sandbox);
-					});
-
-					const SUCCESS = Symbol();
-
-					const tests: [string, string | typeof SUCCESS][] = [
-						['""', SUCCESS],
-						['%', 'SyntaxError'],
-						['eval("")', 'EvalError'],
-						['clearTimeout(setTimeout("", 1000))', 'EvalError'],
-						['clearInterval(setInterval("", 1000))', 'EvalError'],
-						['clearTimeout(setTimeout(Boolean, 1000))', SUCCESS],
-						// This causes the tests to hang
-						// ['clearInterval(setInterval(Boolean, 1000))', SUCCESS],
-						['Function("")', 'EvalError'],
-						['new Function("")', 'EvalError'],
-						['(()=>{}).constructor("")', 'EvalError'],
-						['new ((()=>{}).constructor)("")', 'EvalError'],
-						['(async ()=>{}).constructor("")', 'EvalError'],
-						['new ((async ()=>{}).constructor)("")', 'EvalError'],
-						['(function* (){}).constructor("")', 'EvalError'],
-						['new ((function* (){}).constructor)("")', 'EvalError'],
-						['(async function* (){}).constructor("")', 'EvalError'],
-						[
-							'new ((async function* (){}).constructor)("")',
-							'EvalError',
-						],
-						['TextEncoder.constructor("")', 'EvalError'],
-						['new (TextEncoder.constructor)("")', 'EvalError'],
-						[
-							'TextEncoder.constructor.bind(TextEncoder)("")',
-							'EvalError',
-						],
-						[
-							'Function.prototype.bind.call(TextEncoder.constructor, TextEncoder)("")',
-							'EvalError',
-						],
-						[
-							'class x extends Boolean.constructor{};new x()',
-							'EvalError',
-						],
-						['class x extends Boolean{};new x()', SUCCESS],
-						[
-							'class x extends TextEncoder.constructor{}',
-							'TypeError',
-						],
-						['class x extends URL.constructor{}', 'TypeError'],
-						// These fail because of prototype being non-writable and non-configurable, even though perhaps they should succeed
-						// ['class x extends TextEncoder{}', SUCCESS],
-						// ['class x extends URL{}', SUCCESS],
-					];
-
-					tests.forEach(([expression, errorName]) => {
-						it(`${expression} ${
-							errorName === SUCCESS
-								? 'succeeds'
-								: `causes error ${JSON.stringify(errorName)}`
-						}`, async () => {
-							const sandbox = m(expression);
-							if (errorName === SUCCESS) {
-								await assert.doesNotReject(sandbox);
-							} else {
-								await assert.rejects(sandbox, {
-									name: errorName,
-								});
-							}
-						});
-					});
-
-					tests.forEach(([expression, errorName]) => {
-						it(`Task with ${expression} ${
-							errorName === SUCCESS
-								? 'succeeds'
-								: `causes error ${JSON.stringify(errorName)}`
-						}`, async () => {
-							const sandbox = m(
-								`module.exports={foo:()=>{${expression}}}`,
-							);
-							if (errorName === 'SyntaxError') {
-								await assert.rejects(sandbox, {
-									name: errorName,
-								});
-							} else {
-								const result = (await sandbox)('foo');
-								if (errorName === SUCCESS) {
-									await assert.doesNotReject(result);
-								} else {
-									await assert.rejects(result, {
-										name: errorName,
-									});
-								}
-							}
-						});
-					});
-				});
-			}); */
+		].forEach(([browserName, browserDisplayName]) => {
+			describe(
+				`Browser: ${browserDisplayName}, module: ${m}`,
+				browserTestSuites(code, browserName),
+			);
 		}),
 	),
 );

@@ -32,27 +32,30 @@ const workerSandbox: ISandbox = async (
 		);
 	}
 
-	const originIncoming = 'urn:uuid:' + getRandomUuid();
-	const originOutgoing = 'urn:uuid:' + getRandomUuid();
+	const originIncoming = 'urn:uuid:incoming:' + getRandomUuid();
+	const originOutgoing = 'urn:uuid:outgoing:' + getRandomUuid();
 
 	const eventTargetIncoming = new EventTarget();
 	const eventTargetOutgoing = new EventTarget();
 
-	const postMessageIncoming = (data: unknown[]) =>
-		eventTargetIncoming.dispatchEvent(
-			new MessageEvent('message', {
-				data: data,
-				origin: originIncoming,
-			}),
-		);
+	const postMessageFactory =
+		(target: EventTarget, origin: string) => (data: unknown[]) => {
+			return target.dispatchEvent(
+				new MessageEvent('message', {
+					data: data,
+					origin: origin,
+				}),
+			);
+		};
 
-	const postMessageOutgoing = (data: unknown[]) =>
-		eventTargetOutgoing.dispatchEvent(
-			new MessageEvent('message', {
-				data: data,
-				origin: originOutgoing,
-			}),
-		);
+	const postMessageIncoming = postMessageFactory(
+		eventTargetIncoming,
+		originIncoming,
+	);
+	const postMessageOutgoing = postMessageFactory(
+		eventTargetOutgoing,
+		originOutgoing,
+	);
 
 	const createMessageEventListener = createMessageEventListenerFactory(
 		addEventListener,

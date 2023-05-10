@@ -14,6 +14,8 @@
  */
 
 import EMessageTypes from '../../EMessageTypes.js';
+import type createErrorEventListenerFactory from '../../lib/createErrorEventEventListenerFactory.js';
+import type createMessageEventListenerFactory from '../../lib/createMessageEventListenerFactory.js';
 import createSandboxedHandler from '../../lib/createSandboxedHandler.js';
 import { extractErrorInformation } from '../../lib/errorModem.js';
 import { disableURLStaticMethods } from '../../lib/hardenGlobals.js';
@@ -24,12 +26,12 @@ const iframeSoleSandboxManager = async (
 	script: string,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
-	createMessageEventListener: {
-		(handler: { (data: unknown[]): void }): { (): void };
-	},
-	createErrorEventListener: {
-		(): { (): void };
-	},
+	createMessageEventListener: ReturnType<
+		typeof createMessageEventListenerFactory
+	>,
+	createErrorEventListener: ReturnType<
+		typeof createErrorEventListenerFactory
+	>,
 	postMessage: { (data: unknown[]): void },
 ): Promise<void> => {
 	try {

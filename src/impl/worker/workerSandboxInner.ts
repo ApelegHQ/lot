@@ -87,7 +87,6 @@ const workerSandboxInner = (
 		);
 		postMessage([EMessageTypes.SANDBOX_READY]);
 	} catch (e) {
-		console.log(e);
 		Logger.warn(
 			'Error setting up worker sandbox. Sending GLOBAL_ERROR to parent.',
 		);

@@ -13,20 +13,34 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import webdriver from 'selenium-webdriver';
-import { browserTestSuites } from './browserTestSuites';
-import getCodeHelper from './getCodeHelper';
+import esbuild from 'esbuild';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-['workerSandbox'].forEach((m) =>
-	getCodeHelper('../dist/index.mjs', m).then((code) =>
-		[
-			[webdriver.Browser.CHROME, 'Chrome'],
-			[webdriver.Browser.FIREFOX, 'Firefox'],
-		].forEach(([browserName, browserDisplayName]) => {
-			describe(
-				`Browser: ${browserDisplayName}, module: ${m}`,
-				browserTestSuites(code, browserName),
-			);
-		}),
-	),
-);
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * @param {string} path
+ * @param {string} exportName
+ * @returns {Promise<string>}
+ */
+export default async (path, exportName) => {
+	const buildResult = await esbuild.build({
+		stdin: {
+			contents: `import { ${exportName} } from ${JSON.stringify(
+				path,
+			)}; self[${JSON.stringify(
+				exportName,
+			)}] = ${exportName}; self.m = ${exportName};`,
+			loader: 'js',
+			resolveDir: __dirname,
+			sourcefile: 'browser-bundle.mjs',
+		},
+		bundle: true,
+		format: 'iife',
+		platform: 'node',
+		write: false,
+	});
+
+	return buildResult.outputFiles[0].text;
+};

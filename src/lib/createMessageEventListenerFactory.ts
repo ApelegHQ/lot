@@ -57,7 +57,7 @@ const createMessageEventListenerFactory =
 					)
 						return;
 
-					handler(event.data.slice(1));
+					handler(secret ? event.data.slice(1) : event.data);
 			  };
 
 		addEventListener.call(

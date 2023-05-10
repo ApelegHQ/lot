@@ -16,12 +16,13 @@
 import esbuild from 'esbuild';
 
 export default async (path: string, exportName: string) => {
-	// const contents = fs.readFile(path);
 	const buildResult = await esbuild.build({
 		stdin: {
 			contents: `import { ${exportName} } from ${JSON.stringify(
 				path,
-			)}; self[${JSON.stringify(exportName)}] = ${exportName};`,
+			)}; self[${JSON.stringify(
+				exportName,
+			)}] = ${exportName}; self.m = ${exportName};`,
 			loader: 'js',
 			resolveDir: __dirname,
 			sourcefile: 'browser-bundle.mjs',
