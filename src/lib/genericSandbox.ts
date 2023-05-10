@@ -26,17 +26,20 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	// This is imperfectly mitigated by adding a random number of
 	// braces
 	const guardCount =
-		(global.crypto?.getRandomValues(new Uint16Array(1))[0] ??
-			(Math.random() * 65536) | 0) & 0x7ff;
+		(global.crypto?.getRandomValues(new Uint8Array(1))[0] ??
+			(Math.random() * 256) | 0) & 0xff;
 	const sandboxWrapperFn = Function(
 		'with(this){' +
 			`~function(){${fixGlobalTypes.default}}();` +
 			'(function(){' +
 			"'use strict';" +
-			'{'.repeat(guardCount) +
+			'('.repeat(guardCount) +
+			'function(){' +
 			script +
 			'\r\n/*`*/' +
-			'}'.repeat(guardCount) +
+			'}' +
+			')'.repeat(guardCount) +
+			'()' +
 			'})();' +
 			'}',
 	);
