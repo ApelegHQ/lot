@@ -13,53 +13,44 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import EMessageTypes from '../../EMessageTypes.js';
+import * as Logger from '../../lib/Logger.js';
 import iframeSandboxInner from './iframeSandboxInner.js';
 
-// Exceptions to throw
-class InvalidOrUnsupportedStateError extends Error {}
+const [initMesssageKeyA, initMesssageKeyB] = self.location.hash
+	.slice(1)
+	.split('-');
 
-// Entry point
-const browserOnLoad = function (handler: { (): void }) {
-	if (['interactive', 'complete'].includes(document.readyState)) {
-		// The page has already loaded and the 'DOMContentLoaded'
-		// event has already fired
-		// Call handler directly
-		setTimeout(handler, 0);
-	} else if (typeof document.addEventListener === 'function') {
-		// 'DOMContentLoaded' has not yet fired
-		const listener = function () {
-			if (typeof document.removeEventListener === 'function') {
-				// Remove the event listener to avoid double firing
-				document.removeEventListener('DOMContentLoaded', listener);
-			}
+console.log([initMesssageKeyA, initMesssageKeyB]);
 
-			// Call handler on 'DOMContentLoaded'
-			handler();
-		};
-		// Set an event listener on 'DOMContentLoaded'
-		document.addEventListener('DOMContentLoaded', listener);
-	} else {
-		// The page has not fully loaded but addEventListener isn't
-		// available. This shouldn't happen.
-		throw new InvalidOrUnsupportedStateError();
-	}
+const listener = (event: MessageEvent) => {
+	if (
+		!event.isTrusted ||
+		event.source !== parent ||
+		!Array.isArray(event.data) ||
+		event.data[2] !== EMessageTypes.SANDBOX_READY ||
+		event.data[0] !== event.data[7] ||
+		event.data[1] !== initMesssageKeyB ||
+		event.data.length !== 8
+	)
+		return;
+
+	Logger.info('Received SANDBOX_READY from parent. Creating sandbox.');
+
+	self.removeEventListener('message', listener, false);
+
+	Function.prototype.apply.call(
+		iframeSandboxInner,
+		null,
+		event.data.slice(3),
+	);
 };
 
-const onLoadHandler = Proxy.revocable(() => {
-	onLoadHandler.revoke();
-	if (document.currentScript) {
-		document.currentScript.remove();
-	}
-	const elementId = self.location.hash.slice(1);
-	const el = document.getElementById(elementId);
-	if (!(el instanceof HTMLScriptElement)) throw Error();
-	el.remove();
-	const args = JSON.parse(el.text);
-	if (!Array.isArray(args) || args.length !== 5) throw Error();
-	iframeSandboxInner.apply(
-		globalThis,
-		args as Parameters<typeof iframeSandboxInner>,
-	);
-}, {});
+Logger.info('Iframe loaded, registering event listener');
+self.addEventListener('message', listener, false);
 
-browserOnLoad(onLoadHandler.proxy);
+parent.postMessage(
+	[initMesssageKeyA, EMessageTypes.SANDBOX_READY],
+	// We don't know the origin yet
+	'*',
+);

@@ -14,6 +14,7 @@
  */
 
 import * as iframeSandboxInit from 'inline:./iframeSandboxInit.inline.js';
+import EMessageTypes from '../../EMessageTypes.js';
 import getRandomSecret from '../../lib/getRandomSecret.js';
 import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
 import { ISandbox } from '../../types/index.js';
@@ -32,28 +33,11 @@ const browserSandbox: ISandbox = async (
 	}
 
 	const secret = getRandomSecret();
-	const sourceScriptElementId = getRandomSecret();
+	const initMesssageKeyA = getRandomSecret();
+	const initMesssageKeyB = getRandomSecret();
 	const nonce = getRandomSecret();
 
-	const html = `<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Sandbox</title><script type="application/json" id="${sourceScriptElementId}">${JSON.stringify(
-		[
-			String(script),
-			allowedGlobals?.map(String),
-			externalMethods && Object.keys(externalMethods),
-			self.location.origin,
-			secret,
-		] as Parameters<typeof iframeSandboxInner>,
-	)
-		.split('&')
-		.join('\\u0026')
-		.split('>')
-		.join('\\u003e')
-		.split('<')
-		.join('\\u003c')}</script><script crossorigin="anonymous" integrity="${
-		iframeSandboxInit.sri
-	}" nonce="${nonce}" src="data:;base64,${
-		iframeSandboxInit.contentBase64
-	}" type="text/javascript"></script></head><body></body></html>`;
+	const html = `<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Sandbox</title><script crossorigin="anonymous" integrity="${iframeSandboxInit.sri}" nonce="${nonce}" src="data:;base64,${iframeSandboxInit.contentBase64}" type="text/javascript"></script></head><body></body></html>`;
 
 	const iframe = document.createElement('iframe');
 	const blob = new Blob([html], { type: 'application/xhtml+xml' });
@@ -78,7 +62,10 @@ const browserSandbox: ISandbox = async (
 			: `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval'; script-src-attr 'none'; worker-src blob:`,
 	);
 	const iframeSrcUrl = self.URL.createObjectURL(blob);
-	iframe.setAttribute('src', iframeSrcUrl + '#' + sourceScriptElementId);
+	iframe.setAttribute(
+		'src',
+		iframeSrcUrl + '#' + initMesssageKeyA + '-' + initMesssageKeyB,
+	);
 	Object.assign(iframe.style, {
 		['display']: 'none',
 		['position']: 'absolute',
@@ -97,10 +84,43 @@ const browserSandbox: ISandbox = async (
 
 	const sandboxIframeCW = iframe.contentWindow;
 
+	const sendSourceEventListener = (event: MessageEvent) => {
+		if (
+			!event.isTrusted ||
+			event.source !== sandboxIframeCW ||
+			!Array.isArray(event.data) ||
+			event.data.length !== 2 ||
+			event.data[1] !== EMessageTypes.SANDBOX_READY ||
+			event.data[0] !== initMesssageKeyA
+		)
+			return;
+
+		self.removeEventListener('message', sendSourceEventListener, false);
+
+		postMessageOutgoing([
+			initMesssageKeyB,
+			EMessageTypes.SANDBOX_READY,
+			...([
+				String(script),
+				allowedGlobals?.map(String),
+				externalMethods && Object.keys(externalMethods),
+				self.location.origin,
+				secret,
+			] as Parameters<typeof iframeSandboxInner>),
+		]);
+	};
+
+	self.addEventListener('message', sendSourceEventListener);
+
+	// The targetOrigin is set to '*' because the correct value of 'null' is not
+	// accepted as a valid origin. Although this is not ideal, it's also not much
+	// worse than setting it to 'null', since it still doesn't fully an uniquely
+	// identify the origin
 	const postMessageOutgoing = (data: unknown[]) =>
 		sandboxIframeCW.postMessage([secret, ...data], '*');
 
 	const onDestroy = () => {
+		self.removeEventListener('message', sendSourceEventListener, false);
 		abort?.removeEventListener('abort', onDestroy, false);
 		iframe.remove();
 	};

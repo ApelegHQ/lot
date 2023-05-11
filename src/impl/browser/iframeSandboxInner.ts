@@ -66,8 +66,9 @@ const iframeSandboxInner = async (
 	hardenGlobals();
 
 	const postMessage = (() => {
-		// If origin is not a valid origin, a DOMException gets thrown
+		// If origin is not a valid URL, a DOMException gets thrown
 		// In such cases, set origin to '*'
+		// This happens with the 'null' origin (e.g., if the parent is 'about:blank')
 		const outgoingOrigin = (() => {
 			try {
 				new URL(origin);

@@ -22,7 +22,7 @@ const extractErrorInformation = (e: unknown, depth?: number) => {
 		e instanceof Error ||
 		Object.prototype.hasOwnProperty.call(e, 'stack')
 	) {
-		const d: (string | unknown)[] = [
+		const d: unknown[] = [
 			(e as Error).name && String((e as Error).name),
 			(e as Error).message && String((e as Error).message),
 			String((e as Error).stack),

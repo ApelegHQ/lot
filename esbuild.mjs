@@ -155,44 +155,48 @@ plugins.push(
 
 options.plugins = plugins;
 
-await [
-	{
-		format: 'cjs',
-	},
-	{
-		format: 'esm',
-		outExtension: {
-			'.js': '.mjs',
+await Promise.all(
+	[
+		{
+			format: 'cjs',
 		},
-	},
-].map((extra) =>
-	esbuild.build({
-		...options,
-		...extra,
-		entryPoints: ['./src/index.ts'],
-		outdir: 'dist',
-	}),
+		{
+			format: 'esm',
+			outExtension: {
+				'.js': '.mjs',
+			},
+		},
+	].map((extra) =>
+		esbuild.build({
+			...options,
+			...extra,
+			entryPoints: ['./src/index.ts'],
+			outdir: 'dist',
+		}),
+	),
 );
 
-await [
-	{
-		format: 'cjs',
-	},
-	{
-		format: 'esm',
-		outExtension: {
-			'.js': '.mjs',
+await Promise.all(
+	[
+		{
+			format: 'cjs',
 		},
-	},
-].map((extra) =>
-	esbuild.build({
-		...options,
-		...extra,
-		entryPoints: [
-			'./src/exports/browser.ts',
-			'./src/exports/nodejs.ts',
-			'./src/exports/worker.ts',
-		],
-		outdir: 'dist/exports',
-	}),
+		{
+			format: 'esm',
+			outExtension: {
+				'.js': '.mjs',
+			},
+		},
+	].map((extra) =>
+		esbuild.build({
+			...options,
+			...extra,
+			entryPoints: [
+				'./src/exports/browser.ts',
+				'./src/exports/nodejs.ts',
+				'./src/exports/worker.ts',
+			],
+			outdir: 'dist/exports',
+		}),
+	),
 );

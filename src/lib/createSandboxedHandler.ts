@@ -41,7 +41,7 @@ const createSandboxedHandler = (
 		script,
 		allowedGlobals,
 		FERAL_FUNCTION,
-		performTaskMethods && performTaskMethods[0],
+		performTaskMethods?.[0],
 		externalMethodsList,
 	);
 
@@ -71,7 +71,7 @@ const createSandboxedHandler = (
 				postMessage = Boolean;
 
 				if (__buildtimeSettings__.bidirectionalMessaging) {
-					performTaskMethods && performTaskMethods[2]();
+					performTaskMethods?.[2]();
 				}
 
 				cleanup();
@@ -83,7 +83,7 @@ const createSandboxedHandler = (
 					'Received REQUEST for task [' + data[1] + '] ' + data[2],
 				);
 
-				if (!ctx || !ctx['module'] || !ctx['module']['exports']) {
+				if (!ctx?.['module']?.['exports']) {
 					try {
 						postMessage([
 							EMessageTypes.ERROR,
@@ -110,7 +110,7 @@ const createSandboxedHandler = (
 			case EMessageTypes.RESULT:
 			case EMessageTypes.ERROR: {
 				if (__buildtimeSettings__.bidirectionalMessaging) {
-					performTaskMethods && performTaskMethods[1](data);
+					performTaskMethods?.[1](data);
 				}
 			}
 		}
