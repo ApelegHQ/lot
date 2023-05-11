@@ -16,10 +16,14 @@
 import assert from 'node:assert/strict';
 import webdriver from 'selenium-webdriver';
 import { Options as ChromeOptions } from 'selenium-webdriver/chrome';
+import { Options as EdgeOptions } from 'selenium-webdriver/edge';
 import { Options as FirefoxOptions } from 'selenium-webdriver/firefox';
 
 const chromeOptions = new ChromeOptions();
 chromeOptions.addArguments('--headless=new');
+
+const edgeOptions = new EdgeOptions();
+edgeOptions.headless();
 
 const firefoxOptions = new FirefoxOptions();
 firefoxOptions.headless();
@@ -33,6 +37,7 @@ export const browserTestSuites = (code: string, browserName: string) => () => {
 		driver = await new webdriver.Builder()
 			.forBrowser(browserName)
 			.setChromeOptions(chromeOptions)
+			.setEdgeOptions(edgeOptions)
 			.setFirefoxOptions(firefoxOptions)
 			.build();
 
