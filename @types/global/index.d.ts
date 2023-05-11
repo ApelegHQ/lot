@@ -17,6 +17,7 @@ declare namespace __buildtimeSettings__ {
 	const buildTarget: 'browser' | 'generic' | 'nodejs' | 'worker';
 	const buildType: 'release' | 'debug';
 	const defaultAllowedGlobalProps: string[];
+	const dynamicCodeGeneration: boolean;
 	const sandboxInitDeadlineInMs: number;
 	const innerSandboxInitDeadlineInMs: number;
 	const isolationStategyIframeWorker: boolean;

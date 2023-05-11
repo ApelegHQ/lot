@@ -131,6 +131,7 @@ const options = {
 			defaultAllowedGlobalProps,
 		),
 		'__buildtimeSettings__.fixGlobalTypes': 'true',
+		'__buildtimeSettings__.dynamicCodeGeneration': 'true',
 		'__buildtimeSettings__.bidirectionalMessaging': 'true',
 		'__buildtimeSettings__.sandboxInitDeadlineInMs': '4000',
 		'__buildtimeSettings__.innerSandboxInitDeadlineInMs': '1500',

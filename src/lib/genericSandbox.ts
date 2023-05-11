@@ -26,43 +26,83 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	// with block by ending with `});} { <code here >; ({`
 	// This is imperfectly mitigated by adding a random number of
 	// braces
-	const guardCount =
-		((global.crypto?.getRandomValues(new Uint8Array(1))[0] ??
-			(Math.random() * 256) | 0) &
-			0xff) +
-		1;
-	const canary = getRandomSecret();
-	const canaryStart = canary.slice(0, canary.length / 2);
-	const canaryEnd = canary.slice(canary.length / 2);
+	const guardCount = __buildtimeSettings__.dynamicCodeGeneration
+		? ((global.crypto?.getRandomValues(new Uint8Array(1))[0] ??
+				(Math.random() * 256) | 0) &
+				0xff) +
+		  1
+		: 0;
+	const canary = __buildtimeSettings__.dynamicCodeGeneration
+		? getRandomSecret()
+		: '';
+	const canaryStart = __buildtimeSettings__.dynamicCodeGeneration
+		? canary.slice(0, canary.length / 2)
+		: '';
+	const canaryEnd = __buildtimeSettings__.dynamicCodeGeneration
+		? canary.slice(canary.length / 2)
+		: 0;
+
+	if (
+		!__buildtimeSettings__.dynamicCodeGeneration &&
+		script.indexOf('__canary$zzby$') !== -1
+	) {
+		throw new Error('__canary$zzby$ inside script not supported');
+	}
+
 	const sandboxWrapperFn = Function(
 		// The 'with' block restricts access to the global scope
-		'with(this){' +
-			`~function(){${fixGlobalTypes.default}}();` +
-			`(function(__canary$${canaryStart}__){` +
-			"'use strict';" +
-			// The canary is an additional mechanism to ensure that if the code
-			// after 'script' is skipped, it will throw because it doesn't know
-			// the variable name or its contents, even if it managed to guess the
-			// guardCount variable
-			`__canary$${canaryStart}__="${canaryEnd}";` +
-			// The guard makes it difficult for the script to execute code outside
-			// of the 'with' block by having it guess the correct number of
-			// parentheses it needs to inject. Since guardCount is random, it
-			// cannot be guessed deterministically.
-			'('.repeat(guardCount) +
-			// Function argument to shadow canary value
-			`function(__canary$${canaryStart}__){` +
-			script +
-			// Prevent the script from excluding the following code via comments
-			// or template strings
-			'\r\n/*`*/' +
-			'}' +
-			')'.repeat(guardCount) +
-			'();' +
-			`if("${canaryEnd}"!==__canary$${canaryStart}__)throw "__canary$_";` +
-			`__canary$${canaryStart}__=void 0;` +
-			'})();' +
-			'}',
+		__buildtimeSettings__.dynamicCodeGeneration
+			? 'with(this){' +
+					`~function(){${fixGlobalTypes.default}}();` +
+					`(function(__canary$${canaryStart}__){` +
+					"'use strict';" +
+					// The canary is an additional mechanism to ensure that if the
+					// code after 'script' is skipped, it will throw because it
+					// doesn't know the variable name or its contents, even if it
+					// managed to guess the guardCount variable
+					`__canary$${canaryStart}__="${canaryEnd}";` +
+					// The guard makes it difficult for the script to execute code
+					// outside of the 'with' block by having it guess the correct
+					// number of parentheses it needs to inject. Since guardCount
+					// is random, it cannot be guessed deterministically.
+					'('.repeat(guardCount) +
+					// Function argument to shadow canary value
+					`function(__canary$${canaryStart}__){` +
+					script +
+					// Prevent the script from excluding the following code
+					// via comments or template strings
+					'\r\n/*`*/' +
+					'}' +
+					')'.repeat(guardCount) +
+					'();' +
+					`if("${canaryEnd}"!==__canary$${canaryStart}__)` +
+					'throw "__canary__";' +
+					`__canary$${canaryStart}__=void 0;` +
+					'})();' +
+					'}'
+			: 'with(this){' +
+					`~function(){${fixGlobalTypes.default}}();` +
+					`(function(__canary$zzby$o__){` +
+					'__canary$zzby$o__={};' +
+					`(function(__canary$zzby$i__){` +
+					"'use strict';" +
+					'__canary$zzby$i__=__canary$zzby$o__;' +
+					'(' +
+					// Function arguments to shadow canary values
+					`function(__canary$zzby$o__, __canary$zzby$i__){` +
+					script +
+					// Prevent the script from excluding the following code
+					// via comments or template strings
+					'\r\n/*`*/' +
+					'}' +
+					')' +
+					'();' +
+					`if(__canary$zzby$o__!==__canary$zzby$i__)throw "__canary__";` +
+					`__canary$zzby$i__=void 0;` +
+					`__canary$zzby$o__=void 0;` +
+					'})();' +
+					'})();' +
+					'}',
 	);
 
 	return sandboxWrapperFn;

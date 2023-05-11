@@ -78,7 +78,7 @@ AbortSignal `abort`. It returns a promise that resolves to an implementation of
 It takes a string `op` representing the function name and a list of arguments,
 and it returns a promise that resolves to the result of the task.
 
-The script to be sandboxes, `script`, must expose an object in `module.exports`
+The script to be sandboxed, `script`, must expose an object in `module.exports`
 with a dictionary of the different functions that can be called from outside.
 The type of `module.exports` is `Record<string, typeof Function.prototype>`.
 
