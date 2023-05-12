@@ -34,7 +34,7 @@ describe('Node.js', () => {
 	});
 	describe('Error conditions', () => {
 		it('invalid syntax causes error', async () => {
-			const sandbox = m('%');
+			const sandbox = m('\u0000');
 			await assert.rejects(sandbox);
 		});
 
@@ -46,12 +46,11 @@ describe('Node.js', () => {
 			// eval not present
 			['eval("")', 'TypeError'],
 			//// ['eval("")', 'EvalError'],
-			// setTimeout not (yet) implemented for Node.js
-			//// ['clearTimeout(setTimeout("", 1000))', 'EvalError'],
-			//// ['clearInterval(setInterval("", 1000))', 'EvalError'],
-			//// ['clearTimeout(setTimeout(Boolean, 1000))', SUCCESS],
+			['clearTimeout(setTimeout("", 1000))', 'EvalError'],
+			['clearInterval(setInterval("", 1000))', 'EvalError'],
+			['clearTimeout(setTimeout(Boolean, 1000))', SUCCESS],
 			//// This causes the tests to hang
-			//// ['clearInterval(setInterval(Boolean, 1000))', SUCCESS],
+			// ['clearInterval(setInterval(Boolean, 1000))', SUCCESS],
 			['Function("")', 'EvalError'],
 			['new Function("")', 'EvalError'],
 			['(()=>{}).constructor("")', 'EvalError'],

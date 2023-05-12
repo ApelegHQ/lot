@@ -38,8 +38,10 @@ const exactRealtyClosureBuilderPlugin = {
 		});
 
 		build.onEnd(async (result) => {
+			if (!result.outputFiles) return;
+
 			const outputFiles = await Promise.all(
-				result.outputFiles?.map((o) => {
+				result.outputFiles.map((o) => {
 					if (o.path.endsWith('.js') || o.path.endsWith('.mjs')) {
 						const compiler = new googleClosureCompiler.compiler({
 							js_output_file: o.path,

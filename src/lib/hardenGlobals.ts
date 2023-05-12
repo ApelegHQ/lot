@@ -41,7 +41,7 @@ const inertConstructorProperty = (
 	};
 };
 
-const tameSetFns = (f: 'setTimeout' | 'setInterval') => {
+const tameSetTimerFn = (f: 'setTimeout' | 'setInterval') => {
 	const feralFn = global[f];
 
 	if (typeof feralFn !== 'function') return;
@@ -134,8 +134,8 @@ const hardenGlobals = () => {
 				'eval',
 				inertConstructorProperty(getPrototypeOf(eval), 'eval'),
 			);
-		tameSetFns('setTimeout');
-		tameSetFns('setInterval');
+		tameSetTimerFn('setTimeout');
+		tameSetTimerFn('setInterval');
 		freeze(getPrototypeOf(Object));
 		freeze(Object);
 	} catch (e) {

@@ -111,7 +111,7 @@ const fixGlobalTypes = () => {
 	}
 
 	try {
-		typeof decodeURI === 'function' && decodeURI('%');
+		typeof decodeURI === 'function' && void decodeURI('%');
 	} catch (e) {
 		if (e) {
 			if (typeof URIError !== 'function' || !(e instanceof URIError)) {

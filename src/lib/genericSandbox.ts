@@ -20,7 +20,7 @@ import global from './global.js';
 
 const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	script: string,
-	Function: T,
+	functionConstructor: T,
 ): ReturnType<T> => {
 	// It is possible for a malicious script to escape the
 	// with block by ending with `});} { <code here >; ({`
@@ -49,7 +49,7 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 		throw new Error('__canary$zzby$ inside script not supported');
 	}
 
-	const sandboxWrapperFn = Function(
+	const sandboxWrapperFn = functionConstructor(
 		// The 'with' block restricts access to the global scope
 		__buildtimeSettings__.dynamicCodeGeneration
 			? 'with(this){' +
@@ -206,7 +206,7 @@ const createContext = (
 const genericSandbox = (
 	script: string,
 	allowedGlobals: string[] | undefined | null,
-	Function: (typeof global)['Function'],
+	functionConstructor: (typeof global)['Function'],
 	externalCallMethod?: IPerformTask | null,
 	externalMethodsList?: string[] | null,
 ): { fn: { (): void }; ctx: TContext; revoke: { (): void } } => {
@@ -225,13 +225,15 @@ const genericSandbox = (
 		externalMethodsList,
 	);
 
+	const apply = Function.prototype.apply;
+
 	// This proxy is needed to keep global functions that expect to be bound to
 	// globalThis working (e.g., clearTimeout)
-	const createFunctionProxy = (fn: typeof Function.prototype) => {
+	const createFunctionProxy = (fn: typeof functionConstructor.prototype) => {
 		return new Proxy(fn, {
 			['apply'](o, thisArg, argArray) {
 				if (typeof o === 'function') {
-					return Function.prototype.apply.call(
+					return apply.call(
 						o,
 						thisArg === sandboxWrapperThisProxy.proxy
 							? global
@@ -273,7 +275,7 @@ const genericSandbox = (
 		},
 	});
 
-	const sandboxWrapperFn = createWrapperFn(script, Function);
+	const sandboxWrapperFn = createWrapperFn(script, functionConstructor);
 
 	return {
 		fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy.proxy),

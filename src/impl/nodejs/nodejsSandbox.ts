@@ -18,6 +18,7 @@ import vm from 'node:vm';
 import EMessageTypes from '../../EMessageTypes.js';
 import { createWrapperFn } from '../../lib/genericSandbox.js';
 import getRandomUuid from '../../lib/getRandomUuid.js';
+import scopedTimerFunction from '../../lib/scopedTimerFunction.js';
 import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
 import { ISandbox } from '../../types/index.js';
 
@@ -32,17 +33,14 @@ const postMessageFactory =
 	(target: EventTarget, origin?: string): typeof postMessage =>
 	(message: unknown) => {
 		target.dispatchEvent(
-			new TrustedMessageEvent(
-				'message',
-				message !== undefined
-					? {
-							...(message !== undefined && { data: message }),
-							origin: origin,
-					  }
-					: undefined,
-			),
+			new TrustedMessageEvent('message', {
+				...(message !== undefined && { data: message }),
+				origin: origin,
+			}),
 		);
 	};
+
+const INTERNAL_SOURCE_STRING = 'function source() { [provided externally] }';
 
 const nodejsSandbox: ISandbox = async (
 	script,
@@ -77,16 +75,63 @@ const nodejsSandbox: ISandbox = async (
 		);
 	};
 
+	const [scopedSetTimeout, scopedClearTimeout] = scopedTimerFunction(
+		setTimeout,
+		clearTimeout,
+	);
+	const [scopedSetInterval, scopedClearInterval] = scopedTimerFunction(
+		setInterval,
+		clearInterval,
+	);
+
+	// These are some functions to expose to the sandbox that Node.js does
+	// not provide with vm, as well as some utility functions for communication
+	// (addEventListener, removeEventListener, postMessage) and management
+	// (close, Function)
 	Object.defineProperties(context, {
-		// We expect the sandbox to call 'Function' exactly once
+		// Due to how the Sandbox is constructed, it will attempt to dynamically
+		// execute the sandbox source using Function. However, Function will
+		// not work inside the vm context, as dynamic eval has been disabled
+		// The function is provided upon vm initialisation instead, and
+		// Function is defined to return that function instead.
+		// This function will be called exactly once
 		['Function']: {
 			writable: true,
 			configurable: true,
-			value: () => {
-				const r = context.self.wrapperFn;
-				// delete rawContext.self.wrapperFn;
-				// rawContext.self.Function = r.constructor;
-				return r;
+			value: (source: unknown) => {
+				// If the source is not a string or does not contain the expected
+				// token, return (exceptions might expose internals to the Sandbox)
+				if (
+					typeof source !== 'string' ||
+					String.prototype.lastIndexOf.call(
+						source,
+						INTERNAL_SOURCE_STRING,
+					) === -1
+				) {
+					return;
+				}
+
+				try {
+					// Obtain the wrapper function
+					const r = context.self.wrapperFn;
+					// Delete the reference from context.self
+					delete context.self.wrapperFn;
+					// Delete this function (should still be handled later
+					// on by fixGlobalTypes)
+					if (r.constructor !== Function) {
+						// Restore Function to its regular value
+						context.self.Function = r.constructor;
+					} else {
+						// This shouldn't happen, but in any case this is not
+						// the real Function. The most sensible thing to do is
+						// to delete it
+						delete context.self.Function;
+					}
+					return r;
+				} catch {
+					// empty
+					// (exceptions might expose internals)
+				}
 			},
 		},
 		['addEventListener']: {
@@ -147,7 +192,26 @@ const nodejsSandbox: ISandbox = async (
 			configurable: true,
 			value: btoa,
 		},
-		// TODO: Add setTimeout, clearTimeout, setInterval, clearInterval
+		['clearInterval']: {
+			writable: true,
+			configurable: true,
+			value: scopedClearInterval,
+		},
+		['clearTimeout']: {
+			writable: true,
+			configurable: true,
+			value: scopedClearTimeout,
+		},
+		['setInterval']: {
+			writable: true,
+			configurable: true,
+			value: scopedSetInterval,
+		},
+		['setTimeout']: {
+			writable: true,
+			configurable: true,
+			value: scopedSetTimeout,
+		},
 	});
 
 	vm.createContext(context, {
@@ -158,7 +222,7 @@ const nodejsSandbox: ISandbox = async (
 	});
 
 	vm.runInContext(
-		`void function(){var _init=function(){${nodejsSandboxInit.default}};self.wrapperFn=function(){var _init;${wrapperFn}};~function(){var f=_init;_init=void 0;f();}();}.call({});`,
+		`void function(){var _init=function(){${nodejsSandboxInit.default}};self.wrapperFn=function(_init){${wrapperFn}};~function(){var f=_init;_init=void 0;f();}();}.call({});`,
 		context,
 		{
 			displayErrors: process.env['NODE_ENV'] !== 'production',
@@ -176,7 +240,7 @@ const nodejsSandbox: ISandbox = async (
 			try {
 				postMessageOutgoing([
 					EMessageTypes.SANDBOX_READY,
-					'/* source already provided */',
+					INTERNAL_SOURCE_STRING,
 					allowedGlobals,
 					externalMethods && Object.keys(externalMethods),
 				]);

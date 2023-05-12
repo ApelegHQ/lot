@@ -25,21 +25,19 @@ const enabledBrowsers = new Set(
 	],
 );
 
-if (!process.env.CI) {
-	['workerSandbox'].forEach((m) =>
-		getCodeHelper('../dist/index.mjs', m).then((code) =>
-			[
-				[webdriver.Browser.CHROME, 'Chrome'],
-				[webdriver.Browser.EDGE, 'Edge'],
-				[webdriver.Browser.FIREFOX, 'Firefox'],
-			]
-				.filter(([browserName]) => enabledBrowsers.has(browserName))
-				.forEach(([browserName, browserDisplayName]) => {
-					describe(
-						`Browser: ${browserDisplayName}, module: ${m}`,
-						browserTestSuites(code, browserName),
-					);
-				}),
-		),
-	);
-}
+['workerSandbox'].forEach((m) =>
+	getCodeHelper('../dist/index.mjs', m).then((code) =>
+		[
+			[webdriver.Browser.CHROME, 'Chrome'],
+			[webdriver.Browser.EDGE, 'Edge'],
+			[webdriver.Browser.FIREFOX, 'Firefox'],
+		]
+			.filter(([browserName]) => enabledBrowsers.has(browserName))
+			.forEach(([browserName, browserDisplayName]) => {
+				describe(
+					`Browser: ${browserDisplayName}, module: ${m}`,
+					browserTestSuites(code, browserName),
+				);
+			}),
+	),
+);

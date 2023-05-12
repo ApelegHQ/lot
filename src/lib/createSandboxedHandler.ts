@@ -20,7 +20,12 @@ import * as Logger from './Logger.js';
 import performTaskFactory from './performTaskFactory.js';
 import requestHandler from './requestHandler.js';
 
-const FERAL_FUNCTION = Function;
+const FERAL_FUNCTION = Proxy.revocable(Function, {
+	get: (o, p, r) => {
+		console.log('At FERAL_FUNCTION.get ', { o, p, r });
+		return Reflect.get(o, p, r);
+	},
+});
 
 const createSandboxedHandler = (
 	script: string,
@@ -40,10 +45,14 @@ const createSandboxedHandler = (
 	const sandbox = genericSandbox(
 		script,
 		allowedGlobals,
-		FERAL_FUNCTION,
+		FERAL_FUNCTION.proxy,
 		performTaskMethods?.[0],
 		externalMethodsList,
 	);
+
+	// Although it is scoped to this file, it is still dangerous to keep a
+	// reference to Function. Revoking the proxy addresses this concern.
+	FERAL_FUNCTION.revoke();
 
 	const ctx = sandbox.ctx;
 
@@ -105,13 +114,15 @@ const createSandboxedHandler = (
 					data[2],
 					data[3],
 				);
+
+				return;
 			}
-			// eslint-disable-next-line no-fallthrough
 			case EMessageTypes.RESULT:
 			case EMessageTypes.ERROR: {
 				if (__buildtimeSettings__.bidirectionalMessaging) {
 					performTaskMethods?.[1](data);
 				}
+				return;
 			}
 		}
 	};

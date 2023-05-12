@@ -32,7 +32,7 @@ export const browserTestSuites = (code: string, browserName: string) => () => {
 	let driver: webdriver.WebDriver;
 
 	before(async function () {
-		this.timeout(10e3);
+		this.timeout(30e3);
 
 		driver = await new webdriver.Builder()
 			.forBrowser(browserName)
@@ -48,7 +48,7 @@ export const browserTestSuites = (code: string, browserName: string) => () => {
 	});
 
 	after(async function () {
-		this.timeout(10e3);
+		this.timeout(30e3);
 
 		driver && (await driver.quit());
 		driver = undefined as unknown as typeof driver;

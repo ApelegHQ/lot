@@ -64,11 +64,13 @@ const nativeWrapperFactory =
 	(name: keyof T) => {
 		const fn = obj[name];
 
+		if (typeof fn !== 'function') return;
+
 		Object.defineProperty(obj, name, {
 			writable: true,
 			enumerable: true,
 			configurable: true,
-			value: ((...args: unknown[]) => {
+			value: function (...args: unknown[]) {
 				try {
 					const r = fn.call(obj, ...args);
 					if (typeof r !== 'object' && typeof r !== 'function') {
@@ -77,11 +79,11 @@ const nativeWrapperFactory =
 				} catch (e: unknown) {
 					throw recreateError(e);
 				}
-			}).bind(obj),
+			}.bind(obj),
 		});
 	};
 
-['close', 'atob', 'btoa'].forEach(
+['atob', 'btoa', 'close', 'clearInterval', 'clearTimeout', 'Function'].forEach(
 	nativeWrapperFactory(
 		self as unknown as Parameters<typeof nativeWrapperFactory>[0],
 	),
@@ -99,7 +101,7 @@ const nativeWrapperFactory =
 	>();
 
 	self.addEventListener = (
-		((...args: Parameters<typeof aEL>) => {
+		function (...args: Parameters<typeof aEL>) {
 			const [type, listener] = args;
 			if (
 				type !== 'message' ||
@@ -126,11 +128,11 @@ const nativeWrapperFactory =
 				eventMap.delete(listener);
 				throw recreateError(e);
 			}
-		}) as typeof aEL
+		} as typeof aEL
 	).bind(self);
 
 	self.removeEventListener = (
-		((...args: Parameters<typeof rEL>) => {
+		function (...args: Parameters<typeof rEL>) {
 			const [type, listener] = args;
 			if (type !== 'message' || typeof listener !== 'function') return;
 			const wrappedListener = eventMap.get(listener);
@@ -147,7 +149,7 @@ const nativeWrapperFactory =
 				}
 				eventMap.delete(listener);
 			}
-		}) as typeof rEL
+		} as typeof rEL
 	).bind(self);
 })();
 
@@ -155,22 +157,28 @@ const nativeWrapperFactory =
 // vectors that involve proxies
 (() => {
 	const pm = self.postMessage;
+
+	if (typeof pm !== 'function') return;
+
 	self.postMessage = (
-		((...args) => {
+		function (...args) {
 			try {
 				pm.apply(self, JSON.parse(JSON.stringify(args)));
 			} catch (e) {
 				throw recreateError(e);
 			}
-		}) as typeof pm
+		} as typeof pm
 	).bind(self);
 })();
 
 (() => {
-	const grv = self.crypto.getRandomValues;
-	self.crypto.getRandomValues = (<T extends ArrayBufferView | null>(
+	const grv = self.crypto?.getRandomValues;
+
+	if (typeof grv !== 'function') return;
+
+	self.crypto.getRandomValues = function <T extends ArrayBufferView | null>(
 		array: T,
-	): T => {
+	): T {
 		if (!array) return array;
 
 		try {
@@ -184,8 +192,44 @@ const nativeWrapperFactory =
 		}
 
 		return array;
-	}).bind(self);
+	}.bind(self);
 })();
+
+['setInterval', 'setTimeout'].forEach((v) => {
+	const setTimer = (
+		self as unknown as Record<string, { (...args: unknown[]): unknown }>
+	)[v];
+
+	if (typeof setTimer !== 'function') return;
+
+	(self as unknown as Record<string, typeof setTimer>)[v] = function (
+		...args: Parameters<typeof setTimer>
+	): unknown {
+		try {
+			const callback = args[0] as { (...args: unknown[]): unknown };
+
+			// Wrapper around callback to prevent access to the host Array
+			// constructor through references
+			args[0] = (...params: unknown[]) => {
+				Function.prototype.apply.call(
+					callback,
+					self,
+					Array.from(params),
+				);
+			};
+
+			const ret = setTimer(...args);
+
+			if (typeof ret !== 'number') {
+				throw new Error('Unexpected return value');
+			}
+
+			return ret;
+		} catch (e) {
+			throw recreateError(e);
+		}
+	}.bind(self);
+});
 
 Logger.info('Worker started, registering event listener');
 

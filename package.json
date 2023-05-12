@@ -1,6 +1,6 @@
 {
   "name": "@exact-realty/ecmascript-sandbox",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Sandbox for isolating ECMAScript code",
   "main": "dist/index.js",
   "module": "./dist/index.mjs",
@@ -62,5 +62,5 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2"
   },
-  "keywords": []
+  "keywords": ["Node.js", "browser", "csp", "deno", "ecmascript", "iframe","isolation", "sandbox", "security", "vm", "webworker", "worker"]
 }
