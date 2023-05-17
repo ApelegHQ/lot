@@ -49,6 +49,7 @@ const createMessageEventListener = (() => {
 
 const workerSandboxInner = (
 	script: string,
+	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 ) => {
@@ -75,10 +76,12 @@ const workerSandboxInner = (
 				externalMethodsList,
 				postMessage,
 				Boolean,
-				() => {
-					revokeRootMessageEventListener();
-					close();
-				},
+				revocable
+					? () => {
+							revokeRootMessageEventListener();
+							close();
+					  }
+					: undefined,
 			),
 		);
 

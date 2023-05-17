@@ -20,12 +20,7 @@ import * as Logger from './Logger.js';
 import performTaskFactory from './performTaskFactory.js';
 import requestHandler from './requestHandler.js';
 
-const FERAL_FUNCTION = Proxy.revocable(Function, {
-	get: (o, p, r) => {
-		console.log('At FERAL_FUNCTION.get ', { o, p, r });
-		return Reflect.get(o, p, r);
-	},
-});
+const FERAL_FUNCTION = Proxy.revocable(Function, {});
 
 const createSandboxedHandler = (
 	script: string,
@@ -33,13 +28,13 @@ const createSandboxedHandler = (
 	externalMethodsList: string[] | undefined | null,
 	postMessage: { (data: unknown[]): void },
 	preInit: { (): void },
-	cleanup: { (): void },
+	cleanup: { (): void } | null | undefined,
 ) => {
 	const performTaskMethods =
 		__buildtimeSettings__.bidirectionalMessaging &&
 		Array.isArray(externalMethodsList) &&
 		externalMethodsList.length
-			? performTaskFactory(postMessage)
+			? performTaskFactory(!!cleanup, postMessage)
 			: undefined;
 
 	const sandbox = genericSandbox(
@@ -74,6 +69,8 @@ const createSandboxedHandler = (
 
 		switch (data[0]) {
 			case EMessageTypes.DESTROY: {
+				if (!cleanup) return;
+
 				Logger.debug('Received DESTROY from parent');
 
 				sandbox.revoke();

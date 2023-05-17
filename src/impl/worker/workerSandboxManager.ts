@@ -26,6 +26,7 @@ const ERROR_TIMEOUT = __buildtimeSettings__.innerSandboxInitDeadlineInMs;
 
 const createWorker = (
 	script: string,
+	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 ): [Worker, { (): void }] => {
@@ -36,6 +37,7 @@ const createWorker = (
 	worker.postMessage([
 		EMessageTypes.SANDBOX_READY,
 		script,
+		revocable,
 		allowedGlobals,
 		externalMethodsList,
 	] as [
@@ -53,6 +55,7 @@ const createWorker = (
 
 const workerSandboxManager = async (
 	script: string,
+	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 	createMessageEventListener: ReturnType<
@@ -162,6 +165,7 @@ const workerSandboxManager = async (
 	const startWorker = new Promise<Worker>((resolve_, reject_) => {
 		const workerSandbox = createWorker(
 			script,
+			revocable,
 			allowedGlobals,
 			externalMethodsList,
 		);

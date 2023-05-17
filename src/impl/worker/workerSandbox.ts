@@ -84,6 +84,7 @@ const workerSandbox: ISandbox = async (
 		() =>
 			workerSandboxManager(
 				script,
+				!!abort,
 				allowedGlobals,
 				externalMethods && Object.keys(externalMethods),
 				createMessageEventListener,

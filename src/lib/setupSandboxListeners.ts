@@ -41,7 +41,7 @@ const setupSandboxListeners = (
 	}
 
 	const [performTask, resultHandler, destroyTaskPerformer] =
-		performTaskFactory(postMessageOutgoing);
+		performTaskFactory(!!abort, postMessageOutgoing);
 
 	const eventListener = (event: MessageEvent) => {
 		if (

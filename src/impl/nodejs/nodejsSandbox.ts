@@ -21,6 +21,7 @@ import getRandomUuid from '../../lib/getRandomUuid.js';
 import scopedTimerFunction from '../../lib/scopedTimerFunction.js';
 import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
 import { ISandbox } from '../../types/index.js';
+import type workerSandboxInner from '../worker/workerSandboxInner.js';
 
 class TrustedMessageEvent<T> extends MessageEvent<T> {
 	constructor(type: string, eventInitDict?: MessageEventInit<T>) {
@@ -241,8 +242,12 @@ const nodejsSandbox: ISandbox = async (
 				postMessageOutgoing([
 					EMessageTypes.SANDBOX_READY,
 					INTERNAL_SOURCE_STRING,
+					!!abort,
 					allowedGlobals,
 					externalMethods && Object.keys(externalMethods),
+				] as [
+					EMessageTypes.SANDBOX_READY,
+					...Parameters<typeof workerSandboxInner>,
 				]);
 			} catch {
 				// empty

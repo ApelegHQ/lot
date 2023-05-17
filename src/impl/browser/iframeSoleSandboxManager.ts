@@ -24,6 +24,7 @@ import tightenCsp from '../../lib/tightenCsp.js';
 
 const iframeSoleSandboxManager = async (
 	script: string,
+	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 	createMessageEventListener: ReturnType<
@@ -46,11 +47,13 @@ const iframeSoleSandboxManager = async (
 				externalMethodsList,
 				postMessage,
 				tightenCsp,
-				() => {
-					revokeRootMessageEventListener();
-					revokeRootErrorEventListener();
-					self.close();
-				},
+				revocable
+					? () => {
+							revokeRootMessageEventListener();
+							revokeRootErrorEventListener();
+							self.close();
+					  }
+					: undefined,
 			),
 		);
 		const revokeRootErrorEventListener = createErrorEventListener();

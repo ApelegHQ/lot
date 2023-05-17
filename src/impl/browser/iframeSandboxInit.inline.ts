@@ -29,9 +29,9 @@ const listener = (event: MessageEvent) => {
 		event.source !== parent ||
 		!Array.isArray(event.data) ||
 		event.data[2] !== EMessageTypes.SANDBOX_READY ||
-		event.data[0] !== event.data[7] ||
+		event.data[0] !== event.data[8] ||
 		event.data[1] !== initMesssageKeyB ||
-		event.data.length !== 8
+		event.data.length !== 9
 	)
 		return;
 

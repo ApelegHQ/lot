@@ -1,26 +1,53 @@
 {
   "name": "@exact-realty/ecmascript-sandbox",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Sandbox for isolating ECMAScript code",
   "main": "dist/index.js",
   "module": "./dist/index.mjs",
   "exports": {
     ".": {
-      "deno": "./dist/exports/worker.mjs",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "deno": {
+        "types": "./dist/exports/worker.d.ts",
+        "default": "./dist/exports/worker.mjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     },
     "./browser": {
-      "import": "./dist/exports/browser.mjs",
-      "require": "./dist/exports/browser.js"
+      "import": {
+        "types": "./dist/exports/browser.d.ts",
+        "default": "./dist/exports/browser.mjs"
+      },
+      "require": {
+        "types": "./dist/exports/browser.d.ts",
+        "default": "./dist/exports/browser.js"
+      }
     },
     "./nodejs": {
-      "import": "./dist/exports/nodejs.mjs",
-      "require": "./dist/exports/nodejs.js"
+      "import": {
+        "types": "./dist/exports/nodejs.d.ts",
+        "default": "./dist/exports/nodejs.mjs"
+      },
+      "require": {
+        "types": "./dist/exports/nodejs.d.ts",
+        "default": "./dist/exports/nodejs.js"
+      }
     },
     "./worker": {
-      "import": "./dist/exports/worker.mjs",
-      "require": "./dist/exports/worker.js"
+      "import": {
+        "types": "./dist/exports/worker.d.ts",
+        "default": "./dist/exports/worker.mjs"
+      },
+      "require": {
+        "types": "./dist/exports/worker.d.ts",
+        "default": "./dist/exports/worker.js"
+      }
     }
   },
   "files": [

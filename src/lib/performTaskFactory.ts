@@ -18,10 +18,14 @@ import type { IPerformTask } from '../types/index.js';
 import { reconstructErrorInformation } from './errorModem.js';
 import getRandomSecret from './getRandomSecret.js';
 import * as Logger from './Logger.js';
+import proxyMaybeRevocable from './proxyMaybeRevocable.js';
 
-const performTaskFactory = (postMessageOutgoing: {
-	(data: unknown[]): void;
-}): [IPerformTask, { (data: unknown[]): void }, { (): void }] => {
+const performTaskFactory = (
+	revocable: boolean,
+	postMessageOutgoing: {
+		(data: unknown[]): void;
+	},
+): [IPerformTask, { (data: unknown[]): void }, { (): void }] => {
 	const pendingTasks: Record<string, (typeof Function.prototype)[]> =
 		Object.create(null);
 
@@ -84,7 +88,7 @@ const performTaskFactory = (postMessageOutgoing: {
 	];
 
 	const performTaskMethodsProxy = performTaskMethods.map((m) =>
-		Proxy.revocable(m, {}),
+		proxyMaybeRevocable(revocable || null, m, {}),
 	);
 
 	return [

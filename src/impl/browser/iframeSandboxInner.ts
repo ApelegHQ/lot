@@ -25,6 +25,7 @@ import iframeSoleSandboxManager from './iframeSoleSandboxManager.js';
 
 const iframeSandboxInner = async (
 	script: string,
+	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 	origin: string,
@@ -103,6 +104,7 @@ const iframeSandboxInner = async (
 			try {
 				return await workerSandboxManager(
 					script,
+					revocable,
 					allowedGlobals,
 					externalMethodsList,
 					createMessageEventListener,
@@ -131,6 +133,7 @@ const iframeSandboxInner = async (
 		try {
 			return await iframeSoleSandboxManager(
 				script,
+				revocable,
 				allowedGlobals,
 				externalMethodsList,
 				createMessageEventListener,

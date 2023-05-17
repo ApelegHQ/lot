@@ -102,6 +102,7 @@ const browserSandbox: ISandbox = async (
 			EMessageTypes.SANDBOX_READY,
 			...([
 				String(script),
+				!!abort,
 				allowedGlobals?.map(String),
 				externalMethods && Object.keys(externalMethods),
 				self.location.origin,
