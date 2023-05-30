@@ -1,6 +1,6 @@
 {
   "name": "@exact-realty/ecmascript-sandbox",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Sandbox for isolating ECMAScript code",
   "main": "dist/index.js",
   "module": "./dist/index.mjs",
@@ -74,20 +74,20 @@
   "devDependencies": {
     "@exact-realty/esbuild-plugin-inline-js": "^1.1.0",
     "@types/mocha": "^10.0.1",
-    "@types/selenium-webdriver": "^4.1.14",
-    "@typescript-eslint/eslint-plugin": "^5.57.0",
-    "@typescript-eslint/parser": "^5.57.0",
-    "esbuild": "^0.17.14",
+    "@types/selenium-webdriver": "^4.1.15",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "esbuild": "^0.17.19",
     "esbuild-plugin-node-externals": "^1.0.1",
-    "eslint": "^8.36.0",
+    "eslint": "^8.41.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
     "google-closure-compiler": "^20230502.0.0",
     "mocha": "^10.2.0",
-    "prettier": "^2.8.7",
-    "selenium-webdriver": "^4.9.0",
+    "prettier": "^2.8.8",
+    "selenium-webdriver": "^4.9.2",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.2"
+    "typescript": "^5.0.4"
   },
   "keywords": ["Node.js", "browser", "csp", "deno", "ecmascript", "iframe","isolation", "sandbox", "security", "vm", "webworker", "worker"]
 }

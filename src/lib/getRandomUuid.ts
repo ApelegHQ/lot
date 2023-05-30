@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 /* Copyright © 2023 Exact Realty Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,7 +25,9 @@ const getRandomUuid: typeof global.crypto.randomUUID = global.crypto?.randomUUID
 			uuid[4] = (uuid[4] & 0x3fff) | 0x8000;
 			return [[0, 1], [2], [3], [4], [5, 6, 7]]
 				.map((p) => p.map((i) => helper(uuid[i])).join(''))
-				.join('-') as `${string}-${string}-${string}-${string}-${string}`;
+				.join(
+					'-',
+				) as `${string}-${string}-${string}-${string}-${string}`;
 	  };
 
 export default getRandomUuid;

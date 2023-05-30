@@ -31,6 +31,12 @@ describe('Node.js', () => {
 			const result = await sandbox('foo');
 			assert.equal(result, 'bar');
 		});
+
+		it('should return result for multiple arguments', async () => {
+			const sandbox = await m('module.exports={foo:(a,b)=>"bar"+b+a}');
+			const result = await sandbox('foo', 'X', 'Y');
+			assert.equal(result, 'barYX');
+		});
 	});
 	describe('Error conditions', () => {
 		it('invalid syntax causes error', async () => {

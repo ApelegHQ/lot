@@ -97,4 +97,6 @@ getCodeHelper('../dist/index.mjs', module).then(async (code) => {
 	await driver.executeScript(
 		code + '; console.log("SCRIPT SUCCESSFULLY LOADED");',
 	);
+}).catch((e) => {
+	console.error('Failed to launch browser', e);
 });

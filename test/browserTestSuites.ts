@@ -92,6 +92,25 @@ export const browserTestSuites = (code: string, browserName: string) => () => {
 			);
 			assert.deepEqual(result, ['bar']);
 		});
+
+		it('should return result for multiple arguments', async () => {
+			const result = await driver.executeAsyncScript(
+				`(async () => {
+					const callback = arguments[arguments.length - 1];
+					try {
+						const sandbox = await m(
+							'module.exports={foo:(a,b)=>"bar"+b+a}',
+						);
+						const result = await sandbox('foo', 'X', 'Y');
+
+						callback([result]);
+					} catch(e) {
+						callback([null, {name: e && e.name}]);
+					}
+				})()`,
+			);
+			assert.deepEqual(result, ['barYX']);
+		});
 	});
 
 	describe('Error conditions', () => {
