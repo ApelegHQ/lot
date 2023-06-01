@@ -1,5 +1,12 @@
 # 🏜️ @exact-realty/ecmascript-sandbox 🏖️
 
+ [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
+ [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
+ [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=bugs)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
+ [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
+ [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
+ ![NPM Downloads](https://img.shields.io/npm/dw/@exact-realty/ecmascript-sandbox?style=flat-square)
+
 Welcome to `@exact-realty/ecmascript-sandbox` — the versatile ECMAScript sandbox
 you've been looking for!
 
