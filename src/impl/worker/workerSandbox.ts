@@ -25,6 +25,7 @@ const workerSandbox: ISandbox = async (
 	allowedGlobals,
 	externalMethods,
 	abort,
+	options,
 ) => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(
@@ -90,6 +91,7 @@ const workerSandbox: ISandbox = async (
 				createMessageEventListener,
 				createErrorEventListener,
 				postMessageIncoming,
+				options,
 			),
 		externalMethods,
 		abort,

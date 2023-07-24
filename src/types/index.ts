@@ -23,6 +23,7 @@ export interface ISandbox {
 		allowedGlobals?: string[] | undefined | null,
 		externalMethods?: Record<string, typeof Function.prototype> | null,
 		abort?: AbortSignal,
+		options?: TSandboxOptions,
 	): Promise<IPerformTask>;
 }
 
@@ -31,4 +32,9 @@ export type TContext = Record<PropertyKey, unknown> & {
 	globalThis: TContext;
 	self: TContext;
 	module: { exports: unknown };
+};
+
+export type TSandboxOptions = {
+	browserRequireWorker?: boolean;
+	workerType?: WorkerOptions['type'];
 };

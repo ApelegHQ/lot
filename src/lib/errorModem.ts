@@ -64,11 +64,15 @@ const reconstructErrorInformation = (d: unknown, depth?: number) => {
 		const e = Object.create(errorClass.prototype);
 
 		if (d[0] !== errorClass.name) {
-			Object.defineProperty(e, 'name', {
-				configurable: true,
-				writable: true,
-				value: String(d[0]),
-			});
+			try {
+				Object.defineProperty(e, 'name', {
+					configurable: true,
+					writable: true,
+					value: String(d[0]),
+				});
+			} catch {
+				// 'name' might be read-only in certain environments
+			}
 		}
 		if (d[1]) {
 			Object.defineProperty(e, 'message', {

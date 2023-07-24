@@ -25,6 +25,7 @@ const browserSandbox: ISandbox = async (
 	allowedGlobals,
 	externalMethods,
 	abort,
+	options,
 ) => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(

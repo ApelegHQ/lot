@@ -23,12 +23,20 @@ const inertConstructorProperty = (
 		throw new EvalError(`call to ${errorFnName}() blocked by CSP`);
 	};
 	const boundInertConstructor = inertConstructor.bind(global);
-	defineProperty(boundInertConstructor, 'name', {
-		['value']: prototype.constructor.name,
-		['writable']: false,
-		['configurable']: true,
-		['enumerable']: false,
-	});
+	try {
+		defineProperty(
+			boundInertConstructor,
+			'name',
+			getOwnPropertyDescriptor(prototype.constructor, 'name') || {
+				['value']: prototype.constructor.name,
+				['writable']: false,
+				['configurable']: true,
+				['enumerable']: false,
+			},
+		);
+	} catch {
+		// 'name' might be read-only in certain environments
+	}
 	defineProperty(boundInertConstructor, 'prototype', {
 		['value']: prototype,
 	});
@@ -52,7 +60,20 @@ const tameSetTimerFn = (f: 'setTimeout' | 'setInterval') => {
 		}
 		feralFn.apply(global, args);
 	};
-	tamedFn.name = feralFn.name;
+	try {
+		defineProperty(
+			tamedFn,
+			'name',
+			getOwnPropertyDescriptor(feralFn, 'name') || {
+				['value']: feralFn.name,
+				['writable']: false,
+				['configurable']: true,
+				['enumerable']: false,
+			},
+		);
+	} catch {
+		// 'name' might be read-only in certain environments
+	}
 
 	defineProperty(global, f, {
 		value: tamedFn.bind(null),

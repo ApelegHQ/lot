@@ -20,6 +20,7 @@ import type createMessageEventListenerFactory from '../../lib/createMessageEvent
 import { reconstructErrorInformation } from '../../lib/errorModem.js';
 import * as Logger from '../../lib/Logger.js';
 import type workerSandboxInner from './workerSandboxInner.js';
+import type { TSandboxOptions } from '../../types/index.js';
 
 // Timeout for worker initialisation (in ms)
 const ERROR_TIMEOUT = __buildtimeSettings__.innerSandboxInitDeadlineInMs;
@@ -29,10 +30,16 @@ const createWorker = (
 	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
+	options?: TSandboxOptions,
 ): [Worker, { (): void }] => {
-	const blob = new Blob([workerSandboxInit.default]);
+	const blob = new Blob([workerSandboxInit.default], {
+		['type']: 'text/javascript',
+	});
 	const workerSrcUrl = self.URL.createObjectURL(blob);
-	const worker = new Worker(workerSrcUrl);
+	const worker = new Worker(
+		workerSrcUrl,
+		options?.workerType ? { ['type']: options.workerType } : undefined,
+	);
 
 	worker.postMessage([
 		EMessageTypes.SANDBOX_READY,
@@ -65,6 +72,7 @@ const workerSandboxManager = async (
 		typeof createErrorEventListenerFactory
 	>,
 	postMessage: { (data: unknown[]): void },
+	options?: TSandboxOptions,
 ): Promise<void> => {
 	const postInitSetup = (worker: Worker) => {
 		Logger.info('Sandbox ready. Setting up event listeners.');
@@ -168,6 +176,7 @@ const workerSandboxManager = async (
 			revocable,
 			allowedGlobals,
 			externalMethodsList,
+			options,
 		);
 
 		let errorTimeout: ReturnType<typeof setTimeout> | undefined = undefined;

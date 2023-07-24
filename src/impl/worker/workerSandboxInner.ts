@@ -64,8 +64,6 @@ const workerSandboxInner = (
 		delete selfPrototype.postMessage;
 		delete selfPrototype.close;
 
-		void hardenGlobals;
-		void disableURLStaticMethods;
 		hardenGlobals();
 		disableURLStaticMethods();
 

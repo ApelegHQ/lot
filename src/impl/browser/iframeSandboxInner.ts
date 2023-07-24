@@ -20,6 +20,7 @@ import { extractErrorInformation } from '../../lib/errorModem.js';
 import hardenGlobals from '../../lib/hardenGlobals.js';
 import * as Logger from '../../lib/Logger.js';
 import tightenCsp from '../../lib/tightenCsp.js';
+import type { TSandboxOptions } from '../../types/index.js';
 import workerSandboxManager from '../worker/workerSandboxManager.js';
 import iframeSoleSandboxManager from './iframeSoleSandboxManager.js';
 
@@ -30,6 +31,7 @@ const iframeSandboxInner = async (
 	externalMethodsList: string[] | undefined | null,
 	origin: string,
 	secret: string,
+	options?: TSandboxOptions,
 ): Promise<void> => {
 	Logger.info('Iframe created, setting up worker');
 
@@ -110,6 +112,7 @@ const iframeSandboxInner = async (
 					createMessageEventListener,
 					createErrorEventListener,
 					postMessage,
+					options,
 				).then(tightenCsp);
 			} catch (e) {
 				Logger.warn(
@@ -126,7 +129,10 @@ const iframeSandboxInner = async (
 		}
 	}
 
-	if (__buildtimeSettings__.isolationStategyIframeSole) {
+	if (
+		__buildtimeSettings__.isolationStategyIframeSole &&
+		!options?.browserRequireWorker
+	) {
 		if (error) {
 			Logger.info('Falling back to direct execution');
 		}

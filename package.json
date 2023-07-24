@@ -1,6 +1,6 @@
 {
   "name": "@exact-realty/ecmascript-sandbox",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Sandbox for isolating ECMAScript code",
   "main": "dist/index.js",
   "module": "./dist/index.mjs",
@@ -61,7 +61,6 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint",
     "preversion": "npm run lint",
-    "postinstall": "exit 0",
     "version": "npm run lint && git add -A src",
     "postversion": "git push && git push --tags"
   },
@@ -75,9 +74,9 @@
     "@exact-realty/esbuild-plugin-inline-js": "^1.1.1",
     "@types/mocha": "^10.0.1",
     "@types/selenium-webdriver": "^4.1.15",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "esbuild": "^0.18.13",
+    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "@typescript-eslint/parser": "^6.1.0",
+    "esbuild": "^0.18.16",
     "eslint": "^8.45.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^5.0.0",
