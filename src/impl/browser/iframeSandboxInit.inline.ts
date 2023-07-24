@@ -31,7 +31,7 @@ const listener = (event: MessageEvent) => {
 		event.data[2] !== EMessageTypes.SANDBOX_READY ||
 		event.data[0] !== event.data[8] ||
 		event.data[1] !== initMesssageKeyB ||
-		event.data.length !== 9
+		(event.data.length !== 9 && event.data.length !== 10)
 	)
 		return;
 

@@ -108,6 +108,7 @@ const browserSandbox: ISandbox = async (
 				externalMethods && Object.keys(externalMethods),
 				self.location.origin,
 				secret,
+				options,
 			] as Parameters<typeof iframeSandboxInner>),
 		]);
 	};
