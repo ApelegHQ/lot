@@ -90,13 +90,17 @@ if (process.argv.length !== 4) {
 	module = modules[temp];
 }
 
-getCodeHelper('../dist/index.mjs', module).then(async (code) => {
-	const driver = await new webdriver.Builder().forBrowser(browser).build();
+getCodeHelper('../dist/index.mjs', module)
+	.then(async (code) => {
+		const driver = await new webdriver.Builder()
+			.forBrowser(browser)
+			.build();
 
-	await driver.get('about:blank');
-	await driver.executeScript(
-		code + '; console.log("SCRIPT SUCCESSFULLY LOADED");',
-	);
-}).catch((e) => {
-	console.error('Failed to launch browser', e);
-});
+		await driver.get('about:blank');
+		await driver.executeScript(
+			code + '; console.log("SCRIPT SUCCESSFULLY LOADED");',
+		);
+	})
+	.catch((e) => {
+		console.error('Failed to launch browser', e);
+	});

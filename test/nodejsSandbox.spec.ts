@@ -17,9 +17,21 @@ import assert from 'node:assert/strict';
 import { nodejsSandbox as m } from '../dist/index';
 
 describe('Node.js', () => {
+	const controller = new AbortController();
+	const signal = controller.signal;
+
+	after(async function () {
+		controller.abort();
+	});
+
 	describe('Can run tasks', () => {
 		it('should return result for sync task', async () => {
-			const sandbox = await m('module.exports={foo:()=>"bar"}');
+			const sandbox = await m(
+				'module.exports={foo:()=>"bar"}',
+				null,
+				null,
+				signal,
+			);
 			const result = await sandbox('foo');
 			assert.equal(result, 'bar');
 		});
@@ -27,20 +39,28 @@ describe('Node.js', () => {
 		it('should return result for async task', async () => {
 			const sandbox = await m(
 				'module.exports={foo:()=>Promise.resolve("bar")}',
+				null,
+				null,
+				signal,
 			);
 			const result = await sandbox('foo');
 			assert.equal(result, 'bar');
 		});
 
 		it('should return result for multiple arguments', async () => {
-			const sandbox = await m('module.exports={foo:(a,b)=>"bar"+b+a}');
+			const sandbox = await m(
+				'module.exports={foo:(a,b)=>"bar"+b+a}',
+				null,
+				null,
+				signal,
+			);
 			const result = await sandbox('foo', 'X', 'Y');
 			assert.equal(result, 'barYX');
 		});
 	});
 	describe('Error conditions', () => {
 		it('invalid syntax causes error', async () => {
-			const sandbox = m('\u0000');
+			const sandbox = m('\u0000', null, null, signal);
 			await assert.rejects(sandbox);
 		});
 
@@ -78,7 +98,7 @@ describe('Node.js', () => {
 					? 'succeeds'
 					: `causes error ${JSON.stringify(errorName)}`
 			}`, async () => {
-				const sandbox = m(expression);
+				const sandbox = m(expression, null, null, signal);
 				if (errorName === SUCCESS) {
 					await assert.doesNotReject(sandbox);
 				} else {
@@ -93,7 +113,12 @@ describe('Node.js', () => {
 					? 'succeeds'
 					: `causes error ${JSON.stringify(errorName)}`
 			}`, async () => {
-				const sandbox = m(`module.exports={foo:()=>{${expression}}}`);
+				const sandbox = m(
+					`module.exports={foo:()=>{${expression}}}`,
+					null,
+					null,
+					signal,
+				);
 				if (errorName === 'SyntaxError') {
 					await assert.rejects(sandbox, { name: errorName });
 				} else {
