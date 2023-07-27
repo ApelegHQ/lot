@@ -49,6 +49,29 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 		throw new Error('__canary$zzby$ inside script not supported');
 	}
 
+	// Remove import expresions from the code by introducing an escape sequence
+	// Strings are unaffected, but using the import keyword will trigger a
+	// syntax error
+	// This supports properties called 'import', but they must be quoted
+	// TODO: Improve regex to support things like { import: 123 } and
+	// { import() { return } } (seems difficult without a lot of parsing)
+	// Regex: makes an exception for .import so long as there is exactly one
+	// dot
+	// {
+	//	"   import": "   im\\u0070ort",
+	//	"  .import": "  .import",
+	//	" ..import": " ..im\\u0070ort",
+	//	"...import": "...im\\u0070ort",
+	//	"import0": "import0",
+	//	"0import": "0import",
+	//	"ximportx": "ximportx",
+	//	"import_": "import_",
+	//	"_import": "_import",
+	//	"_import_": "_import_"
+	//	"import:": "im\\u0070ort:",
+	// }
+	script = script.replace(/\b(?<=(?:[^.]|[.]{2}))import\b/g, 'im\\u0070ort');
+
 	const sandboxWrapperFn = functionConstructor(
 		// The 'with' block restricts access to the global scope
 		__buildtimeSettings__.dynamicCodeGeneration
