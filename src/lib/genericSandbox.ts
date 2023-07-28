@@ -38,9 +38,12 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	const canaryStart = __buildtimeSettings__.dynamicCodeGeneration
 		? canary.slice(0, canary.length / 2)
 		: '';
+	const canaryMid = __buildtimeSettings__.dynamicCodeGeneration
+		? canary.slice(canary.length / 4, canary.length / 2)
+		: '';
 	const canaryEnd = __buildtimeSettings__.dynamicCodeGeneration
 		? canary.slice(canary.length / 2)
-		: 0;
+		: '';
 
 	if (
 		!__buildtimeSettings__.dynamicCodeGeneration &&
@@ -77,20 +80,23 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 		__buildtimeSettings__.dynamicCodeGeneration
 			? 'with(this){' +
 					`~function(){${fixGlobalTypes.default}}();` +
-					`(function(__canary$${canaryStart}__){` +
+					`(function(){` +
 					"'use strict';" +
 					// The canary is an additional mechanism to ensure that if the
 					// code after 'script' is skipped, it will throw because it
 					// doesn't know the variable name or its contents, even if it
 					// managed to guess the guardCount variable
-					`__canary$${canaryStart}__="${canaryEnd}";` +
+					`var __canary$${canaryStart}__=` +
+					'(function(_){' +
+					`_="${canaryEnd}";` +
+					`return function(){__canary${canaryMid}__=_;}})();` +
 					// The guard makes it difficult for the script to execute code
 					// outside of the 'with' block by having it guess the correct
 					// number of parentheses it needs to inject. Since guardCount
 					// is random, it cannot be guessed deterministically.
 					'('.repeat(guardCount) +
-					// Function argument to shadow canary value
-					`function(__canary$${canaryStart}__){` +
+					// Function arguments to shadow canary values
+					`function(__canary$${canaryStart}__,__canary${canaryMid}__){` +
 					script +
 					// Prevent the script from excluding the following code
 					// via comments or template strings
@@ -98,21 +104,41 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 					'}' +
 					')'.repeat(guardCount) +
 					'();' +
-					`if("${canaryEnd}"!==__canary$${canaryStart}__)` +
-					'throw "__canary__";' +
-					`__canary$${canaryStart}__=void 0;` +
+					`__canary$${canaryStart}__();` +
 					'})();' +
-					'}'
-			: 'with(this){' +
+					'}' + // End `with`
+					`if("${canaryEnd}"!==this.__canary${canaryMid}__)` +
+					'throw "__canary__";' +
+					`delete this.__canary${canaryMid}__;`
+			: 'const __canary$zzby$t__=' +
+					'(' +
+					'function(_){' +
+					'_={};' +
+					'this.__canary$zzby$f__=_;' +
+					'return function(){return _!==this.__canary$zzby$f__;};' +
+					'})' +
+					'.call(this);' +
+					// Outer function shadows __canary$zzby$t__ to avoid
+					// reassignment of the trap function (like using `const`)
+					'(function(__canary$zzby$t__,arguments){' +
+					'with(this){' +
 					`~function(){${fixGlobalTypes.default}}();` +
-					`(function(__canary$zzby$o__){` +
-					'__canary$zzby$o__={};' +
-					`(function(__canary$zzby$i__){` +
+					'(function(){' +
 					"'use strict';" +
-					'__canary$zzby$i__=__canary$zzby$o__;' +
+					// The canary is an additional mechanism to ensure that if the
+					// code after 'script' is skipped, it will throw because it
+					// doesn't know the variable name or its contents, even if it
+					// managed to guess the guardCount variable
+					'var __canary$zzby$s__=' +
+					'(function(_){' +
+					'delete self.__canary$zzby$f__;' +
+					'return function(){__canary$zzby$f__=_;_=void 0;}})' +
+					'(__canary$zzby$f__);' +
+					// No parenthesis-based guard when not using dynamic code
+					// generation (single parenthesis pair used)
 					'(' +
 					// Function arguments to shadow canary values
-					`function(__canary$zzby$o__, __canary$zzby$i__){` +
+					'function(__canary$zzby$s__,__canary$zzby$f__){' +
 					script +
 					// Prevent the script from excluding the following code
 					// via comments or template strings
@@ -120,12 +146,13 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 					'}' +
 					')' +
 					'();' +
-					`if(__canary$zzby$o__!==__canary$zzby$i__)throw "__canary__";` +
-					`__canary$zzby$i__=void 0;` +
-					`__canary$zzby$o__=void 0;` +
+					'__canary$zzby$s__();' +
 					'})();' +
-					'})();' +
-					'}',
+					'}' + // End `with`
+					'}).call(this);' +
+					'if(__canary$zzby$t__.call(this))' +
+					'throw "__canary__";' +
+					'delete this.__canary$zzby$f__;',
 	);
 
 	return sandboxWrapperFn;
