@@ -21,8 +21,6 @@ const [initMesssageKeyA, initMesssageKeyB] = self.location.hash
 	.slice(1)
 	.split('-');
 
-console.log([initMesssageKeyA, initMesssageKeyB]);
-
 const listener = (event: MessageEvent) => {
 	if (
 		!event.isTrusted ||

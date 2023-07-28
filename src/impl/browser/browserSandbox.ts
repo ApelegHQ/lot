@@ -58,9 +58,14 @@ const browserSandbox: ISandbox = async (
 	// to be able to call Function
 	iframe.setAttribute(
 		'csp',
-		__buildtimeSettings__.isolationStategyIframeSole
+		__buildtimeSettings__.isolationStategyIframeSole &&
+			__buildtimeSettings__.isolationStategyIframeWorker
 			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src blob:`
-			: `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval'; script-src-attr 'none'; worker-src blob:`,
+			: __buildtimeSettings__.isolationStategyIframeSole
+			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src 'none'`
+			: __buildtimeSettings__.isolationStategyIframeWorker
+			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval'; script-src-attr 'none'; worker-src blob:`
+			: "default-src 'none'",
 	);
 	const iframeSrcUrl = self.URL.createObjectURL(blob);
 	iframe.setAttribute(
