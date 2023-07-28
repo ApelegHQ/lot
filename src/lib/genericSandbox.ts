@@ -186,12 +186,12 @@ const createContext = (
 			}
 		}
 
-		if (global[prop as 'Boolean']) {
+		if (global[prop as keyof typeof global]) {
 			return {
 				enumerable: false,
 				writable: false,
 				configurable: true,
-				value: global[prop as 'Boolean'],
+				value: global[prop as keyof typeof global],
 			};
 		}
 	};
@@ -253,6 +253,15 @@ const createContext = (
 	return sandboxWrapperThis;
 };
 
+const propertyIsOverridable = <T>(o: T, p: PropertyKey) => {
+	const propertyDescriptor = Object.getOwnPropertyDescriptor(global, p);
+	return (
+		!propertyDescriptor ||
+		propertyDescriptor['configurable'] ||
+		propertyDescriptor['writable']
+	);
+};
+
 const genericSandbox = (
 	script: string,
 	allowedGlobals: string[] | undefined | null,
@@ -297,21 +306,16 @@ const genericSandbox = (
 		});
 	};
 
-	// eslint-disable-next-line prefer-const
-	let sandboxWrapperThisProxy: {
+	const sandboxWrapperThisProxy: {
 		proxy: typeof sandboxWrapperThis;
 		revoke: { (): void };
-	};
-
-	sandboxWrapperThisProxy = Proxy.revocable(sandboxWrapperThis, {
-		// TODO: Should we trap getOwnPropertyDescriptor as well?
-		// That allows detecting the sandbox and potentially breaks code
-		// calling functions this way.
+	} = Proxy.revocable(sandboxWrapperThis, {
 		['get'](o, p) {
 			const op = o[p];
 			if (
 				typeof op === 'function' &&
-				!Object.prototype.hasOwnProperty.call(global, p)
+				global[p as keyof typeof global] === op &&
+				propertyIsOverridable(global, p)
 			) {
 				return createFunctionProxy(op);
 			}
@@ -319,6 +323,26 @@ const genericSandbox = (
 				return sandboxWrapperThisProxy.proxy;
 			}
 			return op;
+		},
+		['getOwnPropertyDescriptor'](o, p) {
+			const op = o[p];
+			if (
+				typeof op === 'function' &&
+				global[p as keyof typeof global] === op &&
+				propertyIsOverridable(global, p)
+			) {
+				return {
+					...Object.getOwnPropertyDescriptor(o, p),
+					value: createFunctionProxy(op),
+				};
+			}
+			if (op === sandboxWrapperThis) {
+				return {
+					...Object.getOwnPropertyDescriptor(o, p),
+					value: sandboxWrapperThisProxy.proxy,
+				};
+			}
+			return Object.getOwnPropertyDescriptor(o, p);
 		},
 		['has']() {
 			return true;
