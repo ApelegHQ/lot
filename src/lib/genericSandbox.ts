@@ -254,7 +254,7 @@ const createContext = (
 };
 
 const propertyIsOverridable = <T>(o: T, p: PropertyKey) => {
-	const propertyDescriptor = Object.getOwnPropertyDescriptor(global, p);
+	const propertyDescriptor = Object.getOwnPropertyDescriptor(o, p);
 	return (
 		!propertyDescriptor ||
 		propertyDescriptor['configurable'] ||
