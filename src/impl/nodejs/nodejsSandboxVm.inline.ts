@@ -250,7 +250,7 @@ const nodejsSandbox = (
 	// limit the access to system resources in case of an escape
 	(module.constructor as unknown as { builtinModules?: string[] })[
 		'builtinModules'
-	]?.forEach((v, i, a) => {
+	]?.forEach((v) => {
 		if (
 			[
 				'assert/strict',
