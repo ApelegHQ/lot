@@ -26,18 +26,18 @@ import type workerSandboxInner from '../worker/workerSandboxInner.js';
 if (isMainThread || !parentPort) throw new Error('Invalid environment');
 
 const {
-	TypeError,
-	JSON,
-	String,
-	Object,
-	Function,
-	setTimeout,
-	setInterval,
-	clearTimeout,
-	clearInterval,
-	atob,
-	btoa,
-	EventTarget,
+	EventTarget: g_EventTarget,
+	Function: g_Function,
+	JSON: g_JSON,
+	Object: g_Object,
+	String: g_String,
+	TypeError: g_TypeError,
+	atob: g_atob,
+	btoa: g_btoa,
+	clearInterval: g_clearInterval,
+	clearTimeout: g_clearTimeout,
+	setInterval: g_setInterval,
+	setTimeout: g_setTimeout,
 } = global;
 const close = process.exit.bind(process, 0);
 const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
@@ -45,7 +45,7 @@ const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
 class TrustedMessageEvent<T> extends MessageEvent<T> {
 	constructor(type: string, eventInitDict?: MessageEventInit<T>) {
 		super(type, eventInitDict);
-		Object.defineProperty(this, 'isTrusted', { value: true });
+		g_Object.defineProperty(this, 'isTrusted', { value: true });
 	}
 }
 
@@ -61,14 +61,15 @@ const postMessageFactory =
 	};
 
 const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
-	Object.entries(Object.getOwnPropertyDescriptors(o)).forEach(
-		([name, descriptor]) => {
-			if (keep?.includes(name)) return;
-			if (descriptor.configurable) {
-				delete (o as ReturnType<typeof eval>)[name];
-			}
-		},
-	);
+	o &&
+		g_Object
+			.entries(g_Object.getOwnPropertyDescriptors(o))
+			.forEach(([name, descriptor]) => {
+				if (keep?.includes(name)) return;
+				if (descriptor.configurable) {
+					delete (o as ReturnType<typeof eval>)[name];
+				}
+			});
 };
 
 const INTERNAL_SOURCE_STRING = 'function source() { [provided externally] }';
@@ -77,20 +78,20 @@ const nodejsSandbox = (
 	parentPort: MessagePort,
 	script: string,
 	allowedGlobals?: string[] | null | undefined,
-	externalMethods?: string[] | null | undefined,
+	externalMethodKeys?: string[] | null | undefined,
 	abort?: boolean | null | undefined,
 ) => {
-	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
-		throw new TypeError(
+	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethodKeys) {
+		throw new g_TypeError(
 			'Invalid value for externalMethods. Bidirectional messaging is disabled',
 		);
 	}
 
-	const context = Object.create(null);
-	const wrapperFn = createWrapperFn(script, String);
+	const context = g_Object.create(null);
+	const wrapperFn = createWrapperFn(script, g_String);
 
-	const eventTargetIncoming = new EventTarget();
-	const eventTargetOutgoing = new EventTarget();
+	const eventTargetIncoming = new g_EventTarget();
+	const eventTargetOutgoing = new g_EventTarget();
 
 	const postMessageOutgoingUnsafe = postMessageFactory(eventTargetOutgoing);
 	// Messages are forced through JSON.parse(JSON.stringify()) to avoid some attack
@@ -99,24 +100,24 @@ const nodejsSandbox = (
 		postMessageOutgoingUnsafe.apply.call(
 			postMessageOutgoingUnsafe,
 			null,
-			JSON.parse(JSON.stringify(args)),
+			g_JSON.parse(g_JSON.stringify(args)),
 		);
 	};
 
 	const [scopedSetTimeout, scopedClearTimeout] = scopedTimerFunction(
-		setTimeout,
-		clearTimeout,
+		g_setTimeout,
+		g_clearTimeout,
 	);
 	const [scopedSetInterval, scopedClearInterval] = scopedTimerFunction(
-		setInterval,
-		clearInterval,
+		g_setInterval,
+		g_clearInterval,
 	);
 
 	// These are some functions to expose to the sandbox that Node.js does
 	// not provide with vm, as well as some utility functions for communication
 	// (addEventListener, removeEventListener, postMessage) and management
 	// (close, Function)
-	Object.defineProperties(context, {
+	g_Object.defineProperties(context, {
 		// Due to how the Sandbox is constructed, it will attempt to dynamically
 		// execute the sandbox source using Function. However, Function will
 		// not work inside the vm context, as dynamic eval has been disabled
@@ -131,7 +132,7 @@ const nodejsSandbox = (
 				// token, return (exceptions might expose internals to the Sandbox)
 				if (
 					typeof source !== 'string' ||
-					String.prototype.lastIndexOf.call(
+					g_String.prototype.lastIndexOf.call(
 						source,
 						INTERNAL_SOURCE_STRING,
 					) === -1
@@ -140,22 +141,18 @@ const nodejsSandbox = (
 				}
 
 				try {
-					// Obtain the wrapper function
-					const r = context.self.wrapperFn;
-					// Delete the reference from context.self
-					delete context.self.wrapperFn;
 					// Delete this function (should still be handled later
 					// on by fixGlobalTypes)
-					if (r.constructor !== Function) {
+					if (fn.constructor !== g_Function) {
 						// Restore Function to its regular value
-						context.self.Function = r.constructor;
+						context.self.Function = fn.constructor;
 					} else {
 						// This shouldn't happen, but in any case this is not
 						// the real Function. The most sensible thing to do is
 						// to delete it
 						delete context.self.Function;
 					}
-					return r;
+					return fn;
 				} catch {
 					// empty
 					// (exceptions might expose internals)
@@ -189,7 +186,7 @@ const nodejsSandbox = (
 		['crypto']: {
 			configurable: true,
 			enumerable: true,
-			value: Object.create(null, {
+			value: g_Object.create(null, {
 				['getRandomValues']: {
 					writable: true,
 					enumerable: true,
@@ -211,12 +208,12 @@ const nodejsSandbox = (
 		['atob']: {
 			writable: true,
 			configurable: true,
-			value: atob,
+			value: g_atob,
 		},
 		['btoa']: {
 			writable: true,
 			configurable: true,
-			value: btoa,
+			value: g_btoa,
 		},
 		['clearInterval']: {
 			writable: true,
@@ -249,28 +246,67 @@ const nodejsSandbox = (
 
 	const displayErrors = process.env['NODE_ENV'] !== 'production';
 
+	// Remove properties from most built-in modules. This should somewhat
+	// limit the access to system resources in case of an escape
+	(module.constructor as unknown as { builtinModules?: string[] })[
+		'builtinModules'
+	]?.forEach((v, i, a) => {
+		if (
+			[
+				'assert/strict',
+				'async_hooks',
+				'buffer',
+				'events',
+				'diagnostics_channel',
+				'_http_agent',
+				'_http_common',
+				'_http_outgoing',
+				'_http_server',
+				'inspector',
+				'module',
+				'net',
+				'path',
+				'path/posix',
+				'path/win32',
+				'perf_hooks',
+				'process',
+				'stream',
+				'readline',
+				'trace_events',
+				'v8',
+				'vm',
+			].includes(v)
+		)
+			return;
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		removeAllProperties(require('node:' + v));
+	});
+	// Prevent loading CJS modules
+	Object.defineProperty(module.constructor, '_load', {
+		['set']: () => {},
+	});
 	// Remove references in global and process to prevent calling require, etc.
 	removeAllProperties(process, [
-		'hrtime',
-		'nextTick',
-		'stdin',
-		'stdout',
-		'stderr',
-		'report',
+		'_fatalException',
 		'debugPort',
 		'exit',
+		'hrtime',
+		'nextTick',
 		'reallyExit',
-		'_fatalException',
+		'report',
+		'stderr',
+		'stdin',
+		'stdout',
 	]);
 	removeAllProperties(global);
 
-	vm.runInContext(
-		`void function(){var _init=function(){${nodejsSandboxInit.default}};self.wrapperFn=function(_init){${wrapperFn}};~function(){var f=_init;_init=void 0;f();}();}.call({});`,
-		context,
-		{
-			['displayErrors']: displayErrors,
-		},
-	);
+	const fn = vm.runInContext(`(function(){${wrapperFn}})`, context, {
+		['displayErrors']: displayErrors,
+	});
+
+	vm.runInContext(nodejsSandboxInit.default, context, {
+		['displayErrors']: displayErrors,
+	});
 
 	parentPort.on('message', (message) => {
 		postMessageOutgoing(message);
@@ -285,13 +321,11 @@ const nodejsSandbox = (
 		INTERNAL_SOURCE_STRING,
 		!!abort,
 		allowedGlobals,
-		externalMethods && Object.keys(externalMethods),
+		externalMethodKeys,
 	] as [
 		EMessageTypes.SANDBOX_READY,
 		...Parameters<typeof workerSandboxInner>,
 	]);
-
-	return async () => {};
 };
 
 hardenGlobals();
@@ -300,6 +334,6 @@ nodejsSandbox(
 	parentPort,
 	workerData['script'],
 	workerData['allowedGlobals'],
-	workerData['externalMethods'],
+	workerData['externalMethodKeys'],
 	workerData['abort'],
 );

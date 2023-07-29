@@ -82,6 +82,8 @@ const browserSandbox: ISandbox = async (
 		['width']: '1px',
 		['height']: '1px',
 	});
+	iframe.setAttribute('role', 'none');
+	// iframes are flow content and should be placed in the body
 	document.body.appendChild(iframe);
 
 	if (!iframe.contentWindow) {

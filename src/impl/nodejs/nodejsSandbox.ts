@@ -40,7 +40,7 @@ const nodejsSandbox: ISandbox = async (
 		['workerData']: {
 			['abort']: !!abort,
 			['allowedGlobals']: allowedGlobals,
-			['externalMethods']:
+			['externalMethodKeys']:
 				externalMethods && Object.keys(externalMethods),
 			['script']: script,
 		},
