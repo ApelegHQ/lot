@@ -88,84 +88,96 @@ const {
 	setPrototypeOf,
 } = Object;
 
-const hardenGlobals = () => {
-	const FERAL_FUNCTION = hardenGlobals.constructor;
+const hardenGlobals: { (): void } = __buildtimeSettings__.hardenGlobals
+	? () => {
+			const FERAL_FUNCTION = hardenGlobals.constructor;
 
-	const list = [
-		'(function(){})',
-		'(function*(){})',
-		'(async function(){})',
-		'(async function*(){})',
-	]
-		.map((source, i) => {
-			try {
-				return (0, eval)(source);
-			} catch {
-				if (i === 0)
-					return function () {
-						/**/
-					};
-			}
-		})
-		.filter(Boolean);
+			const list = [
+				'(function(){})',
+				'(function*(){})',
+				'(async function(){})',
+				'(async function*(){})',
+			]
+				.map((source, i) => {
+					try {
+						return (0, eval)(source);
+					} catch {
+						if (i === 0)
+							return function () {
+								/**/
+							};
+					}
+				})
+				.filter(Boolean);
 
-	try {
-		// Attempt to tame function constructors
-		list.forEach((fnIntrinsic) => {
 			try {
-				const prototype = getPrototypeOf(fnIntrinsic);
-				const origConstructor = prototype.constructor;
-				const constructorDescriptor = inertConstructorProperty(
-					prototype,
-					'Function',
+				// Attempt to tame function constructors
+				list.forEach((fnIntrinsic) => {
+					try {
+						const prototype = getPrototypeOf(fnIntrinsic);
+						const origConstructor = prototype.constructor;
+						const constructorDescriptor = inertConstructorProperty(
+							prototype,
+							'Function',
+						);
+						defineProperty(
+							prototype,
+							'constructor',
+							constructorDescriptor,
+						);
+
+						// Fix inheritance
+						if (
+							constructorDescriptor.value !==
+							FERAL_FUNCTION.prototype.constructor
+						) {
+							setPrototypeOf(
+								constructorDescriptor.value,
+								FERAL_FUNCTION.prototype.constructor,
+							);
+						}
+
+						// Replace global['Function'], etc.
+						if (
+							getOwnPropertyDescriptor(
+								global,
+								origConstructor.name,
+							)?.value === origConstructor
+						) {
+							defineProperty(
+								global,
+								origConstructor.name,
+								constructorDescriptor,
+							);
+						}
+						freeze(prototype);
+					} catch {
+						// empty
+					}
+				});
+
+				defineProperty(
+					global,
+					'eval',
+					inertConstructorProperty(
+						getPrototypeOf(
+							typeof eval === 'function' ? eval : function () {},
+						),
+						'eval',
+					),
 				);
-				defineProperty(prototype, 'constructor', constructorDescriptor);
-
-				// Fix inheritance
-				if (
-					constructorDescriptor.value !==
-					FERAL_FUNCTION.prototype.constructor
-				) {
-					setPrototypeOf(
-						constructorDescriptor.value,
-						FERAL_FUNCTION.prototype.constructor,
-					);
+				tameSetTimerFn('setTimeout');
+				tameSetTimerFn('setInterval');
+				freeze(getPrototypeOf(Object));
+				freeze(Object);
+			} catch (e) {
+				if (e) {
+					throw e;
 				}
-
-				// Replace global['Function'], etc.
-				if (
-					getOwnPropertyDescriptor(global, origConstructor.name)
-						?.value === origConstructor
-				) {
-					defineProperty(
-						global,
-						origConstructor.name,
-						constructorDescriptor,
-					);
-				}
-				freeze(prototype);
-			} catch {
-				// empty
+				void e;
 			}
-		});
-
-		typeof eval === 'function' &&
-			defineProperty(
-				global,
-				'eval',
-				inertConstructorProperty(getPrototypeOf(eval), 'eval'),
-			);
-		tameSetTimerFn('setTimeout');
-		tameSetTimerFn('setInterval');
-		freeze(getPrototypeOf(Object));
-		freeze(Object);
-	} catch (e) {
-		if (e) {
-			throw e;
-		}
-		void e;
-	}
-};
+	  }
+	: Boolean;
 
 const disableURLStaticMethods = () => {
 	global.URL &&

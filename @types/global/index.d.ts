@@ -20,6 +20,10 @@ declare namespace __buildtimeSettings__ {
 	const dynamicCodeGeneration: boolean;
 	const sandboxInitDeadlineInMs: number;
 	const innerSandboxInitDeadlineInMs: number;
+	const enhancedWrapper: boolean;
+	const emulatedGlobalContext: boolean;
+	const hardenGlobals: boolean;
+	const censorUnsafeExpressions: boolean;
 	const isolationStategyIframeWorker: boolean;
 	const isolationStategyIframeSole: boolean;
 	const bidirectionalMessaging: boolean;

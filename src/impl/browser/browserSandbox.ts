@@ -38,7 +38,7 @@ const browserSandbox: ISandbox = async (
 	const initMesssageKeyB = getRandomSecret();
 	const nonce = getRandomSecret();
 
-	const html = `<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Sandbox</title><script crossorigin="anonymous" integrity="${iframeSandboxInit.sri}" nonce="${nonce}" src="data:;base64,${iframeSandboxInit.contentBase64}" type="text/javascript"></script></head><body></body></html>`;
+	const html = `<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Sandbox</title><script crossorigin="anonymous" integrity="${iframeSandboxInit.sri}" nonce="${nonce}" src="data:text/javascript;base64,${iframeSandboxInit.contentBase64}"></script></head><body></body></html>`;
 
 	const iframe = document.createElement('iframe');
 	const blob = new Blob([html], { type: 'application/xhtml+xml' });

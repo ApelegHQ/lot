@@ -10,152 +10,80 @@
  * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * PERFORMANCE 5OF THIS SOFTWARE.
  */
 
-import * as fixGlobalTypes from 'inline:./fixGlobalTypes.inline.js';
 import { IPerformTask, TContext } from '../types/index.js';
-import getRandomSecret from './getRandomSecret.js';
+import censorUnsafeExpressions from './censorUnsafeExpressions.js';
+import enhancedWrapper from './enhancedWrapper.js';
 import global from './global.js';
 
 const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	script: string,
 	functionConstructor: T,
 ): ReturnType<T> => {
-	// It is possible for a malicious script to escape the
-	// with block by ending with `});} { <code here >; ({`
-	// This is imperfectly mitigated by adding a random number of
-	// braces
-	const guardCount = __buildtimeSettings__.dynamicCodeGeneration
-		? ((global.crypto?.getRandomValues(new Uint8Array(1))[0] ??
-				(Math.random() * 256) | 0) &
-				0xff) +
-		  1
-		: 0;
-	const canary = __buildtimeSettings__.dynamicCodeGeneration
-		? getRandomSecret()
-		: '';
-	const canaryStart = __buildtimeSettings__.dynamicCodeGeneration
-		? canary.slice(0, canary.length / 2)
-		: '';
-	const canaryMid = __buildtimeSettings__.dynamicCodeGeneration
-		? canary.slice(canary.length / 4, canary.length / 2)
-		: '';
-	const canaryEnd = __buildtimeSettings__.dynamicCodeGeneration
-		? canary.slice(canary.length / 2)
-		: '';
-
-	if (
-		!__buildtimeSettings__.dynamicCodeGeneration &&
-		script.indexOf('__canary$zzby$') !== -1
-	) {
-		throw new Error('__canary$zzby$ inside script not supported');
+	if (__buildtimeSettings__.censorUnsafeExpressions) {
+		script = censorUnsafeExpressions(script);
 	}
 
-	// Remove import expresions from the code by introducing an escape sequence
-	// Strings are unaffected, but using the import keyword will trigger a
-	// syntax error
-	// This supports properties called 'import', but they must be quoted
-	// TODO: Improve regex to support things like { import: 123 } and
-	// { import() { return } } (seems difficult without a lot of parsing)
-	// Regex: makes an exception for .import so long as there is exactly one
-	// dot
-	// {
-	//	"   import": "   im\\u0070ort",
-	//	"  .import": "  .import",
-	//	" ..import": " ..im\\u0070ort",
-	//	"...import": "...im\\u0070ort",
-	//	"import0": "import0",
-	//	"0import": "0import",
-	//	"ximportx": "ximportx",
-	//	"import_": "import_",
-	//	"_import": "_import",
-	//	"_import_": "_import_"
-	//	"import:": "im\\u0070ort:",
-	// }
-	script = script.replace(/\b(?<=(?:[^.]|[.]{2}))import\b/g, 'im\\u0070ort');
+	if (__buildtimeSettings__.enhancedWrapper) {
+		script = enhancedWrapper(script);
+	}
 
-	const sandboxWrapperFn = functionConstructor(
-		// The 'with' block restricts access to the global scope
-		__buildtimeSettings__.dynamicCodeGeneration
-			? 'with(this){' +
-					`~function(){${fixGlobalTypes.default}}();` +
-					`(function(){` +
-					"'use strict';" +
-					// The canary is an additional mechanism to ensure that if the
-					// code after 'script' is skipped, it will throw because it
-					// doesn't know the variable name or its contents, even if it
-					// managed to guess the guardCount variable
-					`var __canary$${canaryStart}__=` +
-					'(function(_){' +
-					`_="${canaryEnd}";` +
-					`return function(){__canary${canaryMid}__=_;}})();` +
-					// The guard makes it difficult for the script to execute code
-					// outside of the 'with' block by having it guess the correct
-					// number of parentheses it needs to inject. Since guardCount
-					// is random, it cannot be guessed deterministically.
-					'('.repeat(guardCount) +
-					// Function arguments to shadow canary values
-					`function(__canary$${canaryStart}__,__canary${canaryMid}__){` +
-					script +
-					// Prevent the script from excluding the following code
-					// via comments or template strings
-					'\r\n/*`*/' +
-					'}' +
-					')'.repeat(guardCount) +
-					'();' +
-					`__canary$${canaryStart}__();` +
-					'})();' +
-					'}' + // End `with`
-					`if("${canaryEnd}"!==this.__canary${canaryMid}__)` +
-					'throw "__canary__";' +
-					`delete this.__canary${canaryMid}__;`
-			: 'const __canary$zzby$t__=' +
-					'(' +
-					'function(_){' +
-					'_={};' +
-					'this.__canary$zzby$f__=_;' +
-					'return function(){return _!==this.__canary$zzby$f__;};' +
-					'})' +
-					'.call(this);' +
-					// Outer function shadows __canary$zzby$t__ to avoid
-					// reassignment of the trap function (like using `const`)
-					'(function(__canary$zzby$t__,arguments){' +
-					'with(this){' +
-					`~function(){${fixGlobalTypes.default}}();` +
-					'(function(){' +
-					"'use strict';" +
-					// The canary is an additional mechanism to ensure that if the
-					// code after 'script' is skipped, it will throw because it
-					// doesn't know the variable name or its contents, even if it
-					// managed to guess the guardCount variable
-					'var __canary$zzby$s__=' +
-					'(function(_){' +
-					'delete self.__canary$zzby$f__;' +
-					'return function(){__canary$zzby$f__=_;_=void 0;}})' +
-					'(__canary$zzby$f__);' +
-					// No parenthesis-based guard when not using dynamic code
-					// generation (single parenthesis pair used)
-					'(' +
-					// Function arguments to shadow canary values
-					'function(__canary$zzby$s__,__canary$zzby$f__){' +
-					script +
-					// Prevent the script from excluding the following code
-					// via comments or template strings
-					'\r\n/*`*/' +
-					'}' +
-					')' +
-					'();' +
-					'__canary$zzby$s__();' +
-					'})();' +
-					'}' + // End `with`
-					'}).call(this);' +
-					'if(__canary$zzby$t__.call(this))' +
-					'throw "__canary__";' +
-					'delete this.__canary$zzby$f__;',
-	);
+	const sandboxWrapperFn = functionConstructor(script);
 
 	return sandboxWrapperFn;
+};
+
+const setupExternalMethods = (
+	ctx: object,
+	externalCallMethod: IPerformTask,
+	externalMethodsList: string[],
+) => {
+	Object.defineProperties(
+		ctx,
+		Object.fromEntries(
+			externalMethodsList.map((external) => [
+				external,
+				{
+					configurable: true,
+					writable: false,
+					enumerable: true,
+					value: externalCallMethod.bind(null, external),
+				},
+			]),
+		),
+	);
+};
+
+const setupContextGlobalRefs = (ctx: object) => {
+	Object.defineProperties(ctx, {
+		['global']: {
+			writable: true,
+			configurable: true,
+			value: ctx,
+		},
+		['globalThis']: {
+			writable: true,
+			configurable: true,
+			value: ctx,
+		},
+		['self']: {
+			writable: true,
+			configurable: true,
+			value: ctx,
+		},
+		['module']: {
+			value: Object.create(null, {
+				['exports']: {
+					value: Object.create(null),
+					writable: true,
+					enumerable: true,
+					configurable: true,
+				},
+			}),
+		},
+	});
 };
 
 const createContext = (
@@ -205,48 +133,17 @@ const createContext = (
 		),
 	);
 
-	Object.defineProperties(sandboxWrapperThis, {
-		['global']: {
-			writable: true,
-			configurable: true,
-			value: sandboxWrapperThis,
-		},
-		['globalThis']: {
-			writable: true,
-			configurable: true,
-			value: sandboxWrapperThis,
-		},
-		['self']: {
-			writable: true,
-			configurable: true,
-			value: sandboxWrapperThis,
-		},
-		['module']: {
-			value: Object.create(null, {
-				['exports']: {
-					value: Object.create(null),
-					writable: true,
-					enumerable: true,
-					configurable: true,
-				},
-			}),
-		},
-	});
+	setupContextGlobalRefs(sandboxWrapperThis);
 
-	if (externalCallMethod && Array.isArray(externalMethodsList)) {
-		Object.defineProperties(
+	if (
+		__buildtimeSettings__.bidirectionalMessaging &&
+		externalCallMethod &&
+		Array.isArray(externalMethodsList)
+	) {
+		setupExternalMethods(
 			sandboxWrapperThis,
-			Object.fromEntries(
-				externalMethodsList.map((external) => [
-					external,
-					{
-						configurable: true,
-						writable: false,
-						enumerable: true,
-						value: externalCallMethod.bind(null, external),
-					},
-				]),
-			),
+			externalCallMethod,
+			externalMethodsList,
 		);
 	}
 
@@ -262,101 +159,217 @@ const propertyIsOverridable = <T>(o: T, p: PropertyKey) => {
 	);
 };
 
-const genericSandbox = (
-	script: string,
-	allowedGlobals: string[] | undefined | null,
-	functionConstructor: (typeof global)['Function'],
-	externalCallMethod?: IPerformTask | null,
-	externalMethodsList?: string[] | null,
-): { fn: { (): void }; ctx: TContext; revoke: { (): void } } => {
-	if (
-		!__buildtimeSettings__.bidirectionalMessaging &&
-		(externalCallMethod || externalMethodsList)
-	) {
-		throw new TypeError(
-			'Invalid value for externalCallMethod or externalMethodsList. Bidirectional messaging is disabled',
-		);
-	}
+type TGenericSandbox = {
+	(
+		script: string,
+		allowedGlobals: string[] | undefined | null,
+		functionConstructor: (typeof global)['Function'],
+		externalCallMethod?: IPerformTask | null,
+		externalMethodsList?: string[] | null,
+	): { fn: { (): void }; ctx: TContext; revoke: { (): void } };
+};
 
-	const sandboxWrapperThis = createContext(
-		allowedGlobals,
-		externalCallMethod,
-		externalMethodsList,
-	);
-
-	const apply = Function.prototype.apply;
-
-	// This proxy is needed to keep global functions that expect to be bound to
-	// globalThis working (e.g., clearTimeout)
-	const createFunctionProxy = (fn: typeof functionConstructor.prototype) => {
-		return new Proxy(fn, {
-			['apply'](o, thisArg, argArray) {
-				if (typeof o === 'function') {
-					return apply.call(
-						o,
-						thisArg === sandboxWrapperThisProxy.proxy
-							? global
-							: thisArg,
-						argArray,
+const genericSandbox: TGenericSandbox =
+	__buildtimeSettings__.emulatedGlobalContext
+		? (
+				script,
+				allowedGlobals,
+				functionConstructor,
+				externalCallMethod,
+				externalMethodsList,
+		  ) => {
+				if (
+					!__buildtimeSettings__.bidirectionalMessaging &&
+					(externalCallMethod || externalMethodsList)
+				) {
+					throw new TypeError(
+						'Invalid value for externalCallMethod or externalMethodsList. Bidirectional messaging is disabled',
 					);
 				}
 
-				throw new TypeError('Not a function');
-			},
-		});
-	};
+				const sandboxWrapperThis = createContext(
+					allowedGlobals,
+					externalCallMethod,
+					externalMethodsList,
+				);
 
-	const sandboxWrapperThisProxy: {
-		proxy: typeof sandboxWrapperThis;
-		revoke: { (): void };
-	} = Proxy.revocable(sandboxWrapperThis, {
-		['get'](o, p) {
-			const op = o[p];
-			if (
-				typeof op === 'function' &&
-				global[p as keyof typeof global] === op &&
-				propertyIsOverridable(global, p)
-			) {
-				return createFunctionProxy(op);
-			}
-			if (op === sandboxWrapperThis) {
-				return sandboxWrapperThisProxy.proxy;
-			}
-			return op;
-		},
-		['getOwnPropertyDescriptor'](o, p) {
-			const op = o[p];
-			if (
-				typeof op === 'function' &&
-				global[p as keyof typeof global] === op &&
-				propertyIsOverridable(global, p)
-			) {
-				return {
-					...Object.getOwnPropertyDescriptor(o, p),
-					value: createFunctionProxy(op),
+				const apply = Function.prototype.apply;
+
+				// This proxy is needed to keep global functions that expect to be bound to
+				// globalThis working (e.g., clearTimeout)
+				const createFunctionProxy = (
+					fn: typeof functionConstructor.prototype,
+				) => {
+					return new Proxy(fn, {
+						['apply'](o, thisArg, argArray) {
+							if (typeof o === 'function') {
+								return apply.call(
+									o,
+									[
+										sandboxWrapperThisProxy.proxy,
+										sandboxWrapperThisInnerProxy.proxy,
+									].includes(thisArg)
+										? global
+										: thisArg,
+									argArray,
+								);
+							}
+
+							throw new TypeError('Not a function');
+						},
+					});
 				};
-			}
-			if (op === sandboxWrapperThis) {
+
+				const { proxy: symbols, revoke: revokeSymbols } =
+					Proxy.revocable(Object.create(null), {});
+
+				const sandboxWrapperThisInnerProxy: {
+					proxy: typeof sandboxWrapperThis;
+					revoke: { (): void };
+				} = Proxy.revocable(sandboxWrapperThis, {
+					['get'](o, p) {
+						const op = o[p];
+						if (
+							typeof op === 'function' &&
+							global[p as keyof typeof global] === op &&
+							propertyIsOverridable(o, p)
+						) {
+							return createFunctionProxy(op);
+						}
+						if (op === sandboxWrapperThis) {
+							return sandboxWrapperThisInnerProxy.proxy;
+						}
+						return op;
+					},
+					['getOwnPropertyDescriptor'](o, p) {
+						const op = symbols[p] || o[p];
+						const pd =
+							Object.getOwnPropertyDescriptor(symbols, p) ||
+							Object.getOwnPropertyDescriptor(o, p);
+
+						if (!pd) {
+							return pd;
+						}
+
+						if (
+							typeof op === 'function' &&
+							global[p as keyof typeof global] === op &&
+							propertyIsOverridable(o, p)
+						) {
+							const value = createFunctionProxy(op);
+							if (pd['get']) {
+								pd['get'] = () => value;
+							} else {
+								pd['value'] = value;
+							}
+						}
+						if (op === sandboxWrapperThis) {
+							const value = sandboxWrapperThisInnerProxy.proxy;
+							if (pd['get']) {
+								pd['get'] = () => value;
+							} else {
+								pd['value'] = value;
+							}
+						}
+
+						return pd;
+					},
+					['defineProperty'](o, p, a) {
+						if (!propertyIsOverridable(o, p)) {
+							return false;
+						}
+						Object.defineProperty(
+							typeof p === 'symbol' ? symbols : o,
+							p,
+							a,
+						);
+						return true;
+					},
+					['deleteProperty'](o, p) {
+						return delete symbols[p] && delete o[p];
+					},
+				});
+
+				// Double-Proxy makes the sandbox work more similarly to what
+				// a 'real' global contex would look like, while also handling
+				// special edge-cases like [Symbol.unscopables]
+				// The one thing that seems impossible to implement is
+				// properly throwing ReferenceError.
+				const sandboxWrapperThisProxy: {
+					proxy: typeof sandboxWrapperThis;
+					revoke: { (): void };
+				} = Proxy.revocable(sandboxWrapperThisInnerProxy.proxy, {
+					['get'](o, p) {
+						// Block getting symbols
+						// This is especially relevant for [Symbol.unscopables]
+						// Getting/setting symbols on the inner proxy (using
+						// a self reference) should work fine
+						if (typeof p !== 'string') {
+							return;
+						}
+						return o[p];
+					},
+					['has']() {
+						return true;
+					},
+				});
+
+				const sandboxWrapperFn = createWrapperFn(
+					script,
+					functionConstructor,
+				);
+
 				return {
-					...Object.getOwnPropertyDescriptor(o, p),
-					value: sandboxWrapperThisProxy.proxy,
+					fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy.proxy),
+					ctx: sandboxWrapperThisProxy.proxy,
+					revoke: () => {
+						sandboxWrapperThisInnerProxy.revoke();
+						sandboxWrapperThisProxy.revoke();
+						revokeSymbols();
+					},
 				};
-			}
-			return Object.getOwnPropertyDescriptor(o, p);
-		},
-		['has']() {
-			return true;
-		},
-	});
+		  }
+		: (
+				script,
+				_,
+				functionConstructor,
+				externalCallMethod,
+				externalMethodsList,
+		  ) => {
+				if (
+					!__buildtimeSettings__.bidirectionalMessaging &&
+					(externalCallMethod || externalMethodsList)
+				) {
+					throw new TypeError(
+						'Invalid value for externalCallMethod or externalMethodsList. Bidirectional messaging is disabled',
+					);
+				}
 
-	const sandboxWrapperFn = createWrapperFn(script, functionConstructor);
+				const sandboxWrapperFn = createWrapperFn(
+					script,
+					functionConstructor,
+				);
 
-	return {
-		fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy.proxy),
-		ctx: sandboxWrapperThisProxy.proxy,
-		revoke: sandboxWrapperThisProxy.revoke,
-	};
-};
+				setupContextGlobalRefs(global);
+
+				if (
+					__buildtimeSettings__.bidirectionalMessaging &&
+					externalCallMethod &&
+					Array.isArray(externalMethodsList)
+				) {
+					setupExternalMethods(
+						global,
+						externalCallMethod,
+						externalMethodsList,
+					);
+				}
+
+				return {
+					fn: sandboxWrapperFn.bind(global),
+					ctx: global as unknown as TContext,
+					revoke: Boolean,
+				};
+		  };
 
 export default genericSandbox;
-export { createWrapperFn, createContext };
+export { createContext, createWrapperFn };

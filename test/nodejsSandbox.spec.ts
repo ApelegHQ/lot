@@ -66,12 +66,10 @@ describe('Node.js', () => {
 
 		const SUCCESS = Symbol();
 
-		const tests: [string, string | typeof SUCCESS][] = [
+		const tests: [string, string | RegExp | typeof SUCCESS][] = [
 			['""', SUCCESS],
 			['%', 'SyntaxError'],
-			// eval not present
-			['eval("")', 'TypeError'],
-			//// ['eval("")', 'EvalError'],
+			['eval("")', 'EvalError'],
 			['clearTimeout(setTimeout("", 1000))', 'EvalError'],
 			['clearInterval(setInterval("", 1000))', 'EvalError'],
 			['clearTimeout(setTimeout(Boolean, 1000))', SUCCESS],
@@ -89,7 +87,11 @@ describe('Node.js', () => {
 			['new ((async function* (){}).constructor)("")', 'EvalError'],
 			['class x extends Boolean.constructor{};new x()', 'EvalError'],
 			['class x extends Boolean{};new x()', SUCCESS],
-			['class x extends TextEncoder.constructor{}', 'TypeError'],
+			[
+				'class x extends TextEncoder.constructor{}',
+				/^(Type|Reference)Error$/,
+			],
+			['class x extends self.TextEncoder.constructor{}', 'TypeError'],
 		];
 
 		tests.forEach(([expression, errorName]) => {

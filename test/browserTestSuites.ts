@@ -137,7 +137,7 @@ export const browserTestSuites = (code: string, browserName: string) => () => {
 		const tests: [string, string | typeof SUCCESS][] = [
 			['""', SUCCESS],
 			['%', 'SyntaxError'],
-			['eval("")', 'TypeError'],
+			['eval("")', 'EvalError'],
 			['clearTimeout(setTimeout("", 1000))', 'EvalError'],
 			['clearInterval(setInterval("", 1000))', 'EvalError'],
 			['clearTimeout(setTimeout(Boolean, 1000))', SUCCESS],

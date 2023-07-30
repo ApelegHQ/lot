@@ -16,41 +16,39 @@
 const fixGlobalTypes = () => {
 	if (!__buildtimeSettings__.fixGlobalTypes) return;
 
+	const defineProperty = ({}.constructor as typeof Object).defineProperty;
+
 	// Fix global types
 	if (typeof Object !== 'function' || {}.constructor !== Object) {
-		(({}).constructor as typeof Object).defineProperty(
-			globalThis,
-			'Object',
-			{
-				configurable: true,
-				writable: true,
-				value: {}.constructor,
-			},
-		);
+		defineProperty(globalThis, 'Object', {
+			configurable: true,
+			writable: true,
+			value: {}.constructor,
+		});
 	}
 	if (typeof Array !== 'function' || [].constructor !== Array) {
-		Object.defineProperty(globalThis, 'Array', {
+		defineProperty(globalThis, 'Array', {
 			configurable: true,
 			writable: true,
 			value: [].constructor,
 		});
 	}
 	if (typeof String !== 'function' || ''.constructor !== String) {
-		Object.defineProperty(globalThis, 'String', {
+		defineProperty(globalThis, 'String', {
 			configurable: true,
 			writable: true,
 			value: ''.constructor,
 		});
 	}
 	if (typeof Number !== 'function' || (0).constructor !== Number) {
-		Object.defineProperty(globalThis, 'Number', {
+		defineProperty(globalThis, 'Number', {
 			configurable: true,
 			writable: true,
 			value: (0).constructor,
 		});
 	}
 	if (typeof Boolean !== 'function' || (!0).constructor !== Boolean) {
-		Object.defineProperty(globalThis, 'Boolean', {
+		defineProperty(globalThis, 'Boolean', {
 			configurable: true,
 			writable: true,
 			value: (!0).constructor,
@@ -62,7 +60,7 @@ const fixGlobalTypes = () => {
 			/* empty */
 		}.constructor !== Function
 	) {
-		Object.defineProperty(globalThis, 'Function', {
+		defineProperty(globalThis, 'Function', {
 			configurable: true,
 			writable: true,
 			value: function () {
@@ -75,7 +73,7 @@ const fixGlobalTypes = () => {
 		typeof BigInt(0) === 'bigint' &&
 		BigInt(0).constructor !== BigInt
 	) {
-		Object.defineProperty(globalThis, 'BigInt', {
+		defineProperty(globalThis, 'BigInt', {
 			configurable: true,
 			writable: true,
 			value: BigInt(0).constructor,
@@ -86,7 +84,7 @@ const fixGlobalTypes = () => {
 		typeof Symbol() === 'symbol' &&
 		Symbol().constructor !== Symbol
 	) {
-		Object.defineProperty(globalThis, 'Symbol', {
+		defineProperty(globalThis, 'Symbol', {
 			configurable: true,
 			writable: true,
 			value: Symbol().constructor,
@@ -101,7 +99,7 @@ const fixGlobalTypes = () => {
 				typeof RangeError !== 'function' ||
 				!(e instanceof RangeError)
 			) {
-				Object.defineProperty(globalThis, 'RangeError', {
+				defineProperty(globalThis, 'RangeError', {
 					configurable: true,
 					writable: true,
 					value: (e as RangeError).constructor,
@@ -115,7 +113,7 @@ const fixGlobalTypes = () => {
 	} catch (e) {
 		if (e) {
 			if (typeof URIError !== 'function' || !(e instanceof URIError)) {
-				Object.defineProperty(globalThis, 'URIError', {
+				defineProperty(globalThis, 'URIError', {
 					configurable: true,
 					writable: true,
 					value: (e as URIError).constructor,
@@ -123,7 +121,45 @@ const fixGlobalTypes = () => {
 			}
 		}
 	}
-	// Missing: AggregateError, ReferenceError, EvalError, SyntaxError
+	// Missing: AggregateError, ReferenceError, SyntaxError
+
+	if (typeof EvalError !== 'function') {
+		const evalErrorFn: EvalErrorConstructor = function (
+			this: unknown,
+			message?: string,
+		) {
+			if (!(this instanceof evalErrorFn)) {
+				return new evalErrorFn(message);
+			}
+			if (message) {
+				this.message = message;
+			}
+			return this;
+		} as unknown as EvalErrorConstructor;
+		evalErrorFn.prototype.message = '';
+		evalErrorFn.prototype.name = 'EvalError';
+		Object.setPrototypeOf(evalErrorFn.prototype, Error.prototype);
+		defineProperty(globalThis, 'EvalError', {
+			configurable: true,
+			writable: true,
+			value: evalErrorFn,
+		});
+	}
+
+	if (typeof eval !== 'function') {
+		const fn = function () {
+			throw new EvalError(`call to eval() blocked by CSP`);
+		}.bind({});
+		Object.defineProperty(fn, 'name', {
+			configurable: true,
+			value: 'eval',
+		});
+		defineProperty(globalThis, 'eval', {
+			configurable: true,
+			writable: true,
+			value: fn,
+		});
+	}
 };
 
 export default fixGlobalTypes;
