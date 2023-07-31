@@ -83,7 +83,7 @@ const enhancedWrapper = (script: string): string => {
 				'\r\n/*`*/' +
 				'}' +
 				')'.repeat(guardCount) +
-				'();' +
+				'.call(globalThis);' +
 				`__canary$${canaryStart}__();` +
 				'}).call(this);' +
 				'}' + // End `with`
@@ -93,8 +93,7 @@ const enhancedWrapper = (script: string): string => {
 		: 'const __canary$zzby$t__=' +
 				'(' +
 				'function(_){' +
-				'_={};' +
-				'this.__canary$zzby$f__=_;' +
+				'this.__canary$zzby$f__=_={};' +
 				'return function(){return _!==this.__canary$zzby$f__;};' +
 				'})' +
 				'.call(this);' +
@@ -113,7 +112,7 @@ const enhancedWrapper = (script: string): string => {
 				'(function(_){' +
 				'delete this.__canary$zzby$f__;' +
 				'return function(){this.__canary$zzby$f__=_;_=void 0;}.bind(this)})' +
-				'.call(this,__canary$zzby$f__);' +
+				'.call(this,this.__canary$zzby$f__);' +
 				// No parenthesis-based guard when not using dynamic code
 				// generation (single parenthesis pair used)
 				'(' +
@@ -125,7 +124,7 @@ const enhancedWrapper = (script: string): string => {
 				'\r\n/*`*/' +
 				'}' +
 				')' +
-				'();' +
+				'.call(globalThis);' +
 				'__canary$zzby$s__();' +
 				'}).call(this);' +
 				'}' + // End `with`

@@ -16,7 +16,7 @@
 import { IPerformTask, TContext } from '../types/index.js';
 import censorUnsafeExpressions from './censorUnsafeExpressions.js';
 import enhancedWrapper from './enhancedWrapper.js';
-import global from './global.js';
+import $global from './global.js';
 
 const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	script: string,
@@ -28,6 +28,8 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 
 	if (__buildtimeSettings__.enhancedWrapper) {
 		script = enhancedWrapper(script);
+	} else {
+		script = `(function(module){${script}}).call(this.globalThis,this.module);`;
 	}
 
 	const sandboxWrapperFn = functionConstructor(script);
@@ -57,33 +59,31 @@ const setupExternalMethods = (
 };
 
 const setupContextGlobalRefs = (ctx: object) => {
-	Object.defineProperties(ctx, {
-		['global']: {
-			writable: true,
-			configurable: true,
-			value: ctx,
-		},
-		['globalThis']: {
-			writable: true,
-			configurable: true,
-			value: ctx,
-		},
-		['self']: {
-			writable: true,
-			configurable: true,
-			value: ctx,
-		},
-		['module']: {
-			value: Object.create(null, {
-				['exports']: {
-					value: Object.create(null),
-					writable: true,
-					enumerable: true,
-					configurable: true,
-				},
-			}),
-		},
-	});
+	const propertiesDescriptor: PropertyDescriptorMap = {};
+
+	const selfPropertyDescriptor: PropertyDescriptor = {
+		['writable']: true,
+		['configurable']: true,
+		['value']: ctx,
+	};
+
+	propertiesDescriptor['globalThis'] = selfPropertyDescriptor;
+
+	// Additional references to globalThis based on the host environment
+	if (typeof window === 'object') {
+		propertiesDescriptor['window'] = selfPropertyDescriptor;
+		['parent', 'self', 'top'].forEach((k) => {
+			if (k in $global) {
+				propertiesDescriptor[k] = selfPropertyDescriptor;
+			}
+		});
+	} else if (typeof self === 'object') {
+		propertiesDescriptor['self'] = selfPropertyDescriptor;
+	} else if (typeof global === 'object') {
+		propertiesDescriptor['global'] = selfPropertyDescriptor;
+	}
+
+	Object.defineProperties(ctx, propertiesDescriptor);
 };
 
 // This proxy is needed to keep global functions that expect to be bound to
@@ -99,7 +99,7 @@ const createGlobalFunctionProxy = (() => {
 				if (typeof o === 'function') {
 					return apply.call(
 						o,
-						getPrototypeOf(thisArg) === ctx ? global : thisArg,
+						getPrototypeOf(thisArg) === ctx ? $global : thisArg,
 						argArray,
 					);
 				}
@@ -116,7 +116,7 @@ const descriptorToFunctionProxy = (ctx: object, a?: PropertyDescriptor) => {
 	if (typeof a['value'] === 'function') {
 		a['value'] = createGlobalFunctionProxy(ctx, a['value']);
 	} else if (typeof a['get'] === 'function') {
-		const v = a['get'].call(global);
+		const v = a['get'].call($global);
 		if (typeof v === 'function') {
 			const nameDescriptor = Object.getOwnPropertyDescriptor(
 				a['get'],
@@ -143,7 +143,7 @@ const createContext = (
 		(Array.isArray(allowedGlobals) && allowedGlobals) ||
 		__buildtimeSettings__.defaultAllowedGlobalProps;
 
-	const globalPrototypeChain = [global];
+	const globalPrototypeChain = [$global];
 
 	for (;;) {
 		const p = Object.getPrototypeOf(
@@ -162,12 +162,12 @@ const createContext = (
 			}
 		}
 
-		if (global[prop as keyof typeof global]) {
+		if ($global[prop as keyof typeof $global]) {
 			return {
 				enumerable: false,
 				writable: false,
 				configurable: true,
-				value: global[prop as keyof typeof global],
+				value: $global[prop as keyof typeof $global],
 			};
 		}
 	};
@@ -176,8 +176,12 @@ const createContext = (
 	// Prevent modifying the prototype
 	Object.freeze(contextPrototype);
 
-	const sandboxWrapperThis = Object.create(
-		contextPrototype,
+	const sandboxWrapperThis = Object.create(contextPrototype);
+
+	setupContextGlobalRefs(sandboxWrapperThis);
+
+	Object.defineProperties(
+		sandboxWrapperThis,
 		Object.fromEntries(
 			allowedProps
 				.map((prop) => [
@@ -190,8 +194,6 @@ const createContext = (
 				.filter(([, d]) => !!d),
 		),
 	);
-
-	setupContextGlobalRefs(sandboxWrapperThis);
 
 	if (
 		__buildtimeSettings__.bidirectionalMessaging &&
@@ -212,7 +214,7 @@ type TGenericSandbox = {
 	(
 		script: string,
 		allowedGlobals: string[] | undefined | null,
-		functionConstructor: (typeof global)['Function'],
+		functionConstructor: (typeof $global)['Function'],
 		externalCallMethod?: IPerformTask | null,
 		externalMethodsList?: string[] | null,
 	): { fn: { (): void }; ctx: TContext; revoke: { (): void } };
@@ -255,16 +257,29 @@ const genericSandbox: TGenericSandbox =
 					proxy: typeof sandboxWrapperThis;
 					revoke: { (): void };
 				} = Proxy.revocable(
-					Object.create(Object.getPrototypeOf(sandboxWrapperThis)),
+					Object.create(Object.getPrototypeOf(sandboxWrapperThis), {
+						['module']: {
+							['value']: Object.create(null, {
+								['exports']: {
+									['value']: Object.create(null),
+									['writable']: true,
+									['enumerable']: true,
+									['configurable']: true,
+								},
+							}),
+						},
+					}),
 					{
 						['defineProperty'](_, p, a) {
+							if (p === 'module') return false;
 							Object.defineProperty(sandboxWrapperThis, p, a);
 							return true;
 						},
 						['deleteProperty']: (_, p) => {
+							if (p === 'module') return false;
 							return delete sandboxWrapperThis[p];
 						},
-						['get'](_, p) {
+						['get'](o, p) {
 							// Block getting symbols
 							// This is especially relevant for [Symbol.unscopables]
 							// Getting/setting symbols on the inner proxy (using
@@ -274,9 +289,10 @@ const genericSandbox: TGenericSandbox =
 								// an empty object
 								return;
 							}
+							if (p === 'module') return o[p];
 							return sandboxWrapperThis[p];
 						},
-						['getOwnPropertyDescriptor'](_, p) {
+						['getOwnPropertyDescriptor'](o, p) {
 							// Block getting symbols
 							// This is especially relevant for [Symbol.unscopables]
 							// Getting/setting symbols on the inner proxy (using
@@ -284,6 +300,8 @@ const genericSandbox: TGenericSandbox =
 							if (typeof p !== 'string') {
 								return;
 							}
+							if (p === 'module')
+								return Object.getOwnPropertyDescriptor(o, p);
 							return Object.getOwnPropertyDescriptor(
 								sandboxWrapperThis,
 								p,
@@ -302,6 +320,7 @@ const genericSandbox: TGenericSandbox =
 							return false;
 						},
 						['set'](_, p, v) {
+							if (p === 'module') return false;
 							sandboxWrapperThis[p] = v;
 							return true;
 						},
@@ -345,23 +364,37 @@ const genericSandbox: TGenericSandbox =
 					functionConstructor,
 				);
 
-				setupContextGlobalRefs(global);
-
 				if (
 					__buildtimeSettings__.bidirectionalMessaging &&
 					externalCallMethod &&
 					Array.isArray(externalMethodsList)
 				) {
 					setupExternalMethods(
-						global,
+						$global,
 						externalCallMethod,
 						externalMethodsList,
 					);
 				}
 
+				const ctx = Object.create(null, {
+					['globalThis']: {
+						['value']: $global,
+					},
+					['module']: {
+						['value']: Object.create(null, {
+							['exports']: {
+								['value']: Object.create(null),
+								['writable']: true,
+								['enumerable']: true,
+								['configurable']: true,
+							},
+						}),
+					},
+				});
+
 				return {
-					fn: sandboxWrapperFn.bind(global),
-					ctx: global as unknown as TContext,
+					fn: sandboxWrapperFn.bind(ctx),
+					ctx: ctx as unknown as TContext,
 					revoke: Boolean,
 				};
 		  };
