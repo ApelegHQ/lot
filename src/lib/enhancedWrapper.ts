@@ -29,9 +29,11 @@ const enhancedWrapper = (script: string): string => {
 	// with block by ending with `});} { <code here >; ({`
 	// This is imperfectly mitigated by adding a random number of
 	// braces
+	// Math.random is fine here as it's a fallback and, while not
+	// ideal, it's also better than nothing
 	const guardCount = __buildtimeSettings__.dynamicCodeGeneration
 		? ((global.crypto?.getRandomValues(new Uint8Array(1))[0] ??
-				(Math.random() * 256) | 0) &
+				((0, Math.random)() * 256) | 0) &
 				0xff) +
 		  1
 		: 0;
