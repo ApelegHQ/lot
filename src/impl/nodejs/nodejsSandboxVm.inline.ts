@@ -282,7 +282,7 @@ const nodejsSandbox = (
 		removeAllProperties(require('node:' + v));
 	});
 	// Prevent loading CJS modules
-	Object.defineProperty(module.constructor, '_load', {
+	Object.defineProperty(global.module.constructor, '_load', {
 		['set']: () => {},
 	});
 	// Remove references in global and process to prevent calling require, etc.

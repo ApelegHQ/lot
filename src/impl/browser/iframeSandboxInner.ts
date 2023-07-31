@@ -47,7 +47,17 @@ const iframeSandboxInner = async (
 
 	const replaceFn = (replace: typeof Function.prototype) => {
 		const replacement = () => undefined;
-		replacement.name = replace.name;
+		const replacementNameDescriptor = Object.getOwnPropertyDescriptor(
+			replace,
+			'name',
+		);
+		if (replacementNameDescriptor) {
+			Object.defineProperty(
+				replacement,
+				'name',
+				replacementNameDescriptor,
+			);
+		}
 		return replacement.bind(null);
 	};
 

@@ -155,6 +155,7 @@ plugins.push(
 	inlineScripts({
 		...options,
 		target: 'es2015',
+		format: 'iife',
 		plugins: plugins,
 	}),
 );
