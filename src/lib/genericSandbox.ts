@@ -86,6 +86,54 @@ const setupContextGlobalRefs = (ctx: object) => {
 	});
 };
 
+// This proxy is needed to keep global functions that expect to be bound to
+// globalThis working (e.g., clearTimeout)
+const createGlobalFunctionProxy = (() => {
+	// `Function` may not be available
+	const apply = (() => {}).apply as typeof Function.prototype.apply;
+	const getPrototypeOf = Object.getPrototypeOf;
+
+	return (ctx: object, fn: typeof Function.prototype) => {
+		return new Proxy(fn, {
+			['apply'](o, thisArg, argArray) {
+				if (typeof o === 'function') {
+					return apply.call(
+						o,
+						getPrototypeOf(thisArg) === ctx ? global : thisArg,
+						argArray,
+					);
+				}
+
+				throw new TypeError('Not a function');
+			},
+		});
+	};
+})();
+
+const descriptorToFunctionProxy = (ctx: object, a?: PropertyDescriptor) => {
+	if (typeof a !== 'object') return a;
+
+	if (typeof a['value'] === 'function') {
+		a['value'] = createGlobalFunctionProxy(ctx, a['value']);
+	} else if (typeof a['get'] === 'function') {
+		const v = a['get'].call(global);
+		if (typeof v === 'function') {
+			const nameDescriptor = Object.getOwnPropertyDescriptor(
+				a['get'],
+				'name',
+			);
+			const newGetter = (() => createGlobalFunctionProxy(ctx, v)).bind(
+				null,
+			);
+			if (nameDescriptor) {
+				Object.defineProperty(newGetter, 'name', nameDescriptor);
+			}
+			a['get'] = newGetter;
+		}
+	}
+	return a;
+};
+
 const createContext = (
 	allowedGlobals?: string[] | undefined | null,
 	externalCallMethod?: IPerformTask | null,
@@ -124,11 +172,21 @@ const createContext = (
 		}
 	};
 
+	const contextPrototype = Object.create(null);
+	// Prevent modifying the prototype
+	Object.freeze(contextPrototype);
+
 	const sandboxWrapperThis = Object.create(
-		null,
+		contextPrototype,
 		Object.fromEntries(
 			allowedProps
-				.map((prop) => [prop, getGlobalPropertyDescriptor(prop)])
+				.map((prop) => [
+					prop,
+					descriptorToFunctionProxy(
+						contextPrototype,
+						getGlobalPropertyDescriptor(prop),
+					),
+				])
 				.filter(([, d]) => !!d),
 		),
 	);
@@ -148,15 +206,6 @@ const createContext = (
 	}
 
 	return sandboxWrapperThis;
-};
-
-const propertyIsOverridable = <T>(o: T, p: PropertyKey) => {
-	const propertyDescriptor = Object.getOwnPropertyDescriptor(o, p);
-	return (
-		!propertyDescriptor ||
-		propertyDescriptor['configurable'] ||
-		propertyDescriptor['writable']
-	);
 };
 
 type TGenericSandbox = {
@@ -193,126 +242,74 @@ const genericSandbox: TGenericSandbox =
 					externalMethodsList,
 				);
 
-				const apply = Function.prototype.apply;
-
-				// This proxy is needed to keep global functions that expect to be bound to
-				// globalThis working (e.g., clearTimeout)
-				const createFunctionProxy = (
-					fn: typeof functionConstructor.prototype,
-				) => {
-					return new Proxy(fn, {
-						['apply'](o, thisArg, argArray) {
-							if (typeof o === 'function') {
-								return apply.call(
-									o,
-									[
-										sandboxWrapperThisProxy.proxy,
-										sandboxWrapperThisInnerProxy.proxy,
-									].includes(thisArg)
-										? global
-										: thisArg,
-									argArray,
-								);
-							}
-
-							throw new TypeError('Not a function');
-						},
-					});
-				};
-
-				const { proxy: symbols, revoke: revokeSymbols } =
-					Proxy.revocable(Object.create(null), {});
-
-				const sandboxWrapperThisInnerProxy: {
-					proxy: typeof sandboxWrapperThis;
-					revoke: { (): void };
-				} = Proxy.revocable(sandboxWrapperThis, {
-					['get'](o, p) {
-						const op = o[p];
-						if (
-							typeof op === 'function' &&
-							global[p as keyof typeof global] === op &&
-							propertyIsOverridable(o, p)
-						) {
-							return createFunctionProxy(op);
-						}
-						if (op === sandboxWrapperThis) {
-							return sandboxWrapperThisInnerProxy.proxy;
-						}
-						return op;
-					},
-					['getOwnPropertyDescriptor'](o, p) {
-						const op = symbols[p] || o[p];
-						const pd =
-							Object.getOwnPropertyDescriptor(symbols, p) ||
-							Object.getOwnPropertyDescriptor(o, p);
-
-						if (!pd) {
-							return pd;
-						}
-
-						if (
-							typeof op === 'function' &&
-							global[p as keyof typeof global] === op &&
-							propertyIsOverridable(o, p)
-						) {
-							const value = createFunctionProxy(op);
-							if (pd['get']) {
-								pd['get'] = () => value;
-							} else {
-								pd['value'] = value;
-							}
-						}
-						if (op === sandboxWrapperThis) {
-							const value = sandboxWrapperThisInnerProxy.proxy;
-							if (pd['get']) {
-								pd['get'] = () => value;
-							} else {
-								pd['value'] = value;
-							}
-						}
-
-						return pd;
-					},
-					['defineProperty'](o, p, a) {
-						if (!propertyIsOverridable(o, p)) {
-							return false;
-						}
-						Object.defineProperty(
-							typeof p === 'symbol' ? symbols : o,
-							p,
-							a,
-						);
-						return true;
-					},
-					['deleteProperty'](o, p) {
-						return delete symbols[p] && delete o[p];
-					},
-				});
-
-				// Double-Proxy makes the sandbox work more similarly to what
-				// a 'real' global contex would look like, while also handling
-				// special edge-cases like [Symbol.unscopables]
+				// The Proxy only for the `with` statement makes the sandbox
+				// work more similarly to what a 'real' global contex would
+				// look like, while also handling special edge-cases like
+				// [Symbol.unscopables].
 				// The one thing that seems impossible to implement is
-				// properly throwing ReferenceError.
+				// properly throwing `ReferenceError`.
+				// This handles, for example, checking that
+				// `('undefinedProp' in self)` correctly returns `false` (which
+				// it wouldn't otherwise because of 'has' always returning true)
 				const sandboxWrapperThisProxy: {
 					proxy: typeof sandboxWrapperThis;
 					revoke: { (): void };
-				} = Proxy.revocable(sandboxWrapperThisInnerProxy.proxy, {
-					['get'](o, p) {
-						// Block getting symbols
-						// This is especially relevant for [Symbol.unscopables]
-						// Getting/setting symbols on the inner proxy (using
-						// a self reference) should work fine
-						if (typeof p !== 'string') {
-							return;
-						}
-						return o[p];
+				} = Proxy.revocable(
+					Object.create(Object.getPrototypeOf(sandboxWrapperThis)),
+					{
+						['defineProperty'](_, p, a) {
+							Object.defineProperty(sandboxWrapperThis, p, a);
+							return true;
+						},
+						['deleteProperty']: (_, p) => {
+							return delete sandboxWrapperThis[p];
+						},
+						['get'](_, p) {
+							// Block getting symbols
+							// This is especially relevant for [Symbol.unscopables]
+							// Getting/setting symbols on the inner proxy (using
+							// a self reference) should work fine
+							if (typeof p !== 'string') {
+								// This never throws because the proxy is just for
+								// an empty object
+								return;
+							}
+							return sandboxWrapperThis[p];
+						},
+						['getOwnPropertyDescriptor'](_, p) {
+							// Block getting symbols
+							// This is especially relevant for [Symbol.unscopables]
+							// Getting/setting symbols on the inner proxy (using
+							// a self reference) should work fine
+							if (typeof p !== 'string') {
+								return;
+							}
+							return Object.getOwnPropertyDescriptor(
+								sandboxWrapperThis,
+								p,
+							);
+						},
+						['has']() {
+							// This is crucial to ensure that the `with` statement
+							// remains contrained and does not access the real
+							// global scope. `has` must always return `true`.
+							return true;
+						},
+						['ownKeys']() {
+							return Object.keys(sandboxWrapperThis);
+						},
+						['preventExtensions']: () => {
+							return false;
+						},
+						['set'](_, p, v) {
+							sandboxWrapperThis[p] = v;
+							return true;
+						},
+						['setPrototypeOf']: () => {
+							return false;
+						},
 					},
-					['has']() {
-						return true;
-					},
-				});
+				);
 
 				const sandboxWrapperFn = createWrapperFn(
 					script,
@@ -323,9 +320,7 @@ const genericSandbox: TGenericSandbox =
 					fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy.proxy),
 					ctx: sandboxWrapperThisProxy.proxy,
 					revoke: () => {
-						sandboxWrapperThisInnerProxy.revoke();
 						sandboxWrapperThisProxy.revoke();
-						revokeSymbols();
 					},
 				};
 		  }
