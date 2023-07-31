@@ -16,7 +16,7 @@
 const fixGlobalTypes = () => {
 	if (!__buildtimeSettings__.fixGlobalTypes) return;
 
-	const defineProperty = ({}.constructor as typeof Object).defineProperty;
+	const defineProperty = ({}.constructor as typeof Object)['defineProperty'];
 
 	// Fix global types
 	if (typeof Object !== 'function' || {}.constructor !== Object) {
@@ -121,6 +121,18 @@ const fixGlobalTypes = () => {
 			}
 		}
 	}
+
+	if (
+		typeof Error !== 'function' ||
+		Object.getPrototypeOf(RangeError) !== Error
+	) {
+		defineProperty(globalThis, 'Error', {
+			configurable: true,
+			writable: true,
+			value: Object.getPrototypeOf(RangeError),
+		});
+	}
+
 	// Missing: AggregateError, ReferenceError, SyntaxError
 
 	if (typeof EvalError !== 'function') {
