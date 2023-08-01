@@ -21,37 +21,37 @@ const fixGlobalTypes = () => {
 	// Fix global types
 	if (typeof Object !== 'function' || {}.constructor !== Object) {
 		defineProperty(globalThis, 'Object', {
-			configurable: true,
-			writable: true,
-			value: {}.constructor,
+			['configurable']: true,
+			['writable']: true,
+			['value']: {}.constructor,
 		});
 	}
 	if (typeof Array !== 'function' || [].constructor !== Array) {
 		defineProperty(globalThis, 'Array', {
-			configurable: true,
-			writable: true,
-			value: [].constructor,
+			['configurable']: true,
+			['writable']: true,
+			['value']: [].constructor,
 		});
 	}
 	if (typeof String !== 'function' || ''.constructor !== String) {
 		defineProperty(globalThis, 'String', {
-			configurable: true,
-			writable: true,
-			value: ''.constructor,
+			['configurable']: true,
+			['writable']: true,
+			['value']: ''.constructor,
 		});
 	}
 	if (typeof Number !== 'function' || (0).constructor !== Number) {
 		defineProperty(globalThis, 'Number', {
-			configurable: true,
-			writable: true,
-			value: (0).constructor,
+			['configurable']: true,
+			['writable']: true,
+			['value']: (0).constructor,
 		});
 	}
 	if (typeof Boolean !== 'function' || (!0).constructor !== Boolean) {
 		defineProperty(globalThis, 'Boolean', {
-			configurable: true,
-			writable: true,
-			value: (!0).constructor,
+			['configurable']: true,
+			['writable']: true,
+			['value']: (!0).constructor,
 		});
 	}
 	if (
@@ -61,9 +61,9 @@ const fixGlobalTypes = () => {
 		}.constructor !== Function
 	) {
 		defineProperty(globalThis, 'Function', {
-			configurable: true,
-			writable: true,
-			value: function () {
+			['configurable']: true,
+			['writable']: true,
+			['value']: function () {
 				/* empty */
 			}.constructor,
 		});
@@ -74,9 +74,9 @@ const fixGlobalTypes = () => {
 		BigInt(0).constructor !== BigInt
 	) {
 		defineProperty(globalThis, 'BigInt', {
-			configurable: true,
-			writable: true,
-			value: BigInt(0).constructor,
+			['configurable']: true,
+			['writable']: true,
+			['value']: BigInt(0).constructor,
 		});
 	}
 	if (
@@ -85,9 +85,9 @@ const fixGlobalTypes = () => {
 		Symbol().constructor !== Symbol
 	) {
 		defineProperty(globalThis, 'Symbol', {
-			configurable: true,
-			writable: true,
-			value: Symbol().constructor,
+			['configurable']: true,
+			['writable']: true,
+			['value']: Symbol().constructor,
 		});
 	}
 
@@ -100,9 +100,9 @@ const fixGlobalTypes = () => {
 				!(e instanceof RangeError)
 			) {
 				defineProperty(globalThis, 'RangeError', {
-					configurable: true,
-					writable: true,
-					value: (e as RangeError).constructor,
+					['configurable']: true,
+					['writable']: true,
+					['value']: (e as RangeError).constructor,
 				});
 			}
 		}
@@ -114,9 +114,9 @@ const fixGlobalTypes = () => {
 		if (e) {
 			if (typeof URIError !== 'function' || !(e instanceof URIError)) {
 				defineProperty(globalThis, 'URIError', {
-					configurable: true,
-					writable: true,
-					value: (e as URIError).constructor,
+					['configurable']: true,
+					['writable']: true,
+					['value']: (e as URIError).constructor,
 				});
 			}
 		}
@@ -133,10 +133,8 @@ const fixGlobalTypes = () => {
 		});
 	}
 
-	// Missing: AggregateError, ReferenceError, SyntaxError
-
 	if (typeof EvalError !== 'function') {
-		const evalErrorFn: EvalErrorConstructor = function (
+		const evalErrorFn: ErrorConstructor = function (
 			this: unknown,
 			message?: string,
 		) {
@@ -147,29 +145,32 @@ const fixGlobalTypes = () => {
 				this.message = message;
 			}
 			return this;
-		} as unknown as EvalErrorConstructor;
+		} as unknown as ErrorConstructor;
 		evalErrorFn.prototype.message = '';
 		evalErrorFn.prototype.name = 'EvalError';
 		Object.setPrototypeOf(evalErrorFn.prototype, Error.prototype);
 		defineProperty(globalThis, 'EvalError', {
-			configurable: true,
-			writable: true,
-			value: evalErrorFn,
+			['configurable']: true,
+			['writable']: true,
+			['value']: evalErrorFn,
 		});
 	}
 
+	// Missing errors: AggregateError, ReferenceError, SyntaxError
+	// Other missing: Promise
+
 	if (typeof eval !== 'function') {
 		const fn = function () {
-			throw new EvalError(`call to eval() blocked by CSP`);
+			throw new EvalError('call to eval() blocked by CSP');
 		}.bind({});
 		Object.defineProperty(fn, 'name', {
-			configurable: true,
-			value: 'eval',
+			['configurable']: true,
+			['value']: 'eval',
 		});
 		defineProperty(globalThis, 'eval', {
-			configurable: true,
-			writable: true,
-			value: fn,
+			['configurable']: true,
+			['writable']: true,
+			['value']: fn,
 		});
 	}
 };

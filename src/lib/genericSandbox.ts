@@ -48,10 +48,10 @@ const setupExternalMethods = (
 			externalMethodsList.map((external) => [
 				external,
 				{
-					configurable: true,
-					writable: false,
+					['configurable']: true,
+					['writable']: false,
 					enumerable: true,
-					value: externalCallMethod.bind(null, external),
+					['value']: externalCallMethod.bind(null, external),
 				},
 			]),
 		),
@@ -165,9 +165,9 @@ const createContext = (
 		if ($global[prop as keyof typeof $global]) {
 			return {
 				enumerable: false,
-				writable: false,
-				configurable: true,
-				value: $global[prop as keyof typeof $global],
+				['writable']: false,
+				['configurable']: true,
+				['value']: $global[prop as keyof typeof $global],
 			};
 		}
 	};

@@ -29,7 +29,7 @@ const listener = (event: MessageEvent) => {
 	self.removeEventListener('message', listener, false);
 	// Fix Function prototype
 	Object.defineProperty(Function, 'prototype', {
-		value: listener.constructor.prototype,
+		['value']: listener.constructor.prototype,
 	});
 	Function.prototype.apply.call(
 		workerSandboxInner,
@@ -67,10 +67,10 @@ const nativeWrapperFactory =
 		if (typeof fn !== 'function') return;
 
 		Object.defineProperty(obj, name, {
-			writable: true,
+			['writable']: true,
 			enumerable: true,
-			configurable: true,
-			value: function (...args: unknown[]) {
+			['configurable']: true,
+			['value']: function (...args: unknown[]) {
 				try {
 					const r = fn.call(obj, ...args);
 					if (typeof r !== 'object' && typeof r !== 'function') {
@@ -114,7 +114,7 @@ const nativeWrapperFactory =
 				if (ev.type !== 'message') return;
 
 				Object.defineProperty(ev, 'data', {
-					value: JSON.parse(
+					['value']: JSON.parse(
 						JSON.stringify((ev as MessageEvent).data),
 					),
 				});

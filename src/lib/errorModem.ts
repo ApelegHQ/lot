@@ -66,9 +66,9 @@ const reconstructErrorInformation = (d: unknown, depth?: number) => {
 		if (d[0] !== errorClass.name) {
 			try {
 				Object.defineProperty(e, 'name', {
-					configurable: true,
-					writable: true,
-					value: String(d[0]),
+					['configurable']: true,
+					['writable']: true,
+					['value']: String(d[0]),
 				});
 			} catch {
 				// 'name' might be read-only in certain environments
@@ -76,21 +76,24 @@ const reconstructErrorInformation = (d: unknown, depth?: number) => {
 		}
 		if (d[1]) {
 			Object.defineProperty(e, 'message', {
-				configurable: true,
-				writable: true,
-				value: String(d[1]),
+				['configurable']: true,
+				['writable']: true,
+				['value']: String(d[1]),
 			});
 		}
 		Object.defineProperty(e, 'stack', {
-			configurable: true,
-			writable: true,
-			value: String(d[2]),
+			['configurable']: true,
+			['writable']: true,
+			['value']: String(d[2]),
 		});
 		if ((!depth || depth < MAX_DEPTH) && d.length === 4) {
 			Object.defineProperty(e, 'cause', {
-				configurable: true,
-				writable: true,
-				value: reconstructErrorInformation(d[3], depth ? depth + 1 : 1),
+				['configurable']: true,
+				['writable']: true,
+				['value']: reconstructErrorInformation(
+					d[3],
+					depth ? depth + 1 : 1,
+				),
 			});
 		}
 

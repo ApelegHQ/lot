@@ -68,12 +68,12 @@ const iframeSandboxInner = async (
 	EventTarget.prototype.addEventListener = replaceFn(addEventListener);
 	EventTarget.prototype.removeEventListener = replaceFn(removeEventListener);
 	Object.defineProperty(self, 'onmessage', {
-		configurable: false,
-		writable: false,
+		['configurable']: false,
+		['writable']: false,
 	});
 	Object.defineProperty(self, 'onmessageerror', {
-		configurable: false,
-		writable: false,
+		['configurable']: false,
+		['writable']: false,
 	});
 
 	hardenGlobals();

@@ -45,7 +45,7 @@ const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
 class TrustedMessageEvent<T> extends MessageEvent<T> {
 	constructor(type: string, eventInitDict?: MessageEventInit<T>) {
 		super(type, eventInitDict);
-		g_Object.defineProperty(this, 'isTrusted', { value: true });
+		g_Object.defineProperty(this, 'isTrusted', { ['value']: true });
 	}
 }
 
@@ -125,9 +125,9 @@ const nodejsSandbox = (
 		// Function is defined to return that function instead.
 		// This function will be called exactly once
 		['Function']: {
-			writable: true,
-			configurable: true,
-			value: (source: unknown) => {
+			['writable']: true,
+			['configurable']: true,
+			['value']: (source: unknown) => {
 				// If the source is not a string or does not contain the expected
 				// token, return (exceptions might expose internals to the Sandbox)
 				if (
@@ -160,80 +160,80 @@ const nodejsSandbox = (
 			},
 		},
 		['addEventListener']: {
-			writable: true,
-			configurable: true,
-			value: eventTargetOutgoing.addEventListener.bind(
-				eventTargetOutgoing,
-			),
+			['writable']: true,
+			['configurable']: true,
+			['value']:
+				eventTargetOutgoing.addEventListener.bind(eventTargetOutgoing),
 		},
 		['removeEventListener']: {
-			writable: true,
-			configurable: true,
-			value: eventTargetOutgoing.removeEventListener.bind(
-				eventTargetOutgoing,
-			),
+			['writable']: true,
+			['configurable']: true,
+			['value']:
+				eventTargetOutgoing.removeEventListener.bind(
+					eventTargetOutgoing,
+				),
 		},
 		['postMessage']: {
-			writable: true,
-			configurable: true,
-			value: postMessageFactory(eventTargetIncoming),
+			['writable']: true,
+			['configurable']: true,
+			['value']: postMessageFactory(eventTargetIncoming),
 		},
 		['close']: {
-			writable: true,
-			configurable: true,
-			value: close,
+			['writable']: true,
+			['configurable']: true,
+			['value']: close,
 		},
 		['crypto']: {
-			configurable: true,
+			['configurable']: true,
 			enumerable: true,
-			value: g_Object.create(null, {
+			['value']: g_Object.create(null, {
 				['getRandomValues']: {
-					writable: true,
+					['writable']: true,
 					enumerable: true,
-					configurable: true,
-					value: getRandomValues,
+					['configurable']: true,
+					['value']: getRandomValues,
 				},
 			}),
 		},
 		['self']: {
-			writable: true,
-			configurable: true,
-			value: context,
+			['writable']: true,
+			['configurable']: true,
+			['value']: context,
 		},
 		['globalThis']: {
-			writable: true,
-			configurable: true,
-			value: context,
+			['writable']: true,
+			['configurable']: true,
+			['value']: context,
 		},
 		['atob']: {
-			writable: true,
-			configurable: true,
-			value: g_atob,
+			['writable']: true,
+			['configurable']: true,
+			['value']: g_atob,
 		},
 		['btoa']: {
-			writable: true,
-			configurable: true,
-			value: g_btoa,
+			['writable']: true,
+			['configurable']: true,
+			['value']: g_btoa,
 		},
 		['clearInterval']: {
-			writable: true,
-			configurable: true,
-			value: scopedClearInterval,
+			['writable']: true,
+			['configurable']: true,
+			['value']: scopedClearInterval,
 		},
 		['clearTimeout']: {
-			writable: true,
-			configurable: true,
-			value: scopedClearTimeout,
+			['writable']: true,
+			['configurable']: true,
+			['value']: scopedClearTimeout,
 		},
 		['setInterval']: {
-			writable: true,
-			configurable: true,
-			value: scopedSetInterval,
+			['writable']: true,
+			['configurable']: true,
+			['value']: scopedSetInterval,
 		},
 		['setTimeout']: {
-			writable: true,
-			configurable: true,
-			value: scopedSetTimeout,
+			['writable']: true,
+			['configurable']: true,
+			['value']: scopedSetTimeout,
 		},
 	});
 

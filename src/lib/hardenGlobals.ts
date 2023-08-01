@@ -76,7 +76,7 @@ const tameSetTimerFn = (f: 'setTimeout' | 'setInterval') => {
 	}
 
 	defineProperty(global, f, {
-		value: tamedFn.bind(null),
+		['value']: tamedFn.bind(null),
 	});
 };
 
@@ -183,16 +183,16 @@ const disableURLStaticMethods = () => {
 	global.URL &&
 		Object.defineProperties(global.URL, {
 			['createObjectURL']: {
-				writable: true,
+				['writable']: true,
 				enumerable: true,
-				configurable: true,
-				value: String.bind(null),
+				['configurable']: true,
+				['value']: String.bind(null),
 			},
 			['revokeObjectURL']: {
-				writable: true,
+				['writable']: true,
 				enumerable: true,
-				configurable: true,
-				value: String.prototype.at.bind(''),
+				['configurable']: true,
+				['value']: String.prototype.at.bind(''),
 			},
 		});
 };
