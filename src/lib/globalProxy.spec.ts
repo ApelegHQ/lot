@@ -61,7 +61,7 @@ describe('globalProxy', () => {
 		// Test revoking
 		revoke();
 		assert.throws(() => {
-			proxy.prop;
+			void proxy.prop;
 		}, TypeError);
 	});
 });
