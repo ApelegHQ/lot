@@ -10,17 +10,18 @@
  * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * PERFORMANCE 5OF THIS SOFTWARE.
  */
 
-// This CSP will prevent loading any new scripts or dynamically executing code
-// such as by using Function(), eval(), etc.
-// Once this strict CSP is set, it cannot be removed
-const tightenCsp = () => {
-	const metaCsp = document.createElement('meta');
-	metaCsp.setAttribute('http-equiv', 'content-security-policy');
-	metaCsp.setAttribute('content', "default-src 'none'");
-	document.head.append(metaCsp);
+const modulePropertyDescriptor: PropertyDescriptor = {
+	['value']: Object.create(null, {
+		['exports']: {
+			['value']: Object.create(null),
+			['writable']: true,
+			['enumerable']: true,
+			['configurable']: true,
+		},
+	}),
 };
 
-export default tightenCsp;
+export default modulePropertyDescriptor;

@@ -20,6 +20,15 @@ import getRandomSecret from './getRandomSecret.js';
 import * as Logger from './Logger.js';
 import proxyMaybeRevocable from './proxyMaybeRevocable.js';
 
+/**
+ * Factory function to create a performTask instance.
+ *
+ * @param revocable - Determines if the performTask methods are revocable.
+ * @param postMessageOutgoing - Callback function to send results.
+ * @returns Returns a tuple containing the IPerformTask function, a
+ * resultHandler function, and a cleanup function to revoke the performTask
+ * methods and clear pending tasks.
+ */
 const performTaskFactory = (
 	revocable: boolean,
 	postMessageOutgoing: {
@@ -97,7 +106,12 @@ const performTaskFactory = (
 		() => {
 			performTaskMethodsProxy[0].revoke();
 			performTaskMethodsProxy[1].revoke();
-			Object.keys(pendingTasks).forEach((id) => delete pendingTasks[id]);
+			const error = new Error('Task cancelled');
+			Object.keys(pendingTasks).forEach((id) => {
+				pendingTasks[id][1](error);
+				delete pendingTasks[id];
+			});
+			Object.freeze(pendingTasks);
 		},
 	];
 };

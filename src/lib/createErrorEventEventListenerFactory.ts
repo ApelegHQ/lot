@@ -15,6 +15,21 @@
 
 import EMessageTypes from '../EMessageTypes.js';
 
+/**
+ * Creates an error event listener factory function.
+ *
+ * @param addEventListener - The function to add an event listener.
+ * @param removeEventListener - The function to remove an event listener.
+ * @param defaultEventTarget - The default event target to attach the listener
+ * to if no worker is provided.
+ * @param postMessage - The function to post a message with the error
+ * information.
+ * @returns A function that takes an optional handler and worker, adds an
+ * 'error' event listener to the appropriate target, and returns a function to
+ * remove the listener.
+ * @throws {TypeError} When 'addEventListener' is called on an object that does
+ * not implement the EventTarget interface.
+ */
 const createErrorEventListenerFactory =
 	(
 		addEventListener: typeof EventTarget.prototype.addEventListener,

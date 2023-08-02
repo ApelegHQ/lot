@@ -18,6 +18,9 @@
 		"allowJs": true,
 		"checkJs": false
 	},
+	"ts-node": {
+		"experimentalResolver": true
+	},
 	"include": ["src/**/*"],
 	"exclude": [
 		"node_modules",

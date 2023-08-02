@@ -13,6 +13,26 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/**
+ * Factory function that creates a message event listener and attaches it to
+ * the given target.
+ * @param addEventListener - The `addEventListener` function of the target to
+ * attach the event listener.
+ * @param removeEventListener - The `removeEventListener` function of the
+ * target to remove the event listener.
+ * @param defaultEventTarget - The default event target to use when `worker` is
+ * not provided.
+ * @param parentOrigin - The expected origin of the parent window for secure
+ * communication.
+ * @param parent - The expected parent message source (or null) for secure
+ * communication.
+ * @param secret - An optional secret to validate the received message data.
+ * @param allowUntrusted - If true, allows untrusted events to be processed.
+ * @returns Returns a function to detach the created event listener from the
+ * target.
+ * @throws {TypeError} When 'addEventListener' is called on an object that does
+ * not implement the EventTarget interface.
+ */
 const createMessageEventListenerFactory =
 	(
 		addEventListener: typeof EventTarget.prototype.addEventListener,

@@ -15,6 +15,25 @@
 
 import global from './global.js';
 
+/**
+ * Converts a given buffer into a Base16 string (using a custom logic)
+ *
+ * The conversion is not a standard hexadecimal conversion. It performs specific
+ * bitwise operations and character code translations, including:
+ *
+ * 1. Right shifting the value 4 bits and masking it with 0x0f, then OR'ing it
+ * with 0x40.
+ * 2. Right shifting the value 0 bits (leaving it unchanged) and masking it with
+ * 0x0f, then OR'ing it with 0x40.
+ * 3. Adding 1 to both of these values and converting them to ASCII characters.
+ *
+ * This gives a string with values in the range A-P. This range was chosen
+ * because it is an acceptable range for most places and because of the ease
+ * of calculation.
+ *
+ * @param buffer - The buffer that will be converted to a string
+ * @returns The string representation of the buffer using the custom logic.
+ */
 const bufferToHex = (buffer: Uint8Array) =>
 	Array.prototype.map
 		.call(buffer, (v) =>
@@ -25,6 +44,15 @@ const bufferToHex = (buffer: Uint8Array) =>
 		)
 		.join('');
 
+/**
+ * Generates a random secret string using the Crypto API.
+ *
+ * These secrets are as a flag to serve as a rudimentary check for message
+ * provenance (browser sandbox), to generate canary parts in the enhanced
+ * sandbox wrapper as well as to generate task IDs.
+ *
+ * @returns The randomly generated secret as a string.
+ */
 const getRandomSecret = (): string =>
 	bufferToHex(global.crypto.getRandomValues(new Uint8Array(16)));
 

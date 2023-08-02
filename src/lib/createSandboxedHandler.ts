@@ -22,6 +22,26 @@ import requestHandler from './requestHandler.js';
 
 const FERAL_FUNCTION = Proxy.revocable(Function, {});
 
+/**
+ * Creates a handler function that can process messages and invoke tasks inside
+ * a sandboxed environment.
+ * The handler is set up to communicate with the parent through a series of
+ * messages (see `requestHandler` and `performTaskFactory`).
+ * Cleanup logic is also included to properly close resources.
+ *
+ * @param script - The JavaScript code to be executed inside the sandbox.
+ * @param allowedGlobals - A list of allowed global variables or null/undefined
+ * to use default values.
+ * @param externalMethodsList - A list of external methods available for the
+ * sandboxed script or null/undefined for none (requires bidirectional
+ * messaging to be enabled).
+ * @param postMessage - Function to post messages to the parent.
+ * @param preInit - Function to be executed before initialising the sandbox.
+ * @param cleanup - Function to be executed for cleaning up resources, or
+ * null/undefined if not required.
+ * @returns A handler function that can process incoming messages and invoke
+ * tasks within the sandbox.
+ */
 const createSandboxedHandler = (
 	script: string,
 	allowedGlobals: string[] | undefined | null,

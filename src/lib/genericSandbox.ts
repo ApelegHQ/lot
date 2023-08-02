@@ -17,6 +17,8 @@ import { IPerformTask, TContext } from '../types/index.js';
 import censorUnsafeExpressions from './censorUnsafeExpressions.js';
 import enhancedWrapper from './enhancedWrapper.js';
 import $global from './global.js';
+import globalProxy from './globalProxy.js';
+import modulePropertyDescriptor from './modulePropertyDescriptor.js';
 
 const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	script: string,
@@ -253,82 +255,7 @@ const genericSandbox: TGenericSandbox =
 				// This handles, for example, checking that
 				// `('undefinedProp' in self)` correctly returns `false` (which
 				// it wouldn't otherwise because of 'has' always returning true)
-				const sandboxWrapperThisProxy: {
-					proxy: typeof sandboxWrapperThis;
-					revoke: { (): void };
-				} = Proxy.revocable(
-					Object.create(Object.getPrototypeOf(sandboxWrapperThis), {
-						['module']: {
-							['value']: Object.create(null, {
-								['exports']: {
-									['value']: Object.create(null),
-									['writable']: true,
-									['enumerable']: true,
-									['configurable']: true,
-								},
-							}),
-						},
-					}),
-					{
-						['defineProperty'](_, p, a) {
-							if (p === 'module') return false;
-							Object.defineProperty(sandboxWrapperThis, p, a);
-							return true;
-						},
-						['deleteProperty']: (_, p) => {
-							if (p === 'module') return false;
-							return delete sandboxWrapperThis[p];
-						},
-						['get'](o, p) {
-							// Block getting symbols
-							// This is especially relevant for [Symbol.unscopables]
-							// Getting/setting symbols on the inner proxy (using
-							// a self reference) should work fine
-							if (typeof p !== 'string') {
-								// This never throws because the proxy is just for
-								// an empty object
-								return;
-							}
-							if (p === 'module') return o[p];
-							return sandboxWrapperThis[p];
-						},
-						['getOwnPropertyDescriptor'](o, p) {
-							// Block getting symbols
-							// This is especially relevant for [Symbol.unscopables]
-							// Getting/setting symbols on the inner proxy (using
-							// a self reference) should work fine
-							if (typeof p !== 'string') {
-								return;
-							}
-							if (p === 'module')
-								return Object.getOwnPropertyDescriptor(o, p);
-							return Object.getOwnPropertyDescriptor(
-								sandboxWrapperThis,
-								p,
-							);
-						},
-						['has']() {
-							// This is crucial to ensure that the `with` statement
-							// remains contrained and does not access the real
-							// global scope. `has` must always return `true`.
-							return true;
-						},
-						['ownKeys']() {
-							return Object.keys(sandboxWrapperThis);
-						},
-						['preventExtensions']: () => {
-							return false;
-						},
-						['set'](_, p, v) {
-							if (p === 'module') return false;
-							sandboxWrapperThis[p] = v;
-							return true;
-						},
-						['setPrototypeOf']: () => {
-							return false;
-						},
-					},
-				);
+				const sandboxWrapperThisProxy = globalProxy(sandboxWrapperThis);
 
 				const sandboxWrapperFn = createWrapperFn(
 					script,
@@ -336,10 +263,10 @@ const genericSandbox: TGenericSandbox =
 				);
 
 				return {
-					fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy.proxy),
-					ctx: sandboxWrapperThisProxy.proxy,
+					fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy['proxy']),
+					ctx: sandboxWrapperThisProxy['proxy'],
 					revoke: () => {
-						sandboxWrapperThisProxy.revoke();
+						sandboxWrapperThisProxy['revoke']();
 					},
 				};
 		  }
@@ -376,20 +303,16 @@ const genericSandbox: TGenericSandbox =
 					);
 				}
 
+				// No Proxy in this case, since we are explicitly sharing the
+				// global scope
+				// 'module' is special in that it's not a globally-scoped
+				// variable
 				const ctx = Object.create(null, {
+					// globalThis is used to set 'this' to $global
 					['globalThis']: {
 						['value']: $global,
 					},
-					['module']: {
-						['value']: Object.create(null, {
-							['exports']: {
-								['value']: Object.create(null),
-								['writable']: true,
-								['enumerable']: true,
-								['configurable']: true,
-							},
-						}),
-					},
+					['module']: modulePropertyDescriptor,
 				});
 
 				return {

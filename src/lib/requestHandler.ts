@@ -17,20 +17,28 @@ import EMessageTypes from '../EMessageTypes.js';
 import { extractErrorInformation } from './errorModem.js';
 import * as Logger from './Logger.js';
 
-const promise =
-	typeof Promise === 'function'
-		? Promise
-		: (function () {
-				/* empty*/
-		  } as unknown as { new <T>(): Promise<T> });
-
+/**
+ * Handles a request for executing a task with the specified operation (op)
+ * using the provided context (ctx).
+ * The result or error of the task execution is sent back via the postMessage
+ * function.
+ *
+ * @param postMessage - The function to send messages back to the caller.
+ * @param ctx - The context object containing the operations that can be
+ * executed.
+ * @param id - The unique identifier for the task.
+ * @param op - The name of the operation to be executed.
+ * @param args - Additional arguments to be passed to the operation function.
+ *
+ * @returns This function does not return a value directly, but uses the postMessage function to send results or errors.
+ */
 const requestHandler = (
 	postMessage: { (data: unknown[]): void },
 	ctx: unknown,
 	id: unknown,
 	op: unknown,
 	...args: unknown[]
-) => {
+): void => {
 	if (typeof id !== 'string' || typeof op !== 'string') {
 		Logger.trace('Rejecting REQUEST, invalid id or op', [id, op]);
 		return;
@@ -47,26 +55,34 @@ const requestHandler = (
 			op as keyof typeof ctx
 		];
 
-		if (typeof fn !== 'function') {
-			throw new TypeError(`${op} is not a function`);
-		}
+		const result =
+			typeof fn === 'function'
+				? Function.prototype.apply.call(fn, null, args)
+				: fn;
 
-		const result = Function.prototype.apply.call(fn, null, args);
+		if (
+			typeof result === 'object' &&
+			'then' in result &&
+			typeof result['then'] === 'function'
+		) {
+			const thenable = result['then']((result: unknown) => {
+				Logger.debug(
+					'Sending RESULT from executing task [' +
+						id +
+						'] ' +
+						op +
+						' (async)',
+				);
 
-		if (result instanceof promise) {
-			result
-				.then((result) => {
-					Logger.debug(
-						'Sending RESULT from executing task [' +
-							id +
-							'] ' +
-							op +
-							' (async)',
-					);
+				postMessage([EMessageTypes.RESULT, id, result]);
+			});
 
-					postMessage([EMessageTypes.RESULT, id, result]);
-				})
-				.catch((e) => {
+			if (
+				typeof thenable === 'object' &&
+				'catch' in thenable &&
+				typeof thenable['catch'] === 'function'
+			) {
+				thenable['catch']((e: unknown) => {
 					Logger.debug(
 						'Sending ERROR from executing task [' +
 							id +
@@ -81,6 +97,7 @@ const requestHandler = (
 						extractErrorInformation(e),
 					]);
 				});
+			}
 		} else {
 			Logger.debug(
 				'Sending RESULT from executing task [' +

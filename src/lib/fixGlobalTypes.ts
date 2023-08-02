@@ -13,6 +13,34 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/**
+ * Ensures that global type constructors (e.g., Object, Array, String, etc.)
+ * and related error classes are set to expected values, fixing them if
+ * necessary.
+ *
+ * The function checks various global constructors (Object, Array, String,
+ * Number, Boolean, Function, BigInt, Symbol, and some error classes) and makes
+ * sure that they are of the correct type and correspond to expected behaviuors.
+ * If not, it uses Object.defineProperty to overwrite the incorrect values with
+ * the expected constructors.
+ *
+ * Additionally, this function tests specific error conditions (e.g.,
+ * RangeError, URIError) and ensures that they are defined correctly.
+ *
+ * The process includes:
+ * 1. Ensuring basic type constructors (Object, Array, String, Number, Boolean,
+ * Function) match expectations.
+ * 2. Verifying and correcting BigInt and Symbol constructors if available.
+ * 3. Testing and ensuring the RangeError and URIError classes through specific
+ * error-triggering conditions.
+ * 4. Making sure the Error class and its prototype match expected values.
+ * 5. Defining or fixing the EvalError class and handling the 'eval' function
+ * based on the environment.
+ * 6. Additional handling could be extended for other error types or global
+ * constructs.
+ *
+ * Note: The function relies on `__buildtimeSettings__.fixGlobalTypes`, and if this flag is not set, the function returns without making any changes.
+ */
 const fixGlobalTypes = () => {
 	if (!__buildtimeSettings__.fixGlobalTypes) return;
 
