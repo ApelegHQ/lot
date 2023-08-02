@@ -51,7 +51,7 @@ describe('Censor unsafe expressions', () => {
 					);
 				}
 
-				const expression = () => eval(censored);
+				const expression = () => (0, eval)(censored);
 
 				if (expectation) {
 					assert.doesNotThrow(expression);
