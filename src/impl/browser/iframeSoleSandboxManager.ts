@@ -34,6 +34,7 @@ const iframeSoleSandboxManager = async (
 		typeof createErrorEventListenerFactory
 	>,
 	postMessage: { (data: unknown[]): void },
+	close: { (): void },
 ): Promise<void> => {
 	try {
 		Logger.info('Setting up iframe fallback sandbox');
@@ -51,7 +52,7 @@ const iframeSoleSandboxManager = async (
 					? () => {
 							revokeRootMessageEventListener();
 							revokeRootErrorEventListener();
-							self.close();
+							close();
 					  }
 					: undefined,
 			),

@@ -20,6 +20,7 @@ import hardenGlobals, {
 	disableURLStaticMethods,
 } from '../../lib/hardenGlobals.js';
 import * as Logger from '../../lib/Logger.js';
+import recursivelyDeleteProperty from '../../lib/recursivelyDeleteProperty.js';
 
 const createMessageEventListener = (() => {
 	return (handler: { (data: unknown[]): void }) => {
@@ -53,16 +54,20 @@ const workerSandboxInner = (
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 ) => {
+	const postMessage = self['postMessage'].bind(self);
+	const close = self['close'].bind(self);
+
 	try {
 		Logger.info('Setting up worker sandbox.');
 
 		// Remove methods from DedicatedWorkerGlobalScope
-		// TODO: Seemingly not working
-		const selfPrototype = Object.getPrototypeOf(self);
-		const postMessage = self.postMessage.bind(self);
-		const close = self.close.bind(self);
-		delete selfPrototype.postMessage;
-		delete selfPrototype.close;
+		recursivelyDeleteProperty(self, 'close');
+		recursivelyDeleteProperty(self, 'postMessage');
+		self.postMessage = () => {
+			const e = new Error('Called self.postMessage!');
+			console.log(e);
+			throw e;
+		};
 
 		hardenGlobals();
 		disableURLStaticMethods();
@@ -93,6 +98,7 @@ const workerSandboxInner = (
 		);
 
 		postMessage([EMessageTypes.GLOBAL_ERROR, extractErrorInformation(e)]);
+		close();
 	}
 };
 

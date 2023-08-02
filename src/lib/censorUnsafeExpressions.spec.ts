@@ -22,6 +22,12 @@ const testCases: [string, boolean][] = [
 	['{ let foo = { "import": ()=>"bar" }; foo.import(""); }', true],
 	['{ let foo = { import() {return "bar"} }; foo.import (); }', true],
 	['{ let foo = { import () {return "bar"} }; foo.import(); }', true],
+	// Import can be a substring
+	['var important="value"', true],
+	[
+		'(function(){ function important() {return "work"}; important(); })()',
+		true,
+	],
 	// Import as keyword should always fail
 	['import("data:text/javascript,")', false],
 	[' import("data:text/javascript,")', false],
@@ -39,11 +45,11 @@ describe('Censor unsafe expressions', () => {
 			it(`\`${code}\` ${expectation ? 'succeeds' : 'fails'}`, () => {
 				const censored = censorUnsafeExpressions(code);
 
-				if (censored.includes('import')) {
+				if (/\bimport\b/.test(censored)) {
 					// /\.import/ is allowed but /\.{2,}import/ is not
 					const joinStr =
 						'(---MAYBE OK IMPORT @' + String(Date.now()) + '---)';
-					const temp = censored.split('.import').join(joinStr);
+					const temp = censored.split('.import');
 
 					assert.ok(
 						!temp.includes('import') &&

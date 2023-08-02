@@ -19,6 +19,7 @@ import createMessageEventListenerFactory from '../../lib/createMessageEventListe
 import { extractErrorInformation } from '../../lib/errorModem.js';
 import hardenGlobals from '../../lib/hardenGlobals.js';
 import * as Logger from '../../lib/Logger.js';
+import recursivelyDeleteProperty from '../../lib/recursivelyDeleteProperty.js';
 import tightenCsp from '../../lib/tightenCsp.js';
 import type { TSandboxOptions } from '../../types/index.js';
 import workerSandboxManager from '../worker/workerSandboxManager.js';
@@ -38,9 +39,15 @@ const iframeSandboxInner = async (
 	let error: unknown;
 
 	const parent = self.parent;
-	// Disable accessing parent.
+
+	const close = self['close'].bind(self);
+
+	recursivelyDeleteProperty(self, 'close');
+	recursivelyDeleteProperty(self, 'postMessage');
+
 	// This still leaves 'top', which is non-configurable.
-	self.parent = self;
+	recursivelyDeleteProperty(self, 'opener');
+	recursivelyDeleteProperty(self, 'parent');
 
 	const addEventListener = EventTarget.prototype.addEventListener;
 	const removeEventListener = EventTarget.prototype.removeEventListener;
@@ -155,6 +162,7 @@ const iframeSandboxInner = async (
 				createMessageEventListener,
 				createErrorEventListener,
 				postMessage,
+				close,
 			);
 		} catch (e) {
 			Logger.warn('Error setting up direct execution sandbox', e);

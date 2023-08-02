@@ -10,23 +10,30 @@
  * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE 5OF THIS SOFTWARE.
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
- * Censors the use of the `import` keyword in a given script.
- * Replaces occurrences of "import" with an escaped version.
+ * Recursively deletes a property from an object or its prototype chain.
  *
- * This function aims to prevent import expressions from being used, as they
- * may be used to load arbitrary code.
+ * @template T - The object type.
+ * @param o - The object from which the property should be deleted.
+ * @param p - The property name to delete from the object.
+ * @returns - This function does not return a value.
  *
- * @param script - The script to be processed.
- * @returns The modified script with "import" occurrences censored where
- * applicable.
+ * @example
+ * const obj = Object.create({ prop: 'value' });
+ * // deletes 'prop' from the object's prototype
+ * recursivelyDeleteProperty(obj, 'prop');
  */
-const censorUnsafeExpressions = (script: string): string => {
-	// Remove import expresions from the code by introducing an escape sequence
-	return script.replace(/\bimport\b/g, 'im\\u0070ort');
+const recursivelyDeleteProperty = <T extends object>(o: T, p: keyof T) => {
+	while (o && p in o) {
+		if (Object.prototype.hasOwnProperty.call(o, p)) {
+			delete o[p];
+			return;
+		}
+		o = Object.getPrototypeOf(o);
+	}
 };
 
-export default censorUnsafeExpressions;
+export default recursivelyDeleteProperty;

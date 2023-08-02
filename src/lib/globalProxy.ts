@@ -15,7 +15,9 @@
 
 import modulePropertyDescriptor from './modulePropertyDescriptor.js';
 
-type TGlobalProxy<T> = T & { ['module']: { ['exports']: object } };
+type TGlobalProxy<T> = Omit<T, 'module'> & {
+	['module']: { ['exports']: object };
+};
 
 /**
  * Creates a proxy object that mirrors the provided context, with special
