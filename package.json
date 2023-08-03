@@ -1,6 +1,6 @@
 {
 	"name": "@exact-realty/ecmascript-sandbox",
-	"version": "0.0.12",
+	"version": "0.0.13",
 	"description": "Sandbox for isolating ECMAScript code",
 	"main": "dist/index.js",
 	"module": "./dist/index.mjs",

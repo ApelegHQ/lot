@@ -1,5 +1,4 @@
 {
-  "extension": ["ts"],
-  "xspec": "test/**/*.spec.ts",
-  "loader": "ts-node/esm"
+	"extension": ["ts"],
+	"loader": "ts-node/esm"
 }
