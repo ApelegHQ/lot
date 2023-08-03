@@ -135,6 +135,7 @@ const options = {
 		'__buildtimeSettings__.fixGlobalTypes': 'true',
 		'__buildtimeSettings__.dynamicCodeGeneration': 'true',
 		'__buildtimeSettings__.bidirectionalMessaging': 'true',
+		'__buildtimeSettings__.scopedTimerFunctions': 'true',
 		'__buildtimeSettings__.sandboxInitDeadlineInMs': '4000',
 		'__buildtimeSettings__.innerSandboxInitDeadlineInMs': '1500',
 		'__buildtimeSettings__.enhancedWrapper': 'true',
@@ -143,6 +144,12 @@ const options = {
 		'__buildtimeSettings__.censorUnsafeExpressions': 'true',
 		'__buildtimeSettings__.isolationStategyIframeSole': 'true',
 		'__buildtimeSettings__.isolationStategyIframeWorker': 'true',
+		'EMessageTypes.SANDBOX_READY': '0',
+		'EMessageTypes.REQUEST': '1',
+		'EMessageTypes.DESTROY': '2',
+		'EMessageTypes.RESULT': '3',
+		'EMessageTypes.ERROR': '4',
+		'EMessageTypes.GLOBAL_ERROR': '5',
 	},
 };
 

@@ -13,4 +13,28 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+import esbuild from 'esbuild';
+
+export default (
+	resolveDir: string,
+	path: string,
+	exportName: string,
+): Promise<string> =>
+	esbuild
+		.build({
+			stdin: {
+				contents: `import { ${exportName} } from ${JSON.stringify(
+					path,
+				)}; self[${JSON.stringify(
+					exportName,
+				)}] = ${exportName}; self.m = ${exportName};`,
+				loader: 'js',
+				resolveDir: resolveDir,
+				sourcefile: 'browser-bundle.mjs',
+			},
+			bundle: true,
+			format: 'iife',
+			platform: 'node',
+			write: false,
+		})
+		.then((buildResult) => buildResult.outputFiles[0].text);

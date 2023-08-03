@@ -1,93 +1,106 @@
 {
-  "name": "@exact-realty/ecmascript-sandbox",
-  "version": "0.0.12",
-  "description": "Sandbox for isolating ECMAScript code",
-  "main": "dist/index.js",
-  "module": "./dist/index.mjs",
-  "exports": {
-    ".": {
-      "deno": {
-        "types": "./dist/exports/worker.d.ts",
-        "default": "./dist/exports/worker.mjs"
-      },
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      }
-    },
-    "./browser": {
-      "import": {
-        "types": "./dist/exports/browser.d.ts",
-        "default": "./dist/exports/browser.mjs"
-      },
-      "require": {
-        "types": "./dist/exports/browser.d.ts",
-        "default": "./dist/exports/browser.js"
-      }
-    },
-    "./nodejs": {
-      "import": {
-        "types": "./dist/exports/nodejs.d.ts",
-        "default": "./dist/exports/nodejs.mjs"
-      },
-      "require": {
-        "types": "./dist/exports/nodejs.d.ts",
-        "default": "./dist/exports/nodejs.js"
-      }
-    },
-    "./worker": {
-      "import": {
-        "types": "./dist/exports/worker.d.ts",
-        "default": "./dist/exports/worker.mjs"
-      },
-      "require": {
-        "types": "./dist/exports/worker.d.ts",
-        "default": "./dist/exports/worker.js"
-      }
-    }
-  },
-  "files": [
-    "dist/**/*"
-  ],
-  "scripts": {
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "build": "tsc --emitDeclarationOnly --declarationMap && node esbuild.mjs",
-    "test:unit": "mocha src/**/*.spec.ts",
-    "test:e2e": "mocha test/**/*.spec.ts",
-    "test": "npm run test:unit && npm run build && npm run test:e2e",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
-    "preversion": "npm run lint",
-    "version": "npm run lint && git add -A src",
-    "postversion": "git push && git push --tags"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Exact-Realty/ecmascript-sandbox.git"
-  },
-  "author": "Exact Realty Limited",
-  "license": "ISC",
-  "devDependencies": {
-    "@exact-realty/esbuild-plugin-inline-js": "^1.1.3",
-    "@types/mocha": "^10.0.1",
-    "@types/selenium-webdriver": "^4.1.15",
-    "@typescript-eslint/eslint-plugin": "^6.2.1",
-    "@typescript-eslint/parser": "^6.2.1",
-    "esbuild": "^0.18.17",
-    "eslint": "^8.46.0",
-    "eslint-config-prettier": "^8.9.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "google-closure-compiler": "^20230502.0.0",
-    "mocha": "^10.2.0",
-    "prettier": "^3.0.0",
-    "selenium-webdriver": "^4.11.1",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
-  },
-  "keywords": ["Node.js", "browser", "csp", "deno", "ecmascript", "iframe","isolation", "sandbox", "security", "vm", "webworker", "worker"]
+	"name": "@exact-realty/ecmascript-sandbox",
+	"version": "0.0.13",
+	"description": "Sandbox for isolating ECMAScript code",
+	"main": "dist/index.js",
+	"module": "./dist/index.mjs",
+	"exports": {
+		".": {
+			"deno": {
+				"types": "./dist/exports/worker.d.ts",
+				"default": "./dist/exports/worker.mjs"
+			},
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./browser": {
+			"import": {
+				"types": "./dist/exports/browser.d.ts",
+				"default": "./dist/exports/browser.mjs"
+			},
+			"require": {
+				"types": "./dist/exports/browser.d.ts",
+				"default": "./dist/exports/browser.js"
+			}
+		},
+		"./nodejs": {
+			"import": {
+				"types": "./dist/exports/nodejs.d.ts",
+				"default": "./dist/exports/nodejs.mjs"
+			},
+			"require": {
+				"types": "./dist/exports/nodejs.d.ts",
+				"default": "./dist/exports/nodejs.js"
+			}
+		},
+		"./worker": {
+			"import": {
+				"types": "./dist/exports/worker.d.ts",
+				"default": "./dist/exports/worker.mjs"
+			},
+			"require": {
+				"types": "./dist/exports/worker.d.ts",
+				"default": "./dist/exports/worker.js"
+			}
+		}
+	},
+	"files": [
+		"dist/**/*"
+	],
+	"scripts": {
+		"lint": "eslint . --ext .js,.jsx,.ts,.tsx,.json",
+		"lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx,.json --fix",
+		"build": "tsc --emitDeclarationOnly --declarationMap && node esbuild.mjs",
+		"test:unit": "mocha src/**/*.spec.ts",
+		"test:e2e": "mocha test/**/*.spec.ts",
+		"test": "npm run test:unit && npm run build && npm run test:e2e",
+		"prepare": "npm run build",
+		"prepublishOnly": "npm test && npm run lint",
+		"preversion": "npm run lint",
+		"version": "npm run lint && git add -A src",
+		"postversion": "git push && git push --tags"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Exact-Realty/ecmascript-sandbox.git"
+	},
+	"author": "Exact Realty Limited",
+	"license": "ISC",
+	"devDependencies": {
+		"@exact-realty/esbuild-plugin-inline-js": "^1.1.3",
+		"@types/mocha": "^10.0.1",
+		"@types/selenium-webdriver": "^4.1.15",
+		"@typescript-eslint/eslint-plugin": "^6.2.1",
+		"@typescript-eslint/parser": "^6.2.1",
+		"esbuild": "^0.18.17",
+		"eslint": "^8.46.0",
+		"eslint-config-prettier": "^8.9.0",
+		"eslint-plugin-prettier": "^5.0.0",
+		"google-closure-compiler": "^20230502.0.0",
+		"mocha": "^10.2.0",
+		"prettier": "^3.0.0",
+		"selenium-webdriver": "^4.11.1",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.1.6"
+	},
+	"keywords": [
+		"Node.js",
+		"browser",
+		"csp",
+		"deno",
+		"ecmascript",
+		"iframe",
+		"isolation",
+		"sandbox",
+		"security",
+		"vm",
+		"webworker",
+		"worker"
+	]
 }

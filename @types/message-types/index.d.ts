@@ -13,4 +13,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+declare const enum EMessageTypes {
+	SANDBOX_READY,
+	REQUEST,
+	DESTROY,
+	RESULT,
+	ERROR,
+	GLOBAL_ERROR,
+}

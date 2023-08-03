@@ -1,0 +1,38 @@
+[
+	["''", true],
+	["%", "SyntaxError"],
+	["eval('')", "EvalError"],
+	["clearTimeout(setTimeout('', 1000))", "EvalError"],
+	["clearInterval(setInterval('', 1000))", "EvalError"],
+	["clearTimeout(setTimeout(Boolean, 1000))", true],
+	["clearInterval(setInterval(Boolean, 1000))", true],
+	["Function('')", "EvalError"],
+	["new Function('')", "EvalError"],
+	["(()=>{}).constructor('')", "EvalError"],
+	["new ((()=>{}).constructor)('')", "EvalError"],
+	["(async ()=>{}).constructor('')", "EvalError"],
+	["new ((async ()=>{}).constructor)('')", "EvalError"],
+	["(function* (){}).constructor('')", "EvalError"],
+	["new ((function* (){}).constructor)('')", "EvalError"],
+	["(async function* (){}).constructor('')", "EvalError"],
+	["new ((async function* (){}).constructor)('')", "EvalError"],
+	["Boolean.constructor('')", "EvalError"],
+	["new (Boolean.constructor)('')", "EvalError"],
+	["Boolean.constructor.bind(Boolean)('')", "EvalError"],
+	[
+		"Function.prototype.bind.call(Boolean.constructor, Boolean)('')",
+		"EvalError"
+	],
+	["class x extends Boolean.constructor{};new x()", "EvalError"],
+	["class x extends Boolean{};new x()", true],
+	["class x extends $notDefined$.constructor{}", "ReferenceError"],
+	["class x extends globalThis.$notDefined$.constructor{}", "TypeError"],
+	[
+		"return new Proxy(_=>_,{get:new Proxy(_=>_,{apply(_0,_1,args){args.constructor.constructor('throw`fail`')()}})})",
+		"DataCloneError"
+	],
+	[
+		"((x,o)=>o.keys(o.getOwnPropertyDescriptors(x)).map(k=>{try{delete x[k]}catch{}}))(globalThis,Object)",
+		true
+	]
+]

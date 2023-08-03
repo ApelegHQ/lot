@@ -13,4 +13,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+/**
+ * Censors the use of the `import` keyword in a given script.
+ * Replaces occurrences of "import" with an escaped version.
+ *
+ * This function aims to prevent import expressions from being used, as they
+ * may be used to load arbitrary code.
+ *
+ * @param script - The script to be processed.
+ * @returns The modified script with "import" occurrences censored where
+ * applicable.
+ */
+const censorUnsafeExpressions = (script: string): string => {
+	// Remove import expresions from the code by introducing an escape sequence
+	return script.replace(/\bimport\b/g, 'im\\u0070ort');
+};
+
+export default censorUnsafeExpressions;
