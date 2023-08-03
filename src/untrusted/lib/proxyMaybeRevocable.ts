@@ -13,4 +13,27 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+import { PX } from './utils.js';
+
+type TProxyMaybeRevocable = {
+	<T extends object>(
+		revocable: boolean | null,
+		target: T,
+		handler: ProxyHandler<T>,
+	): {
+		proxy: T;
+		revoke: () => void;
+	};
+};
+
+const proxyMaybeRevocable: TProxyMaybeRevocable = (revocable, ...args) => {
+	if (revocable) {
+		return Proxy.revocable(...args);
+	}
+	return {
+		['proxy']: revocable === null ? args[0] : new PX(...args),
+		['revoke']: Boolean,
+	};
+};
+
+export default proxyMaybeRevocable;

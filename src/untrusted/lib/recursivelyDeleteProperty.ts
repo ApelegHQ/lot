@@ -13,4 +13,29 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+import { oGetPrototypeOf, oHasOwnProperty } from './utils.js';
+
+/**
+ * Recursively deletes a property from an object or its prototype chain.
+ *
+ * @template T - The object type.
+ * @param o - The object from which the property should be deleted.
+ * @param p - The property name to delete from the object.
+ * @returns - This function does not return a value.
+ *
+ * @example
+ * const obj = Object.create({ prop: 'value' });
+ * // deletes 'prop' from the object's prototype
+ * recursivelyDeleteProperty(obj, 'prop');
+ */
+const recursivelyDeleteProperty = <T extends object>(o: T, p: keyof T) => {
+	while (o && p in o) {
+		if (oHasOwnProperty(o, p)) {
+			delete o[p];
+			return;
+		}
+		o = oGetPrototypeOf(o);
+	}
+};
+
+export default recursivelyDeleteProperty;

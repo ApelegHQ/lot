@@ -144,6 +144,12 @@ const options = {
 		'__buildtimeSettings__.censorUnsafeExpressions': 'true',
 		'__buildtimeSettings__.isolationStategyIframeSole': 'true',
 		'__buildtimeSettings__.isolationStategyIframeWorker': 'true',
+		'EMessageTypes.SANDBOX_READY': '0',
+		'EMessageTypes.REQUEST': '1',
+		'EMessageTypes.DESTROY': '2',
+		'EMessageTypes.RESULT': '3',
+		'EMessageTypes.ERROR': '4',
+		'EMessageTypes.GLOBAL_ERROR': '5',
 	},
 };
 

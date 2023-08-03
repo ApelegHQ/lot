@@ -26,5 +26,13 @@
 	["class x extends Boolean.constructor{};new x()", "EvalError"],
 	["class x extends Boolean{};new x()", true],
 	["class x extends $notDefined$.constructor{}", "ReferenceError"],
-	["class x extends self.$notDefined$.constructor{}", "TypeError"]
+	["class x extends globalThis.$notDefined$.constructor{}", "TypeError"],
+	[
+		"return new Proxy(_=>_,{get:new Proxy(_=>_,{apply(_0,_1,args){args.constructor.constructor('throw`fail`')()}})})",
+		"DataCloneError"
+	],
+	[
+		"((x,o)=>o.keys(o.getOwnPropertyDescriptors(x)).map(k=>{try{delete x[k]}catch{}}))(globalThis,Object)",
+		true
+	]
 ]

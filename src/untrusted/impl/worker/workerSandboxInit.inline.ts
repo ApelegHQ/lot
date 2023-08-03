@@ -13,4 +13,22 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+import * as Logger from '../../lib/Logger.js';
+import { aIsArray, fnApply } from '../../lib/utils.js';
+import workerSandboxInner from './workerSandboxInner.js';
+
+const listener = (event: MessageEvent) => {
+	if (
+		!event.isTrusted ||
+		!aIsArray(event.data) ||
+		event.data[0] !== EMessageTypes.SANDBOX_READY
+	)
+		return;
+
+	Logger.info('Received SANDBOX_READY from parent. Creating sandbox.');
+	globalThis.removeEventListener('message', listener, false);
+	fnApply(workerSandboxInner, null, event.data.slice(1));
+};
+
+Logger.info('Worker started, registering event listener');
+globalThis.addEventListener('message', listener, false);

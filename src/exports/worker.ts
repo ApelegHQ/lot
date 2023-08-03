@@ -13,4 +13,4 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../impl/worker/workerSandbox.js';
+export { default } from '../trusted/impl/worker/workerSandbox.js';

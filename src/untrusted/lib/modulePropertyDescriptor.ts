@@ -13,4 +13,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+import { oCreate } from './utils.js';
+
+const modulePropertyDescriptor: PropertyDescriptor = {
+	['value']: oCreate(null, {
+		['exports']: {
+			['value']: oCreate(null),
+			['writable']: true,
+			['enumerable']: true,
+			['configurable']: true,
+		},
+	}),
+};
+
+export default modulePropertyDescriptor;
