@@ -14,7 +14,8 @@
  */
 
 import assert from 'node:assert/strict';
-import { nodejsSandbox as m } from '../dist/index';
+import { nodejsSandbox as m } from '../../../dist/index';
+import baseTests from '../../lib/baseTests.json';
 
 describe('Node.js', () => {
 	const controller = new AbortController();
@@ -64,54 +65,32 @@ describe('Node.js', () => {
 			await assert.rejects(sandbox);
 		});
 
-		const SUCCESS = Symbol();
-
-		const tests: [string, string | RegExp | typeof SUCCESS][] = [
-			['""', SUCCESS],
-			['%', 'SyntaxError'],
-			['eval("")', 'EvalError'],
-			['clearTimeout(setTimeout("", 1000))', 'EvalError'],
-			['clearInterval(setInterval("", 1000))', 'EvalError'],
-			['clearTimeout(setTimeout(Boolean, 1000))', SUCCESS],
-			//// This causes the tests to hang
-			// ['clearInterval(setInterval(Boolean, 1000))', SUCCESS],
-			['Function("")', 'EvalError'],
-			['new Function("")', 'EvalError'],
-			['(()=>{}).constructor("")', 'EvalError'],
-			['new ((()=>{}).constructor)("")', 'EvalError'],
-			['(async ()=>{}).constructor("")', 'EvalError'],
-			['new ((async ()=>{}).constructor)("")', 'EvalError'],
-			['(function* (){}).constructor("")', 'EvalError'],
-			['new ((function* (){}).constructor)("")', 'EvalError'],
-			['(async function* (){}).constructor("")', 'EvalError'],
-			['new ((async function* (){}).constructor)("")', 'EvalError'],
-			['class x extends Boolean.constructor{};new x()', 'EvalError'],
-			['class x extends Boolean{};new x()', SUCCESS],
-			[
-				'class x extends TextEncoder.constructor{}',
-				/^(Type|Reference)Error$/,
-			],
-			['class x extends self.TextEncoder.constructor{}', 'TypeError'],
-		];
-
-		tests.forEach(([expression, errorName]) => {
+		baseTests.forEach(([expression, errorName]: unknown[]) => {
 			it(`${expression} ${
-				errorName === SUCCESS
+				errorName === true
 					? 'succeeds'
 					: `causes error ${JSON.stringify(errorName)}`
 			}`, async () => {
-				const sandbox = m(expression, null, null, signal);
-				if (errorName === SUCCESS) {
+				const sandbox = m(String(expression), null, null, signal);
+				if (errorName === true) {
 					await assert.doesNotReject(sandbox);
 				} else {
-					await assert.rejects(sandbox, { name: errorName });
+					await assert.rejects(sandbox, {
+						name:
+							// TODO: Handle this in a different
+							// way. ReferenceError only happens
+							// when not using globalProxy
+							errorName === 'ReferenceError'
+								? 'TypeError'
+								: errorName,
+					});
 				}
 			});
 		});
 
-		tests.forEach(([expression, errorName]) => {
+		baseTests.forEach(([expression, errorName]: unknown[]) => {
 			it(`Task with ${expression} ${
-				errorName === SUCCESS
+				errorName === true
 					? 'succeeds'
 					: `causes error ${JSON.stringify(errorName)}`
 			}`, async () => {
@@ -125,10 +104,18 @@ describe('Node.js', () => {
 					await assert.rejects(sandbox, { name: errorName });
 				} else {
 					const result = (await sandbox)('foo');
-					if (errorName === SUCCESS) {
+					if (errorName === true) {
 						await assert.doesNotReject(result);
 					} else {
-						await assert.rejects(result, { name: errorName });
+						await assert.rejects(result, {
+							name:
+								// TODO: Handle this in a different
+								// way. ReferenceError only happens
+								// when not using globalProxy
+								errorName === 'ReferenceError'
+									? 'TypeError'
+									: errorName,
+						});
 					}
 				}
 			});

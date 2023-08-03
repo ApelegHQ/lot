@@ -15,8 +15,8 @@
 
 import modulePropertyDescriptor from './modulePropertyDescriptor.js';
 
-type TGlobalProxy<T> = Omit<T, 'module'> & {
-	['module']: { ['exports']: object };
+type TGlobalProxy<T> = T & {
+	['module']: { ['exports']: unknown };
 };
 
 /**
@@ -40,7 +40,7 @@ type TGlobalProxy<T> = Omit<T, 'module'> & {
  * @param ctx - The context object to create the proxy for.
  * @returns An object containing the proxy and the revoke function.
  */
-const globalProxy = <T extends Record<PropertyKey, unknown>>(
+const globalProxy = <T extends object>(
 	ctx: T,
 ): {
 	['proxy']: TGlobalProxy<T>;
@@ -60,7 +60,7 @@ const globalProxy = <T extends Record<PropertyKey, unknown>>(
 			},
 			['deleteProperty']: (_, p) => {
 				if (p === 'module') return false;
-				return delete ctx[p];
+				return delete ctx[p as keyof T];
 			},
 			['get'](o, p) {
 				// Block getting symbols
@@ -73,7 +73,7 @@ const globalProxy = <T extends Record<PropertyKey, unknown>>(
 					return;
 				}
 				if (p === 'module') return o[p];
-				return ctx[p];
+				return ctx[p as keyof T];
 			},
 			['getOwnPropertyDescriptor'](o, p) {
 				// Block getting symbols
@@ -102,7 +102,7 @@ const globalProxy = <T extends Record<PropertyKey, unknown>>(
 			},
 			['set'](_, p, v) {
 				if (p === 'module') return false;
-				ctx[p as unknown as keyof T] = v;
+				ctx[p as keyof T] = v;
 				return true;
 			},
 			['setPrototypeOf']() {

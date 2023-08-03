@@ -220,8 +220,12 @@ const nativeWrapperFactory =
 
 			const ret = setTimer(...args);
 
-			if (typeof ret !== 'number') {
-				throw new Error('Unexpected return value');
+			// Warning: this is unsafe because it exposes an Object to the
+			// sandbox
+			if (__buildtimeSettings__.scopedTimerFunctions) {
+				if (typeof ret !== 'number') {
+					throw new Error('Unexpected return value');
+				}
 			}
 
 			return ret;

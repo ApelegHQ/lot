@@ -11,7 +11,7 @@
 		"esModuleInterop": true,
 		"skipLibCheck": false,
 		"forceConsistentCasingInFileNames": true,
-		"resolveJsonModule": false,
+		"resolveJsonModule": true,
 		"lib": ["es6", "dom"],
 		"typeRoots": ["./node_modules/@types", "./@types"],
 		"declaration": true,
@@ -22,10 +22,6 @@
 		"experimentalResolver": true
 	},
 	"include": ["src/**/*"],
-	"exclude": [
-		"node_modules",
-		"build",
-		"dist"
-	],
+	"exclude": ["node_modules", "build", "dist"],
 	"types": ["node"]
 }

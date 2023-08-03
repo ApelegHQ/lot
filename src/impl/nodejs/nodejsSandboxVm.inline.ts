@@ -104,14 +104,14 @@ const nodejsSandbox = (
 		);
 	};
 
-	const [scopedSetTimeout, scopedClearTimeout] = scopedTimerFunction(
-		g_setTimeout,
-		g_clearTimeout,
-	);
-	const [scopedSetInterval, scopedClearInterval] = scopedTimerFunction(
-		g_setInterval,
-		g_clearInterval,
-	);
+	const [scopedSetTimeout, scopedClearTimeout] =
+		__buildtimeSettings__.scopedTimerFunctions
+			? scopedTimerFunction(g_setTimeout, g_clearTimeout)
+			: [g_setTimeout, g_clearTimeout];
+	const [scopedSetInterval, scopedClearInterval] =
+		__buildtimeSettings__.scopedTimerFunctions
+			? scopedTimerFunction(g_setInterval, g_clearInterval)
+			: [g_setInterval, g_clearInterval];
 
 	// These are some functions to expose to the sandbox that Node.js does
 	// not provide with vm, as well as some utility functions for communication

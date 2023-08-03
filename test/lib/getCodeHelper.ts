@@ -14,33 +14,27 @@
  */
 
 import esbuild from 'esbuild';
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-/**
- * @param {string} path
- * @param {string} exportName
- * @returns {Promise<string>}
- */
-export default async (path, exportName) => {
-	const buildResult = await esbuild.build({
-		stdin: {
-			contents: `import { ${exportName} } from ${JSON.stringify(
-				path,
-			)}; self[${JSON.stringify(
-				exportName,
-			)}] = ${exportName}; self.m = ${exportName};`,
-			loader: 'js',
-			resolveDir: __dirname,
-			sourcefile: 'browser-bundle.mjs',
-		},
-		bundle: true,
-		format: 'iife',
-		platform: 'node',
-		write: false,
-	});
-
-	return buildResult.outputFiles[0].text;
-};
+export default (
+	resolveDir: string,
+	path: string,
+	exportName: string,
+): Promise<string> =>
+	esbuild
+		.build({
+			stdin: {
+				contents: `import { ${exportName} } from ${JSON.stringify(
+					path,
+				)}; self[${JSON.stringify(
+					exportName,
+				)}] = ${exportName}; self.m = ${exportName};`,
+				loader: 'js',
+				resolveDir: resolveDir,
+				sourcefile: 'browser-bundle.mjs',
+			},
+			bundle: true,
+			format: 'iife',
+			platform: 'node',
+			write: false,
+		})
+		.then((buildResult) => buildResult.outputFiles[0].text);

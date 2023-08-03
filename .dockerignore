@@ -3,3 +3,4 @@ Dockerfile
 **/.gitignore
 **/node_modules
 **/build
+**/dist

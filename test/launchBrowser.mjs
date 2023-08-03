@@ -15,8 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import { fileURLToPath } from 'node:url';
 import webdriver from 'selenium-webdriver';
-import getCodeHelper from './getCodeHelper.mjs';
+import getCodeHelper from './lib/getCodeHelper.mjs';
+import { dirname } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const modules = {
 	['browser']: 'browserSandbox',
@@ -35,7 +39,7 @@ let browser;
 /**
  * @type {(typeof modules)[string]}
  */
-let module;
+let moduleName;
 
 /**
  * @param {boolean} err
@@ -87,10 +91,10 @@ if (process.argv.length !== 4) {
 		usage(true);
 	}
 
-	module = modules[temp];
+	moduleName = modules[temp];
 }
 
-getCodeHelper('../dist/index.mjs', module)
+getCodeHelper(__dirname, '../dist/index.mjs', moduleName)
 	.then(async (code) => {
 		const driver = await new webdriver.Builder()
 			.forBrowser(browser)

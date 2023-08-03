@@ -184,6 +184,18 @@ declare namespace __buildtimeSettings__ {
 	 */
 	const bidirectionalMessaging: boolean;
 
+	/** Flag to indicate whether timer functions (setTimeout, setInterval,
+	 * etc.) should return a value distinct from that of the host function, to
+	 * ensure that calls to clearTimeout, clearInterval, etc. cannot be used
+	 * to unset timers outside of the sandbox scope.
+	 *
+	 * WARNING: This flag has security implications and you should not disable
+	 * it without careful consideration. For Node.js, it'll expose an Object
+	 * to the sandbox that may be used to obtain access to the global
+	 * environment.
+	 */
+	const scopedTimerFunctions: boolean;
+
 	/**
 	 * Flag to indicate whether global types are fixed.
 	 *

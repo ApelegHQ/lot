@@ -13,31 +13,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import webdriver from 'selenium-webdriver';
-import { browserTestSuites } from './browserTestSuites';
-import getCodeHelper from './getCodeHelper';
+import {
+	enabledBrowsers,
+	webdriverTestSuites,
+} from '../../lib/webdriverTestSuites.js';
 
-const enabledBrowsers = new Set(
-	process.env.WEBDRIVER_BROWSERS?.split(/[ ,;]/) ?? [
-		webdriver.Browser.CHROME,
-		webdriver.Browser.EDGE,
-		webdriver.Browser.FIREFOX,
-	],
-);
+import getCodeHelper from '../../lib/getCodeHelper.js';
 
 ['browserSandbox'].forEach((m) =>
-	getCodeHelper('../dist/index.mjs', m).then((code) =>
-		[
-			[webdriver.Browser.CHROME, 'Chrome'],
-			[webdriver.Browser.EDGE, 'Edge'],
-			[webdriver.Browser.FIREFOX, 'Firefox'],
-		]
-			.filter(([browserName]) => enabledBrowsers.has(browserName))
-			.forEach(([browserName, browserDisplayName]) => {
-				describe(
-					`Browser: ${browserDisplayName}, module: ${m}`,
-					browserTestSuites(code, browserName),
-				);
-			}),
+	getCodeHelper(__dirname, '../../../dist/index.mjs', m).then((code) =>
+		enabledBrowsers().forEach(([browserName, browserDisplayName]) => {
+			describe(
+				`Browser: ${browserDisplayName}, module: ${m}`,
+				webdriverTestSuites(code, browserName),
+			);
+		}),
 	),
 );

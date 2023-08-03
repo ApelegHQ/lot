@@ -28,9 +28,7 @@ export interface ISandbox {
 }
 
 export type TContext = Record<PropertyKey, unknown> & {
-	global: TContext;
 	globalThis: TContext;
-	self: TContext;
 	module: { exports: unknown };
 };
 
