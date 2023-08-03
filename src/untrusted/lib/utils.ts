@@ -30,6 +30,9 @@ const l_fnpApply = l_Function.apply;
 const l_fnpCall = l_Function.call;
 l_fnpApply.call = l_fnpCall;
 
+const l_crypto = crypto;
+const l_cGRC = l_crypto.getRandomValues;
+
 export const S = String;
 export const E = Error;
 export const EE = EvalError;
@@ -92,3 +95,6 @@ export const oSetPrototypeOf = l_Object.setPrototypeOf;
 export const sFromCharCode = String.fromCharCode;
 
 export const u8Alloc = (n: number) => new l_Uint8Array(n);
+
+export const cGRC = <T extends ArrayBufferView | null>(array: T): T =>
+	fnCall(l_cGRC, l_crypto, array);
