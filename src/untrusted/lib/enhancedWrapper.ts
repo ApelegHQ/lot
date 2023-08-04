@@ -16,7 +16,7 @@
 import * as fixGlobalTypes from 'inline:./fixGlobalTypes.inline.js';
 import getRandomSecret from './getRandomSecret.js';
 import global from './global.js';
-import { E, u8Alloc } from './utils.js';
+import { E, sSlice, u8Alloc } from './utils.js';
 
 const enhancedWrapper = (script: string): string => {
 	if (
@@ -42,13 +42,13 @@ const enhancedWrapper = (script: string): string => {
 		? getRandomSecret()
 		: '';
 	const canaryStart = __buildtimeSettings__.dynamicCodeGeneration
-		? canary.slice(0, canary.length / 2)
+		? sSlice(canary, 0, canary.length / 2)
 		: '';
 	const canaryMid = __buildtimeSettings__.dynamicCodeGeneration
-		? canary.slice(canary.length / 4, canary.length / 2)
+		? sSlice(canary, canary.length / 4, canary.length / 2)
 		: '';
 	const canaryEnd = __buildtimeSettings__.dynamicCodeGeneration
-		? canary.slice(canary.length / 2)
+		? sSlice(canary, canary.length / 2)
 		: '';
 
 	const fixGlobals = __buildtimeSettings__.fixGlobalTypes

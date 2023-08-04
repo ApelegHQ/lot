@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { TE, aIsArray, fnCall } from './utils.js';
+import { TE, aIsArray, aSlice, fnCall } from './utils.js';
 
 /**
  * Factory function that creates a message event listener and attaches it to
@@ -79,7 +79,7 @@ const createMessageEventListenerFactory =
 					)
 						return;
 
-					handler(secret ? event.data.slice(1) : event.data);
+					handler(secret ? aSlice(event.data, 1) : event.data);
 			  };
 
 		fnCall(

@@ -111,6 +111,20 @@ const exactRealtyClosureBuilderPlugin = {
 	},
 };
 
+const sequence = () => {
+	const generator = (function* () {
+		yield String(17);
+		for (let i = 119; i !== 17; i = (29 * i + 7) % 127) {
+			yield String(i);
+		}
+		throw new Error('Sequence depleted');
+	})();
+
+	return { next: () => generator.next().value };
+};
+
+const EMessageTypesSequence = sequence();
+
 const options = {
 	target: 'es2015',
 	bundle: true,
@@ -144,12 +158,13 @@ const options = {
 		'__buildtimeSettings__.censorUnsafeExpressions': 'true',
 		'__buildtimeSettings__.isolationStategyIframeSole': 'true',
 		'__buildtimeSettings__.isolationStategyIframeWorker': 'true',
-		'EMessageTypes.SANDBOX_READY': '0',
-		'EMessageTypes.REQUEST': '1',
-		'EMessageTypes.DESTROY': '2',
-		'EMessageTypes.RESULT': '3',
-		'EMessageTypes.ERROR': '4',
-		'EMessageTypes.GLOBAL_ERROR': '5',
+		// Enums
+		'EMessageTypes.SANDBOX_READY': EMessageTypesSequence.next(),
+		'EMessageTypes.REQUEST': EMessageTypesSequence.next(),
+		'EMessageTypes.DESTROY': EMessageTypesSequence.next(),
+		'EMessageTypes.RESULT': EMessageTypesSequence.next(),
+		'EMessageTypes.ERROR': EMessageTypesSequence.next(),
+		'EMessageTypes.GLOBAL_ERROR': EMessageTypesSequence.next(),
 	},
 };
 

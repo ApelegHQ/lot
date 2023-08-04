@@ -26,6 +26,7 @@ import {
 	aForEach,
 	aIsArray,
 	aMap,
+	aPush,
 	fnApply,
 	oCreate,
 	oDefineProperties,
@@ -161,7 +162,7 @@ const createContext = (
 			globalPrototypeChain[globalPrototypeChain.length - 1],
 		);
 		if (p === null) break;
-		globalPrototypeChain.push(p);
+		aPush(globalPrototypeChain, p);
 	}
 
 	const getGlobalPropertyDescriptor = (prop: string) => {

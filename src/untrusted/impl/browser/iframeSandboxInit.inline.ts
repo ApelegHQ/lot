@@ -14,12 +14,13 @@
  */
 
 import * as Logger from '../../lib/Logger.js';
-import { aIsArray, fnApply } from '../../lib/utils.js';
+import { aIsArray, aSlice, fnApply, sSlice, sSplit } from '../../lib/utils.js';
 import iframeSandboxInner from './iframeSandboxInner.js';
 
-const [initMesssageKeyA, initMesssageKeyB] = self.location.hash
-	.slice(1)
-	.split('-');
+const [initMesssageKeyA, initMesssageKeyB] = sSplit(
+	sSlice(self.location.hash, 1),
+	'-',
+);
 
 const listener = (event: MessageEvent) => {
 	if (
@@ -37,7 +38,7 @@ const listener = (event: MessageEvent) => {
 
 	self.removeEventListener('message', listener, false);
 
-	fnApply(iframeSandboxInner, null, event.data.slice(3));
+	fnApply(iframeSandboxInner, null, aSlice(event.data, 3));
 };
 
 Logger.info('Iframe loaded, registering event listener');

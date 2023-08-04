@@ -14,10 +14,11 @@
  */
 
 import {
+	aForEach,
 	aIncludes,
 	aIsArray,
 	aMap,
-	EE,
+	E,
 	oCreate,
 	oDefineProperty,
 	oHasOwnProperty,
@@ -53,15 +54,14 @@ const MAX_DEPTH = 3;
 const extractErrorInformation = (e: unknown, depth?: number) => {
 	if (!aIncludes(['object', 'function'], typeof e)) {
 		return e;
-	} else if (e && (e instanceof Error || oHasOwnProperty(e, 'stack'))) {
-		const d: unknown[] = aMap(
-			[
-				(e as Error).name && S((e as Error).name),
-				(e as Error).message && S((e as Error).message),
-				S((e as Error).stack),
-			],
-			S,
-		);
+	} else if (e && (e instanceof E || oHasOwnProperty(e, 'stack'))) {
+		const d: unknown[] = aMap(['name', 'message', 'stack'], (p) => {
+			try {
+				return S(e[p as unknown as keyof typeof e]);
+			} catch {
+				return '';
+			}
+		});
 
 		if ((!depth || depth < MAX_DEPTH) && oHasOwnProperty(e, 'cause')) {
 			d[3] = extractErrorInformation(
@@ -112,44 +112,39 @@ const reconstructErrorInformation = (d: unknown, depth?: number) => {
 		const errorClass =
 			oHasOwnProperty(globalThis, d[0] as PropertyKey) &&
 			typeof globalThis[d[0] as 'Error'] === 'function' &&
-			globalThis[d[0] as 'Error'].prototype instanceof EE
+			globalThis[d[0] as 'Error'].prototype instanceof E
 				? globalThis[d[0] as 'Error']
-				: EE;
+				: E;
 
 		const e = oCreate(errorClass.prototype);
 
-		if (d[0] !== errorClass.name) {
+		aForEach(['name', 'message', 'stack'], (p, i) => {
 			try {
-				oDefineProperty(e, 'name', {
+				if (d[i] !== e[p]) {
+					oDefineProperty(e, p, {
+						['configurable']: true,
+						['writable']: true,
+						['value']: S(d[i]),
+					});
+				}
+			} catch {
+				// reading or setting a property might fail
+			}
+		});
+
+		if ((!depth || depth < MAX_DEPTH) && d.length === 4) {
+			try {
+				oDefineProperty(e, 'cause', {
 					['configurable']: true,
 					['writable']: true,
-					['value']: S(d[0]),
+					['value']: reconstructErrorInformation(
+						d[3],
+						depth ? depth + 1 : 1,
+					),
 				});
-			} catch {
-				// 'name' might be read-only in certain environments
+			} catch (e) {
+				// reading or setting a property might fail
 			}
-		}
-		if (d[1]) {
-			oDefineProperty(e, 'message', {
-				['configurable']: true,
-				['writable']: true,
-				['value']: S(d[1]),
-			});
-		}
-		oDefineProperty(e, 'stack', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: S(d[2]),
-		});
-		if ((!depth || depth < MAX_DEPTH) && d.length === 4) {
-			oDefineProperty(e, 'cause', {
-				['configurable']: true,
-				['writable']: true,
-				['value']: reconstructErrorInformation(
-					d[3],
-					depth ? depth + 1 : 1,
-				),
-			});
 		}
 
 		return e;

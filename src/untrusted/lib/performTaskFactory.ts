@@ -23,6 +23,7 @@ import {
 	aIncludes,
 	aIsArray,
 	aMap,
+	aPush,
 	E,
 	oCreate,
 	oFreeze,
@@ -88,7 +89,7 @@ const performTaskFactory = (
 		pendingTasks[taskId] = [];
 
 		const taskPromise = new PM((resolve, reject) => {
-			pendingTasks[taskId].push(resolve, reject);
+			aPush(pendingTasks[taskId], resolve, reject);
 		});
 
 		try {
