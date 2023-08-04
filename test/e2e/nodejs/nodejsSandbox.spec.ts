@@ -17,14 +17,13 @@ import '../../../src/untrusted/lib/nodejsLoadWebcrypto.js'; // MUST BE AT THE TO
 
 import assert from 'node:assert/strict';
 import { nodejsSandbox as m } from '../../../dist/index';
+import assertRejectsWithFactory from '../../lib/assertRejectsWithFactory.js';
 import baseTests from '../../lib/baseTests.json';
+import wrapper from '../../lib/wrapper.js';
 
-const wrapper = (testCase: { (s: AbortSignal): Promise<void> }) => {
-	const controller = new AbortController();
-	const signal = controller.signal;
-
-	return () => testCase(signal).finally(() => controller.abort());
-};
+const assertRejectsWith = assertRejectsWithFactory((predicate, c) =>
+	assert.rejects(predicate, c),
+);
 
 describe('Node.js', () => {
 	describe('Can run tasks', async () => {
@@ -74,9 +73,9 @@ describe('Node.js', () => {
 	describe('Error conditions', async () => {
 		it(
 			'invalid syntax causes error',
-			wrapper(async (signal) => {
+			wrapper((signal) => {
 				const sandbox = m('\u0000', null, null, signal);
-				await assert.rejects(sandbox);
+				return assertRejectsWith(sandbox, 'SyntaxError');
 			}),
 		);
 
@@ -89,7 +88,7 @@ describe('Node.js', () => {
 							? 'succeeds'
 							: `causes error ${JSON.stringify(errorName)}`
 					}`,
-					wrapper(async (signal) => {
+					wrapper((signal) => {
 						const sandbox = m(
 							String(expression),
 							null,
@@ -97,17 +96,12 @@ describe('Node.js', () => {
 							signal,
 						);
 						if (errorName === true) {
-							await sandbox;
-						} else {
-							await assert.rejects(sandbox, {
-								name:
-									// TODO: Handle this in a different
-									// way. ReferenceError only happens
-									// when not using globalProxy
-									errorName === 'ReferenceError'
-										? 'TypeError'
-										: errorName,
-							});
+							return sandbox;
+						} else if (
+							typeof errorName === 'string' ||
+							Array.isArray(errorName)
+						) {
+							return assertRejectsWith(sandbox, errorName);
 						}
 					}),
 				);
@@ -122,7 +116,7 @@ describe('Node.js', () => {
 							? 'succeeds'
 							: `causes error ${JSON.stringify(errorName)}`
 					}`,
-					wrapper(async (signal) => {
+					wrapper((signal) => {
 						const sandbox = m(
 							`module.exports={foo:function(){${expression}}}`,
 							null,
@@ -130,22 +124,18 @@ describe('Node.js', () => {
 							signal,
 						);
 						if (errorName === 'SyntaxError') {
-							await assert.rejects(sandbox, { name: errorName });
+							return assertRejectsWith(sandbox, errorName);
 						} else {
-							const result = (await sandbox)('foo');
-							if (errorName === true) {
-								await result;
-							} else {
-								await assert.rejects(result, {
-									name:
-										// TODO: Handle this in a different
-										// way. ReferenceError only happens
-										// when not using globalProxy
-										errorName === 'ReferenceError'
-											? 'TypeError'
-											: errorName,
-								});
-							}
+							return sandbox.then((r) => {
+								const t = r('foo');
+								if (
+									typeof errorName === 'string' ||
+									Array.isArray(errorName)
+								) {
+									return assertRejectsWith(t, errorName);
+								}
+								return t;
+							});
 						}
 					}),
 				);

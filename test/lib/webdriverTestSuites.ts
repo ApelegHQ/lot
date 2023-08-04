@@ -183,7 +183,7 @@ export const webdriverTestSuites =
 											// TODO: Handle this in a different
 											// way. ReferenceError only happens
 											// when not using globalProxy
-											errorName === 'ReferenceError'
+											Array.isArray(errorName)
 												? 'TypeError'
 												: errorName,
 									},
@@ -238,7 +238,7 @@ export const webdriverTestSuites =
 											// TODO: Handle this in a different
 											// way. ReferenceError only happens
 											// when not using globalProxy
-											errorName === 'ReferenceError'
+											Array.isArray(errorName)
 												? 'TypeError'
 												: errorName,
 									},

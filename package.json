@@ -56,7 +56,8 @@
 	"scripts": {
 		"lint": "eslint . --ext .js,.jsx,.ts,.tsx,.json",
 		"lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx,.json --fix",
-		"build": "tsc --emitDeclarationOnly --declarationMap && node esbuild.mjs",
+		"ts:declaration": "tsc --emitDeclarationOnly --declarationMap --declaration",
+		"build": "npm run ts:declaration && node esbuild.mjs",
 		"test:unit": "mocha src/**/*.spec.ts",
 		"test:e2e": "mocha test/**/*.spec.ts",
 		"test": "npm run test:unit && npm run build && npm run test:e2e",
@@ -78,6 +79,7 @@
 		"@types/selenium-webdriver": "^4.1.15",
 		"@typescript-eslint/eslint-plugin": "^6.2.1",
 		"@typescript-eslint/parser": "^6.2.1",
+		"deno-types": "^1.25.0",
 		"esbuild": "^0.18.17",
 		"eslint": "^8.46.0",
 		"eslint-config-prettier": "^8.9.0",
