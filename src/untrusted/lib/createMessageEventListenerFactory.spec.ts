@@ -13,6 +13,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import './nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
+
 import assert from 'node:assert/strict';
 import createMessageEventListenerFactory from './createMessageEventListenerFactory.js';
 

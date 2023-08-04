@@ -13,6 +13,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import '../../../src/untrusted/lib/nodejsLoadWebcrypto.js'; // MUST BE AT THE TOP
+
 import assert from 'node:assert/strict';
 import { nodejsSandbox as m } from '../../../dist/index';
 import baseTests from '../../lib/baseTests.json';

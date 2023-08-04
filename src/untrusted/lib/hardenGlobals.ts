@@ -194,13 +194,13 @@ const disableURLStaticMethods = () => {
 		oDefineProperties(global.URL, {
 			['createObjectURL']: {
 				['writable']: true,
-				enumerable: true,
+				['enumerable']: true,
 				['configurable']: true,
 				['value']: String.bind(null),
 			},
 			['revokeObjectURL']: {
 				['writable']: true,
-				enumerable: true,
+				['enumerable']: true,
 				['configurable']: true,
 				['value']: String.prototype.at.bind(''),
 			},

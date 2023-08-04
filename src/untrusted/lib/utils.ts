@@ -44,6 +44,8 @@ export const PX = Proxy;
 export const RE = ReferenceError;
 export const TE = TypeError;
 
+export const mR = Math.random;
+
 const l_sP = S.prototype;
 const l_sSlice = l_sP.slice;
 const l_sSplit = l_sP.split;

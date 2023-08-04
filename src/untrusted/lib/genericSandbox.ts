@@ -176,7 +176,7 @@ const createContext = (
 
 		if ($global[prop as keyof typeof $global]) {
 			return {
-				enumerable: false,
+				['enumerable']: false,
 				['writable']: false,
 				['configurable']: true,
 				['value']: $global[prop as keyof typeof $global],

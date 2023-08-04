@@ -16,7 +16,7 @@
 import * as fixGlobalTypes from 'inline:./fixGlobalTypes.inline.js';
 import getRandomSecret from './getRandomSecret.js';
 import global from './global.js';
-import { E, sSlice, u8Alloc } from './utils.js';
+import { E, mR, sSlice, u8Alloc } from './utils.js';
 
 const enhancedWrapper = (script: string): string => {
 	if (
@@ -33,8 +33,7 @@ const enhancedWrapper = (script: string): string => {
 	// Math.random is fine here as it's a fallback and, while not
 	// ideal, it's also better than nothing
 	const guardCount = __buildtimeSettings__.dynamicCodeGeneration
-		? ((global.crypto?.getRandomValues(u8Alloc(1))[0] ??
-				((0, Math.random)() * 256) | 0) &
+		? ((global.crypto?.getRandomValues(u8Alloc(1))[0] ?? (mR() * 256) | 0) &
 				0xff) +
 		  1
 		: 0;
