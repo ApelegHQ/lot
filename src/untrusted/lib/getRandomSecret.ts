@@ -13,8 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import global from './global.js';
-import { aJoin, aMap, sFromCharCode, u8Alloc } from './utils.js';
+import { aJoin, aMap, cGRC, sFromCharCode, u8Alloc } from './utils.js';
 
 /**
  * Converts a given buffer into a Base16 string (using a custom logic)
@@ -55,7 +54,6 @@ const bufferToHex = (buffer: Uint8Array) =>
  *
  * @returns The randomly generated secret as a string.
  */
-const getRandomSecret = (): string =>
-	bufferToHex(global.crypto.getRandomValues(u8Alloc(16)));
+const getRandomSecret = (): string => bufferToHex(cGRC(u8Alloc(16)));
 
 export default getRandomSecret;

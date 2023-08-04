@@ -25,10 +25,16 @@ const l_aForEach = l_aP.forEach;
 const l_aIncludes = l_aP.includes;
 const l_aJoin = l_aP.join;
 const l_aMap = l_aP.map;
+const l_aPush = l_aP.push;
+const l_aSlice = l_aP.slice;
+
 const l_Function = (() => {}).constructor;
 const l_fnpApply = l_Function.apply;
 const l_fnpCall = l_Function.call;
 l_fnpApply.call = l_fnpCall;
+
+const l_crypto = crypto;
+const l_cGRC = l_crypto.getRandomValues;
 
 export const S = String;
 export const E = Error;
@@ -37,6 +43,12 @@ export const PM = Promise;
 export const PX = Proxy;
 export const RE = ReferenceError;
 export const TE = TypeError;
+
+export const mR = Math.random;
+
+const l_sP = S.prototype;
+const l_sSlice = l_sP.slice;
+const l_sSplit = l_sP.split;
 
 const l_oHasOwnPropery = l_oP.hasOwnProperty;
 
@@ -66,6 +78,13 @@ export const aMap = <TT, TU>(
 	callbackfn: (value: TT, index: number, array: TT[]) => TU,
 	thisArg?: TAny,
 ): TU[] => fnCall(l_aMap, a, callbackfn, thisArg);
+export const aPush = <TT>(a: TT[], ...items: TT[]): number =>
+	fnApply(l_aPush, a, items);
+export const aSlice = <TT>(
+	a: TT[],
+	start?: number | undefined,
+	end?: number | undefined,
+): TT[] => fnCall(l_aSlice, a, start, end);
 
 export const fnApply = <TT extends CallableFunction>(
 	fn: TT,
@@ -90,5 +109,26 @@ export const oKeys = l_Object.keys;
 export const oSetPrototypeOf = l_Object.setPrototypeOf;
 
 export const sFromCharCode = String.fromCharCode;
+export const sSlice = <T extends string>(
+	s: T,
+	start?: number | undefined,
+	end?: number | undefined,
+): T => fnCall(l_sSlice, s, start, end);
+export const sSplit = <T extends string>(
+	s: T,
+	separator:
+		| string
+		| RegExp
+		| {
+				[Symbol.split](
+					string: string,
+					limit?: number | undefined,
+				): string[];
+		  },
+	limit?: number | undefined,
+): T[] => fnCall(l_sSplit, s, separator, limit);
 
 export const u8Alloc = (n: number) => new l_Uint8Array(n);
+
+export const cGRC = <T extends ArrayBufferView | null>(array: T): T =>
+	fnCall(l_cGRC, l_crypto, array);

@@ -17,6 +17,7 @@ import * as Logger from '../../lib/Logger.js';
 import {
 	aFrom,
 	aIsArray,
+	aSlice,
 	fnApply,
 	oCreate,
 	oDefineProperty,
@@ -130,7 +131,7 @@ const listener = (event: MessageEvent) => {
 	oDefineProperty(Function, 'prototype', {
 		['value']: l_Function.constructor.prototype,
 	});
-	fnApply(workerSandboxInner, null, event.data.slice(1));
+	fnApply(workerSandboxInner, null, aSlice(event.data, 1));
 };
 
 const recreateError = (e: unknown): Error => {

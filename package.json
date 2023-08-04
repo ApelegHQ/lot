@@ -60,7 +60,7 @@
 		"test:unit": "mocha src/**/*.spec.ts",
 		"test:e2e": "mocha test/**/*.spec.ts",
 		"test": "npm run test:unit && npm run build && npm run test:e2e",
-		"prepare": "npm run build",
+		"prepack": "npm run build",
 		"prepublishOnly": "npm test && npm run lint",
 		"preversion": "npm run lint",
 		"version": "npm run lint && git add -A src",

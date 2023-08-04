@@ -13,9 +13,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import '../../lib/nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
+
 import * as nodejsSandboxInit from 'inline:./nodejsSandboxInit.inline.js';
 import vm from 'node:vm';
-import type { MessagePort } from 'node:worker_threads';
+import { MessagePort } from 'node:worker_threads';
 import { isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { createWrapperFn } from '../../lib/genericSandbox.js';
 import hardenGlobals from '../../lib/hardenGlobals.js';
@@ -37,14 +39,27 @@ const {
 	setInterval: g_setInterval,
 	setTimeout: g_setTimeout,
 	structuredClone: g_structuredClone,
+	MessageEvent: g_ME,
 } = global;
 const close = process.exit.bind(process, 0);
 const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
 
-class TrustedMessageEvent<T> extends MessageEvent<T> {
+// This is an ugly hack to support the lack of postMessage or the ability to set
+// isTrusted in events (although Node 19 seems to allow this). isTrusted is
+// used in workerSandbox, and disabling the check or the ability to do so could
+// affect the sandbox integrity in browsers.
+// A better longer term solution would be not checking for event.isTrusted
+// in the worker sandbox, or to add a build-time flag to detect building for
+// Node.js and adjusting accordingly, in a way that doesn't also affect browser
+// bundles.
+class TrustedMessageEvent<T> /* extends MessageEvent<T> */ {
 	constructor(type: string, eventInitDict?: MessageEventInit<T>) {
-		super(type, eventInitDict);
+		// super(type, eventInitDict);
+		g_Object.defineProperty(this, 'defaultPrevented', { ['value']: false });
 		g_Object.defineProperty(this, 'isTrusted', { ['value']: true });
+		g_Object.defineProperty(this, 'type', { ['value']: type });
+		const realEvent = new g_ME(type, eventInitDict);
+		g_Object.setPrototypeOf(this, realEvent);
 	}
 }
 
@@ -57,7 +72,7 @@ const postMessageFactory =
 					['data']: g_structuredClone(message),
 				}),
 				['origin']: origin,
-			}),
+			}) as unknown as MessageEvent,
 		);
 	};
 
@@ -177,11 +192,11 @@ const nodejsSandbox = (
 		},
 		['crypto']: {
 			['configurable']: true,
-			enumerable: true,
+			['enumerable']: true,
 			['value']: g_Object.create(null, {
 				['getRandomValues']: {
 					['writable']: true,
-					enumerable: true,
+					['enumerable']: true,
 					['configurable']: true,
 					['value']: getRandomValues,
 				},
