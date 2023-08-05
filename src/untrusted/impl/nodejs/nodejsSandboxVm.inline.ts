@@ -17,7 +17,7 @@ import '../../lib/nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
 
 import * as nodejsSandboxInit from 'inline:./nodejsSandboxInit.inline.js';
 import vm from 'node:vm';
-import { MessagePort } from 'node:worker_threads';
+import type { MessagePort } from 'node:worker_threads';
 import { isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { createWrapperFn } from '../../lib/genericSandbox.js';
 import hardenGlobals from '../../lib/hardenGlobals.js';

@@ -33,6 +33,9 @@ const workerSandbox: ISandbox = async (
 		);
 	}
 
+	const addEventListener = EventTarget.prototype.addEventListener;
+	const removeEventListener = EventTarget.prototype.removeEventListener;
+
 	const originIncoming = 'urn:uuid:incoming:' + getRandomUuid();
 	const originOutgoing = 'urn:uuid:outgoing:' + getRandomUuid();
 
