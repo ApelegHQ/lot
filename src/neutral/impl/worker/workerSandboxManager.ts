@@ -35,9 +35,11 @@ const createWorker = (
 		['type']: 'text/javascript',
 	});
 	const workerSrcUrl = globalThis.URL.createObjectURL(blob);
+	// Option name extracted as string constant to avoid name mangling
+	const typeOptName = 'workerType';
 	const worker = new Worker(
 		workerSrcUrl,
-		options?.workerType ? { ['type']: options.workerType } : undefined,
+		options?.[typeOptName] ? { ['type']: options[typeOptName] } : undefined,
 	);
 
 	worker.postMessage([

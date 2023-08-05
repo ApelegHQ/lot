@@ -32,6 +32,14 @@ const exactRealtyClosureBuilderPlugin = {
 
 		void origTarget;
 
+		const origFmt = build.initialOptions.format;
+
+		if (origFmt === 'esm') {
+			// Google Closure Compiler doesn't support library exports it seems
+			// So, set format to cjs
+			build.initialOptions.format = 'cjs';
+		}
+
 		Object.assign(build.initialOptions, {
 			target: 'es2020',
 			write: false,
@@ -42,20 +50,31 @@ const exactRealtyClosureBuilderPlugin = {
 
 			const outputFiles = await Promise.all(
 				result.outputFiles.map((o) => {
-					if (o.path.endsWith('.js') || o.path.endsWith('.mjs')) {
+					if (
+						o.path.endsWith('.js') ||
+						o.path.endsWith('.cjs') ||
+						o.path.endsWith('.mjs')
+					) {
 						const compiler = new googleClosureCompiler.compiler({
 							js_output_file: o.path,
 							compilation_level: 'ADVANCED',
 							language_in: 'ECMASCRIPT_2020',
-							language_out: 'ECMASCRIPT_2020',
+							language_out: 'ECMASCRIPT_2015',
 							rewrite_polyfills: false,
 							process_closure_primitives: false,
 							apply_input_source_maps: false,
 							warning_level: 'QUIET',
-							chunk_output_type:
+							externs: './closure-externs.js',
+							assume_function_wrapper: true,
+							...(origFmt === 'esm' && {
+								output_wrapper:
+									'var module={};%output%export default module.exports.default;',
+							}),
+							chunk_output_type: 'GLOBAL_NAMESPACE',
+							/* chunk_output_type:
 								build.initialOptions.format === 'esm'
 									? 'ES_MODULES'
-									: 'GLOBAL_NAMESPACE',
+									: 'GLOBAL_NAMESPACE', */
 							env: 'BROWSER',
 						});
 						return new Promise((resolve, reject) => {
@@ -170,8 +189,8 @@ const options = {
 
 void exactRealtyClosureBuilderPlugin;
 
-// TODO: Use Google Closure Compiler
-const plugins = isNaN(0) ? [exactRealtyClosureBuilderPlugin] : [];
+// TODO: Use Google Closure Compiler globally
+const plugins = [];
 
 plugins.push(
 	inlineScripts({
@@ -209,6 +228,9 @@ await Promise.all(
 	[
 		{
 			format: 'cjs',
+			outExtension: {
+				'.js': '.cjs',
+			},
 		},
 		{
 			format: 'esm',
@@ -220,9 +242,44 @@ await Promise.all(
 		esbuild.build({
 			...options,
 			...extra,
+			entryPoints: ['./src/exports/nodejs.ts'],
+			outdir: 'dist/exports',
+		}),
+	),
+);
+
+plugins.unshift(exactRealtyClosureBuilderPlugin);
+
+await Promise.all(
+	[
+		{
+			format: 'cjs',
+			outExtension: {
+				'.js': '.cjs',
+			},
+		},
+		{
+			format: 'esm',
+			outExtension: {
+				'.js': '.cjs',
+			},
+		},
+		{
+			format: 'iife',
+			globalName: '__export__',
+			banner: {
+				js: `define(function(){`,
+			},
+			footer: {
+				js: `return __export__;});`,
+			},
+		},
+	].map((extra) =>
+		esbuild.build({
+			...options,
+			...extra,
 			entryPoints: [
 				'./src/exports/browser.ts',
-				'./src/exports/nodejs.ts',
 				'./src/exports/worker.ts',
 			],
 			outdir: 'dist/exports',

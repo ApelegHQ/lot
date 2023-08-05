@@ -6,6 +6,13 @@
 	"module": "./dist/index.mjs",
 	"exports": {
 		".": {
+			"browser": {
+				"types": "./dist/exports/browser.d.ts",
+				"amd": "./dist/exports/browser.mjs",
+				"import": "./dist/exports/browser.mjs",
+				"require": "./dist/exports/browser.cjs",
+				"default": "./dist/exports/browser.mjs"
+			},
 			"deno": {
 				"types": "./dist/exports/worker.d.ts",
 				"default": "./dist/exports/worker.mjs"
@@ -20,13 +27,17 @@
 			}
 		},
 		"./browser": {
+			"amd": {
+				"types": "./dist/exports/browser.d.ts",
+				"default": "./dist/exports/browser.js"
+			},
 			"import": {
 				"types": "./dist/exports/browser.d.ts",
 				"default": "./dist/exports/browser.mjs"
 			},
 			"require": {
 				"types": "./dist/exports/browser.d.ts",
-				"default": "./dist/exports/browser.js"
+				"default": "./dist/exports/browser.cjs"
 			}
 		},
 		"./nodejs": {
@@ -36,17 +47,21 @@
 			},
 			"require": {
 				"types": "./dist/exports/nodejs.d.ts",
-				"default": "./dist/exports/nodejs.js"
+				"default": "./dist/exports/nodejs.cjs"
 			}
 		},
 		"./worker": {
+			"amd": {
+				"types": "./dist/exports/browser.d.ts",
+				"default": "./dist/exports/worker.js"
+			},
 			"import": {
 				"types": "./dist/exports/worker.d.ts",
 				"default": "./dist/exports/worker.mjs"
 			},
 			"require": {
 				"types": "./dist/exports/worker.d.ts",
-				"default": "./dist/exports/worker.js"
+				"default": "./dist/exports/worker.cjs"
 			}
 		}
 	},
@@ -84,7 +99,7 @@
 		"eslint": "^8.46.0",
 		"eslint-config-prettier": "^8.9.0",
 		"eslint-plugin-prettier": "^5.0.0",
-		"google-closure-compiler": "^20230502.0.0",
+		"google-closure-compiler": "^20230802.0.0",
 		"mocha": "^10.2.0",
 		"prettier": "^3.0.0",
 		"selenium-webdriver": "^4.11.1",

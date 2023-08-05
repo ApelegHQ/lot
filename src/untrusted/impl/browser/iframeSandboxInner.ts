@@ -145,9 +145,12 @@ const iframeSandboxInner = async (
 		}
 	}
 
+	// Option name extracted as string constant to avoid name mangling
+	const requireWorkerOptName = 'browserRequireWorker';
+
 	if (
 		__buildtimeSettings__.isolationStategyIframeSole &&
-		!options?.browserRequireWorker
+		!options?.[requireWorkerOptName]
 	) {
 		if (error) {
 			Logger.info('Falling back to direct execution');

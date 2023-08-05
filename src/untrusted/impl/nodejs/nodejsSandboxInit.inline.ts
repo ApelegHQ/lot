@@ -25,7 +25,7 @@ import {
 import workerSandboxInner from '../worker/workerSandboxInner.js';
 
 const l_Function = (() => {}).constructor;
-const l_String = globalThis['String'];
+const l_String = String;
 const l_WeakMap = WeakMap;
 const l_ePrototype = Error.prototype;
 const l_wmpDelete = WeakMap.prototype.delete;
@@ -59,8 +59,8 @@ const l_wmSet = <TT extends object, TU>(
 
 // Local copy to prevent it from being overwritten
 const l_structuredClone =
-	typeof globalThis['structuredClone'] === 'function'
-		? globalThis['structuredClone']
+	typeof structuredClone === 'function'
+		? structuredClone
 		: (() => {
 				// Fallback for when structuredClone is unavailable
 				// The goal is to ensure that we don't get references to the
