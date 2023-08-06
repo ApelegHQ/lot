@@ -261,7 +261,7 @@ await Promise.all(
 		{
 			format: 'esm',
 			outExtension: {
-				'.js': '.cjs',
+				'.js': '.mjs',
 			},
 		},
 		{
