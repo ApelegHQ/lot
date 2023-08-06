@@ -5,7 +5,8 @@ name: Node.js Package
 
 on:
   release:
-    types: [created]
+    types:
+      - created
 
 jobs:
   publish-npm:
@@ -18,7 +19,7 @@ jobs:
           java-version: '11'
       - uses: actions/setup-node@v3
         with:
-          node-version: 19
+          node-version: '19'
           registry-url: https://registry.npmjs.org/
       - run: npm ci
       - run: npm publish --access public
