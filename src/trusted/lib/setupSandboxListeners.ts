@@ -28,7 +28,7 @@ const setupSandboxListeners = (
 	sourceIncoming: MessageEventSource | null,
 	secretIncoming: string | undefined,
 	allowUntrusted: boolean,
-	postMessageOutgoing: typeof postMessage,
+	postMessageOutgoing: MessagePort['postMessage'],
 	manager: { (): Promise<void> },
 	externalMethods?: Record<string, typeof Function.prototype> | null,
 	abort?: AbortSignal,

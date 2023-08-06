@@ -13,12 +13,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import workerSandboxManager from '../../../neutral/impl/worker/workerSandboxManager.js';
+import { ISandbox } from '../../../types/index.js';
 import createErrorEventListenerFactory from '../../../untrusted/lib/createErrorEventEventListenerFactory.js';
 import createMessageEventListenerFactory from '../../../untrusted/lib/createMessageEventListenerFactory.js';
-import getRandomUuid from '../../lib/getRandomUuid.js';
 import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
-import { ISandbox } from '../../../types/index.js';
-import workerSandboxManager from '../../../neutral/impl/worker/workerSandboxManager.js';
 
 const workerSandbox: ISandbox = async (
 	script,
@@ -36,36 +35,16 @@ const workerSandbox: ISandbox = async (
 	const addEventListener = EventTarget.prototype.addEventListener;
 	const removeEventListener = EventTarget.prototype.removeEventListener;
 
-	const originIncoming = 'urn:uuid:incoming:' + getRandomUuid();
-	const originOutgoing = 'urn:uuid:outgoing:' + getRandomUuid();
+	const channel = new MessageChannel();
 
-	const eventTargetIncoming = new EventTarget();
-	const eventTargetOutgoing = new EventTarget();
-
-	const postMessageFactory =
-		(target: EventTarget, origin: string) => (data: unknown[]) => {
-			return target.dispatchEvent(
-				new MessageEvent('message', {
-					data: data,
-					origin: origin,
-				}),
-			);
-		};
-
-	const postMessageIncoming = postMessageFactory(
-		eventTargetIncoming,
-		originIncoming,
-	);
-	const postMessageOutgoing = postMessageFactory(
-		eventTargetOutgoing,
-		originOutgoing,
-	);
+	const postMessageIncoming = channel.port2.postMessage.bind(channel.port2);
+	const postMessageOutgoing = channel.port1.postMessage.bind(channel.port1);
 
 	const createMessageEventListener = createMessageEventListenerFactory(
 		addEventListener,
 		removeEventListener,
-		eventTargetOutgoing,
-		originOutgoing,
+		channel.port2,
+		'',
 		null,
 		undefined,
 		true,
@@ -74,19 +53,29 @@ const workerSandbox: ISandbox = async (
 	const createErrorEventListener = createErrorEventListenerFactory(
 		addEventListener,
 		removeEventListener,
-		eventTargetOutgoing,
+		channel.port2,
 		postMessageIncoming,
 	);
 
+	const teardown = () => {
+		channel.port1.close();
+		channel.port2.close();
+	};
+
 	return setupSandboxListeners(
-		eventTargetIncoming,
-		originIncoming,
+		channel.port1,
+		'',
 		null,
 		undefined,
 		true,
 		postMessageOutgoing,
-		() =>
-			workerSandboxManager(
+		() => {
+			channel.port1.start();
+			channel.port2.start();
+
+			abort?.addEventListener('abort', teardown);
+
+			return workerSandboxManager(
 				script,
 				!!abort,
 				allowedGlobals,
@@ -95,10 +84,14 @@ const workerSandbox: ISandbox = async (
 				createErrorEventListener,
 				postMessageIncoming,
 				options,
-			),
+			);
+		},
 		externalMethods,
 		abort,
-	);
+	).catch((e) => {
+		teardown();
+		throw e;
+	});
 };
 
 export default workerSandbox;
