@@ -25,11 +25,9 @@ export default (resolveDir, path, exportName) =>
 	esbuild
 		.build({
 			stdin: {
-				contents: `import { ${exportName} } from ${JSON.stringify(
+				contents: `import { ${exportName} as $$ } from ${JSON.stringify(
 					path,
-				)}; self[${JSON.stringify(
-					exportName,
-				)}] = ${exportName}; self.m = ${exportName};`,
+				)}; self[${JSON.stringify(exportName)}] = $$; self.m = $$;`,
 				loader: 'js',
 				resolveDir: resolveDir,
 				sourcefile: 'browser-bundle.mjs',

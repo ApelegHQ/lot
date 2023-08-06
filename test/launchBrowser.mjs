@@ -30,6 +30,7 @@ const browsers = {
 	['chrome']: webdriver.Browser.CHROME,
 	['edge']: webdriver.Browser.EDGE,
 	['firefox']: webdriver.Browser.FIREFOX,
+	['safari']: webdriver.Browser.SAFARI,
 };
 
 /**
@@ -49,7 +50,7 @@ const usage = (err) => {
 
 	file.write(
 		`Usage: ${process.argv[0]} BROWSER MODULE\n\n` +
-			'BROWSER can be one of Chrome, Edge or Firefox\n' +
+			'BROWSER can be one of Chrome, Edge, Firefox or Safari\n' +
 			'MODULE can be one of Browser or Worker\n\n',
 	);
 

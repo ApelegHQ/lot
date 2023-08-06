@@ -79,67 +79,58 @@ describe('Node.js', () => {
 			}),
 		);
 
-		await Promise.all(
-			baseTests.map(async ([expression, errorName]: unknown[]) => {
-				if (String(expression).includes('return')) return;
-				it(
-					`${expression} ${
-						errorName === true
-							? 'succeeds'
-							: `causes error ${JSON.stringify(errorName)}`
-					}`,
-					wrapper((signal) => {
-						const sandbox = m(
-							String(expression),
-							null,
-							null,
-							signal,
-						);
-						if (errorName === true) {
-							return sandbox;
-						} else if (
-							typeof errorName === 'string' ||
-							Array.isArray(errorName)
-						) {
-							return assertRejectsWith(sandbox, errorName);
-						}
-					}),
-				);
-			}),
-		);
+		baseTests.forEach(([expression, errorName]: unknown[]) => {
+			if (String(expression).includes('return')) return;
+			it(
+				`${expression} ${
+					errorName === true
+						? 'succeeds'
+						: `causes error ${JSON.stringify(errorName)}`
+				}`,
+				wrapper((signal) => {
+					const sandbox = m(String(expression), null, null, signal);
+					if (errorName === true) {
+						return sandbox;
+					} else if (
+						typeof errorName === 'string' ||
+						Array.isArray(errorName)
+					) {
+						return assertRejectsWith(sandbox, errorName);
+					}
+				}),
+			);
+		});
 
-		await Promise.all(
-			baseTests.map(async ([expression, errorName]: unknown[]) => {
-				it(
-					`Task with ${expression} ${
-						errorName === true
-							? 'succeeds'
-							: `causes error ${JSON.stringify(errorName)}`
-					}`,
-					wrapper((signal) => {
-						const sandbox = m(
-							`module.exports={foo:function(){${expression}}}`,
-							null,
-							null,
-							signal,
-						);
-						if (errorName === 'SyntaxError') {
-							return assertRejectsWith(sandbox, errorName);
-						} else {
-							return sandbox.then((r) => {
-								const t = r('foo');
-								if (
-									typeof errorName === 'string' ||
-									Array.isArray(errorName)
-								) {
-									return assertRejectsWith(t, errorName);
-								}
-								return t;
-							});
-						}
-					}),
-				);
-			}),
-		);
+		baseTests.forEach(([expression, errorName]: unknown[]) => {
+			it(
+				`Task with ${expression} ${
+					errorName === true
+						? 'succeeds'
+						: `causes error ${JSON.stringify(errorName)}`
+				}`,
+				wrapper((signal) => {
+					const sandbox = m(
+						`module.exports={foo:function(){${expression}}}`,
+						null,
+						null,
+						signal,
+					);
+					if (errorName === 'SyntaxError') {
+						return assertRejectsWith(sandbox, errorName);
+					} else {
+						return sandbox.then((r) => {
+							const t = r('foo');
+							if (
+								typeof errorName === 'string' ||
+								Array.isArray(errorName)
+							) {
+								return assertRejectsWith(t, errorName);
+							}
+							return t;
+						});
+					}
+				}),
+			);
+		});
 	});
 });

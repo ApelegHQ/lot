@@ -13,20 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import {
-	enabledBrowsers,
-	webdriverTestSuites,
-} from '../../lib/webdriverTestSuites.js';
+import runBrowserTest from '../../lib/runBrowserTest.js';
 
-import getCodeHelper from '../../lib/getCodeHelper.js';
-
-['browserSandbox'].forEach((m) =>
-	getCodeHelper(__dirname, '../../../dist/index.mjs', m).then((code) =>
-		enabledBrowsers().forEach(([browserName, browserDisplayName]) => {
-			describe(
-				`Browser: ${browserDisplayName}, module: ${m}`,
-				webdriverTestSuites(code, browserName),
-			);
-		}),
-	),
-);
+runBrowserTest('browserSandbox');

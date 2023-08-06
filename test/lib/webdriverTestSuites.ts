@@ -18,22 +18,28 @@ import webdriver from 'selenium-webdriver';
 import { Options as ChromeOptions } from 'selenium-webdriver/chrome';
 import { Options as EdgeOptions } from 'selenium-webdriver/edge';
 import { Options as FirefoxOptions } from 'selenium-webdriver/firefox';
+import { Options as SafariOptions } from 'selenium-webdriver/safari';
 import baseTests from './baseTests.json';
 
 export const enabledBrowsers = () => {
-	const webkitBrowsers = new Set(
-		process.env.WEBDRIVER_BROWSERS?.split(/[ ,;]/) ?? [
-			webdriver.Browser.CHROME,
-			webdriver.Browser.EDGE,
-			webdriver.Browser.FIREFOX,
-		],
+	const webdriverBrowsers = new Set(
+		process.env.WEBDRIVER_BROWSERS?.split(/[ ,;]/) ??
+			[
+				webdriver.Browser.CHROME,
+				(process.platform === 'win32' && webdriver.Browser.EDGE) ||
+					undefined,
+				webdriver.Browser.FIREFOX,
+				(process.platform === 'darwin' && webdriver.Browser.SAFARI) ||
+					undefined,
+			].filter(Boolean),
 	);
 
 	return [
 		[webdriver.Browser.CHROME, 'Chrome'],
 		[webdriver.Browser.EDGE, 'Edge'],
 		[webdriver.Browser.FIREFOX, 'Firefox'],
-	].filter(([browserName]) => webkitBrowsers.has(browserName));
+		[webdriver.Browser.SAFARI, 'Safari'],
+	].filter(([browserName]) => webdriverBrowsers.has(browserName));
 };
 
 const chromeOptions = new ChromeOptions();
@@ -45,21 +51,33 @@ edgeOptions.headless();
 const firefoxOptions = new FirefoxOptions();
 firefoxOptions.headless();
 
+const safariOptions = new SafariOptions();
+
 export const webdriverTestSuites =
-	(code: string, browserName: string) => () => {
+	(codePromise: Promise<string>, browserName: string) => () => {
 		let driver: webdriver.WebDriver;
+		let code: string;
 
 		before(async function () {
 			this.timeout(30e3);
 
-			driver = await new webdriver.Builder()
-				.forBrowser(browserName)
-				.setChromeOptions(chromeOptions)
-				.setEdgeOptions(edgeOptions)
-				.setFirefoxOptions(firefoxOptions)
-				.build();
+			await Promise.all([
+				(async () => {
+					code = await codePromise;
+				})(),
+				(async () => {
+					driver = await new webdriver.Builder()
+						.forBrowser(browserName)
+						.setChromeOptions(chromeOptions)
+						.setEdgeOptions(edgeOptions)
+						.setFirefoxOptions(firefoxOptions)
+						.setSafariOptions(safariOptions)
+						.build();
 
-			await driver.get('about:blank');
+					await driver.get('about:blank');
+				})(),
+			]);
+
 			await driver.executeScript(
 				code + '; console.log("SCRIPT SUCCESSFULLY LOADED");',
 			);
@@ -68,8 +86,11 @@ export const webdriverTestSuites =
 		after(async function () {
 			this.timeout(30e3);
 
-			driver && (await driver.quit());
-			driver = undefined as unknown as typeof driver;
+			if (driver) {
+				await driver.quit().then(() => {
+					driver = undefined as unknown as typeof driver;
+				});
+			}
 		});
 
 		describe('Can run tasks', () => {
