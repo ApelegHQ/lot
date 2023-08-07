@@ -73,8 +73,6 @@ const workerSandbox: ISandbox = async (
 			channel.port1.start();
 			channel.port2.start();
 
-			abort?.addEventListener('abort', teardown);
-
 			return workerSandboxManager(
 				script,
 				!!abort,
@@ -84,14 +82,12 @@ const workerSandbox: ISandbox = async (
 				createErrorEventListener,
 				postMessageIncoming,
 				options,
+				teardown,
 			);
 		},
 		externalMethods,
 		abort,
-	).catch((e) => {
-		teardown();
-		throw e;
-	});
+	);
 };
 
 export default workerSandbox;

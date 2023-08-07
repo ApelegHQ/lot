@@ -74,6 +74,7 @@ const workerSandboxManager = async (
 	>,
 	postMessage: { (data: unknown[]): void },
 	options?: TSandboxOptions,
+	teardown?: { (): void },
 ): Promise<void> => {
 	const postInitSetup = (worker: Worker) => {
 		Logger.info('Sandbox ready. Setting up event listeners.');
@@ -121,6 +122,10 @@ const workerSandboxManager = async (
 					revokeWorkerErrorEventListener();
 
 					worker.terminate();
+
+					if (typeof teardown === 'function') {
+						teardown();
+					}
 				}
 			},
 		);
@@ -206,6 +211,10 @@ const workerSandboxManager = async (
 			reject_(e);
 			try {
 				workerSandbox[0].terminate();
+
+				if (typeof teardown === 'function') {
+					teardown();
+				}
 			} catch {
 				// empty
 			}

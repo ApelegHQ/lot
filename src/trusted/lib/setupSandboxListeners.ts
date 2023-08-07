@@ -88,13 +88,13 @@ const setupSandboxListeners = (
 	};
 
 	const onDestroy = () => {
+		postMessageOutgoing([EMessageTypes.DESTROY]);
 		destroyTaskPerformer();
 		eventTargetIncoming.removeEventListener(
 			'message',
 			eventListener as { (event: Event): void },
 			false,
 		);
-		postMessageOutgoing([EMessageTypes.DESTROY]);
 		abort?.removeEventListener('abort', onDestroy, false);
 	};
 
