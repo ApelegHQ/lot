@@ -13,6 +13,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import { sReplace } from './utils.js';
+
 /**
  * Censors the use of the `import` keyword in a given script.
  * Replaces occurrences of "import" with an escaped version.
@@ -26,7 +28,7 @@
  */
 const censorUnsafeExpressions = (script: string): string => {
 	// Remove import expresions from the code by introducing an escape sequence
-	return script.replace(/\bimport\b/g, 'im\\u0070ort');
+	return sReplace(script, /\bimport\b/g, 'im\\u0070ort');
 };
 
 export default censorUnsafeExpressions;

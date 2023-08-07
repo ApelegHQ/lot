@@ -47,6 +47,7 @@ export const TE = TypeError;
 export const mR = Math.random;
 
 const l_sP = S.prototype;
+const l_sReplace = l_sP.replace;
 const l_sSlice = l_sP.slice;
 const l_sSplit = l_sP.split;
 
@@ -109,6 +110,11 @@ export const oKeys = l_Object.keys;
 export const oSetPrototypeOf = l_Object.setPrototypeOf;
 
 export const sFromCharCode = String.fromCharCode;
+export const sReplace = <TT extends string | RegExp, TU>(
+	s: string,
+	searchValue: TT,
+	replaceValue: TU,
+): string => fnCall(l_sReplace, s, searchValue, replaceValue);
 export const sSlice = <T extends string>(
 	s: T,
 	start?: number | undefined,

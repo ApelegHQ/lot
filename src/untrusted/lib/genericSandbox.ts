@@ -41,6 +41,10 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	script: string,
 	functionConstructor: T,
 ): ReturnType<T> => {
+	if (typeof script !== 'string') {
+		throw TE('called on incompatible ' + typeof script);
+	}
+
 	if (__buildtimeSettings__.censorUnsafeExpressions) {
 		script = censorUnsafeExpressions(script);
 	}
@@ -251,6 +255,11 @@ const genericSandbox: TGenericSandbox =
 					);
 				}
 
+				const sandboxWrapperFn = createWrapperFn(
+					script,
+					functionConstructor,
+				);
+
 				const sandboxWrapperThis = createContext(
 					allowedGlobals,
 					externalCallMethod,
@@ -267,11 +276,6 @@ const genericSandbox: TGenericSandbox =
 				// `('undefinedProp' in self)` correctly returns `false` (which
 				// it wouldn't otherwise because of 'has' always returning true)
 				const sandboxWrapperThisProxy = globalProxy(sandboxWrapperThis);
-
-				const sandboxWrapperFn = createWrapperFn(
-					script,
-					functionConstructor,
-				);
 
 				return {
 					fn: sandboxWrapperFn.bind(sandboxWrapperThisProxy['proxy']),
