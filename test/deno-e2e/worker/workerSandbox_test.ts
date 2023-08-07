@@ -15,8 +15,10 @@
 
 /// <reference types="deno-types" />
 
-import * as assert from 'https://deno.land/std@0.197.0/testing/asserts.ts';
+// @deno-types="../../../dist/exports/worker.d.ts"
 import m from '../../../dist/exports/worker.mjs';
+
+import * as assert from 'https://deno.land/std@0.197.0/testing/asserts.ts';
 import assertRejectsWithFactory from '../../lib/assertRejectsWithFactory.ts';
 import baseTests from '../../lib/baseTests.json' assert { type: 'json' };
 import wrapper from '../../lib/wrapper.ts';
