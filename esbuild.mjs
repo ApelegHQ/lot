@@ -41,7 +41,7 @@ const exactRealtyClosureBuilderPlugin = {
 		}
 
 		Object.assign(build.initialOptions, {
-			target: 'es2020',
+			target: origFmt === 'iife' ? 'es2015' : 'es2020',
 			write: false,
 		});
 
@@ -65,12 +65,12 @@ const exactRealtyClosureBuilderPlugin = {
 							apply_input_source_maps: false,
 							warning_level: 'QUIET',
 							externs: './closure-externs.js',
-							assume_function_wrapper: true,
+							assume_function_wrapper: origFmt !== 'iife',
 							...(origFmt === 'esm' && {
 								output_wrapper:
 									'var module={};%output%export default module.exports.default;',
 							}),
-							chunk_output_type: 'GLOBAL_NAMESPACE',
+							// chunk_output_type: 'GLOBAL_NAMESPACE',
 							/* chunk_output_type:
 								build.initialOptions.format === 'esm'
 									? 'ES_MODULES'

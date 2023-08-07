@@ -15,7 +15,6 @@
 
 /// <reference types="deno-types" />
 
-// @deno-types="../../../dist/exports/worker.d.ts"
 import m from '../../../dist/exports/worker.mjs';
 
 import * as assert from 'https://deno.land/std@0.197.0/testing/asserts.ts';
@@ -139,16 +138,21 @@ Deno.test('Deno', async (t) => {
 							if (errorName === 'SyntaxError') {
 								return assertRejectsWith(sandbox, errorName);
 							} else {
-								return sandbox.then((r) => {
-									const t = r('foo');
-									if (
-										typeof errorName === 'string' ||
-										Array.isArray(errorName)
-									) {
-										return assertRejectsWith(t, errorName);
-									}
-									return t;
-								});
+								return sandbox.then(
+									(r: { (s: string): Promise<unknown> }) => {
+										const t = r('foo');
+										if (
+											typeof errorName === 'string' ||
+											Array.isArray(errorName)
+										) {
+											return assertRejectsWith(
+												t,
+												errorName,
+											);
+										}
+										return t;
+									},
+								);
 							}
 						}),
 					);
