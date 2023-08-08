@@ -30,7 +30,7 @@ import { INTERNAL_SOURCE_STRING } from './constants.js';
 if (isMainThread) throw new Error('Invalid environment');
 
 const {
-	Function: g_Function,
+	JSON: g_JSON,
 	Object: g_Object,
 	String: g_String,
 	TypeError: g_TypeError,
@@ -70,8 +70,6 @@ const nodejsSandbox = (
 	const context = g_Object.create(null);
 	const wrapperFn = createWrapperFn(script, g_String);
 
-	const postMessageOutgoing = messagePort.postMessage.bind(messagePort);
-
 	const [scopedSetTimeout, scopedClearTimeout] =
 		__buildtimeSettings__.scopedTimerFunctions
 			? scopedTimerFunction(g_setTimeout, g_clearTimeout)
@@ -86,47 +84,7 @@ const nodejsSandbox = (
 	// (addEventListener, removeEventListener, postMessage) and management
 	// (close, Function)
 	g_Object.defineProperties(context, {
-		// Due to how the Sandbox is constructed, it will attempt to dynamically
-		// execute the sandbox source using Function. However, Function will
-		// not work inside the vm context, as dynamic eval has been disabled
-		// The function is provided upon vm initialisation instead, and
-		// Function is defined to return that function instead.
-		// This function will be called exactly once
-		['Function']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: (source: unknown) => {
-				// If the source is not a string or does not contain the expected
-				// token, return (exceptions might expose internals to the Sandbox)
-				if (
-					typeof source !== 'string' ||
-					g_String.prototype.lastIndexOf.call(
-						source,
-						INTERNAL_SOURCE_STRING,
-					) === -1
-				) {
-					return;
-				}
-
-				try {
-					// Delete this function (should still be handled later
-					// on by fixGlobalTypes)
-					if (fn.constructor !== g_Function) {
-						// Restore Function to its regular value
-						context.globalThis.Function = fn.constructor;
-					} else {
-						// This shouldn't happen, but in any case this is not
-						// the real Function. The most sensible thing to do is
-						// to delete it
-						delete context.globalThis.Function;
-					}
-					return fn;
-				} catch {
-					// empty
-					// (exceptions might expose internals)
-				}
-			},
-		},
+		/**/
 		['addEventListener']: {
 			['writable']: true,
 			['configurable']: true,
@@ -141,8 +99,9 @@ const nodejsSandbox = (
 		['postMessage']: {
 			['writable']: true,
 			['configurable']: true,
-			['value']: postMessageOutgoing,
+			['value']: messagePort.postMessage.bind(messagePort),
 		},
+		/**/
 		['close']: {
 			['writable']: true,
 			['configurable']: true,
@@ -198,15 +157,18 @@ const nodejsSandbox = (
 	});
 
 	vm.createContext(context, {
-		codeGeneration: {
-			strings: false,
-			wasm: false,
+		['codeGeneration']: {
+			['strings']: false,
+			['wasm']: false,
 		},
 	});
 
 	// TODO: Move to context
 	// This breaks stuff (probably related to the sanitisation below)
-	// moveMessagePortToContext(messagePort as ReturnType<typeof eval>, context);
+	/* messagePort = moveMessagePortToContext(
+		messagePort as ReturnType<typeof eval>,
+		context,
+	) as ReturnType<typeof eval>; */
 	void moveMessagePortToContext;
 
 	const displayErrors = process.env['NODE_ENV'] !== 'production';
@@ -265,13 +227,37 @@ const nodejsSandbox = (
 	]);
 	removeAllProperties(global);
 
-	const fn = vm.runInContext(`(function(){${wrapperFn}})`, context, {
-		['displayErrors']: displayErrors,
-	});
+	// context['__messagePort__'] = messagePort;
 
-	vm.runInContext(nodejsSandboxInit.default, context, {
-		['displayErrors']: displayErrors,
+	// Due to how the Sandbox is constructed, it will attempt to dynamically
+	// execute the sandbox source using Function. However, Function will
+	// not work inside the vm context, as dynamic eval has been disabled
+	// The function is provided upon vm initialisation instead, and
+	// Function is defined to return that function instead.
+	// This function will be called exactly once
+	context['__upc_js__'] = vm.compileFunction(wrapperFn, undefined, {
+		['filename']: 'upc.js',
+		['parsingContext']: context,
 	});
+	vm.runInContext(
+		'Function=(function(__upc_js__){' +
+			'__upc_js__=globalThis["__upc_js__"];' +
+			'delete globalThis["__upc_js__"];' +
+			'return function(src){' +
+			`if(src.lastIndexOf(${g_JSON.stringify(
+				INTERNAL_SOURCE_STRING,
+			)})===-1)` +
+			'throw "Invalid call";' +
+			'Function=Function.constructor;' +
+			`return __upc_js__;` +
+			'};' +
+			'})();' +
+			nodejsSandboxInit.default,
+		context,
+		{
+			['displayErrors']: displayErrors,
+		},
+	);
 };
 
 hardenGlobals();

@@ -26,8 +26,9 @@ import workerSandboxInner from '../worker/workerSandboxInner.js';
 
 const l_Function = (() => {}).constructor;
 const l_String = String;
-const l_WeakMap = WeakMap;
 const l_ePrototype = Error.prototype;
+/**/
+const l_WeakMap = WeakMap;
 const l_wmpDelete = WeakMap.prototype.delete;
 const l_wmpGet = WeakMap.prototype.get;
 const l_wmpHas = WeakMap.prototype.has;
@@ -55,7 +56,7 @@ const l_wmSet = <TT extends object, TU>(
 	...args: Parameters<typeof wm.set>
 ): ReturnType<typeof wm.set> => {
 	return fnApply(l_wmpSet, wm, args);
-};
+}; /**/
 
 // Local copy to prevent it from being overwritten
 const l_structuredClone =
@@ -194,6 +195,7 @@ const nativeWrapperFactory =
 // Messages are forced through structuredClone() to avoid some attack
 // vectors that involve indirect references
 (() => {
+	/**/
 	const aEL = globalThis.addEventListener;
 	const rEL = globalThis.removeEventListener;
 
@@ -202,8 +204,53 @@ const nativeWrapperFactory =
 		typeof Function.prototype
 	>();
 
+	/*
+	const messagePort = (() => {
+		const gT = globalThis as unknown as {
+			['__messagePort__']?: MessagePort;
+			[k: PropertyKey]: unknown;
+		};
+		const messagePort = gT['__messagePort__'];
+		if (typeof messagePort !== 'object') {
+			throw 'Missing __messagePort__';
+		}
+		delete gT['__messagePort__'];
+		return messagePort;
+	})();
+	void messagePort;
+
+	const eventListeners: (typeof Function.prototype)[] = [];
+
+	messagePort.onmessage = (event) => {
+		for (const eventListener of eventListeners) {
+			eventListener(event);
+		}
+	};
+
+	globalThis.addEventListener = function <T extends keyof WindowEventMap>(
+		type: T,
+		listener: { (e: WindowEventMap[T]): ReturnType<typeof eval> },
+	) {
+		if (type !== 'message') return;
+		eventListeners.push(listener);
+	}.bind(this) as typeof addEventListener;
+
+	globalThis.removeEventListener = function <T extends keyof WindowEventMap>(
+		type: T,
+		listener: { (e: WindowEventMap[T]): ReturnType<typeof eval> },
+	) {
+		if (type !== 'message') return;
+		const index = eventListeners.indexOf(listener);
+		if (index !== -1) {
+			eventListeners.splice(index, 1);
+		}
+	}.bind(this) as typeof removeEventListener;
+
+	globalThis.postMessage = messagePort.postMessage as typeof postMessage;
+	*/
+
 	globalThis.addEventListener = (
-		function (...args: Parameters<typeof aEL>) {
+		function (...args: Parameters<typeof globalThis.addEventListener>) {
 			const [type, listener] = args;
 			if (
 				type !== 'message' ||
@@ -228,7 +275,7 @@ const nativeWrapperFactory =
 				l_wmDelete(eventMap, listener);
 				throw recreateError(e);
 			}
-		} as typeof aEL
+		} as typeof globalThis.addEventListener
 	).bind(globalThis);
 
 	globalThis.removeEventListener = (
@@ -249,7 +296,7 @@ const nativeWrapperFactory =
 				l_wmDelete(eventMap, listener);
 			}
 		} as typeof rEL
-	).bind(globalThis);
+	).bind(globalThis); /**/
 })();
 
 (() => {
@@ -268,7 +315,7 @@ const nativeWrapperFactory =
 			}
 		} as typeof pm
 	).bind(globalThis);
-})();
+})(); /* */
 
 (() => {
 	const grv = globalThis.crypto?.getRandomValues;
