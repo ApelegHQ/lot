@@ -26,7 +26,7 @@ const createMessageEventListener = (() => {
 	return (handler: { (data: unknown[]): void }) => {
 		const eventListener = (event: MessageEvent) => {
 			if (
-				!event.isTrusted ||
+				// !event.isTrusted || TODO FIXME (Node.js)
 				!aIsArray(event.data) ||
 				![
 					EMessageTypes.REQUEST,

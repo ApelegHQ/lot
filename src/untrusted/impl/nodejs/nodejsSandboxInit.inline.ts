@@ -119,7 +119,7 @@ const l_structuredClone =
 
 const listener = (event: MessageEvent) => {
 	if (
-		!event.isTrusted ||
+		// !event.isTrusted || FIXME
 		!aIsArray(event.data) ||
 		event.data[0] !== EMessageTypes.SANDBOX_READY
 	)

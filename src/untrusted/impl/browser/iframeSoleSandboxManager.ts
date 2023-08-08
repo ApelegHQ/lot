@@ -22,6 +22,7 @@ import * as Logger from '../../lib/Logger.js';
 import tightenCsp from '../../lib/tightenCsp.js';
 
 const iframeSoleSandboxManager = async (
+	messagePort: MessagePort,
 	script: string,
 	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
@@ -32,15 +33,17 @@ const iframeSoleSandboxManager = async (
 	createErrorEventListener: ReturnType<
 		typeof createErrorEventListenerFactory
 	>,
-	postMessage: { (data: unknown[]): void },
 	close: { (): void },
 ): Promise<void> => {
+	const postMessage = messagePort.postMessage.bind(messagePort);
+
 	try {
 		Logger.info('Setting up iframe fallback sandbox');
 
 		disableURLStaticMethods();
 
 		const revokeRootMessageEventListener = createMessageEventListener(
+			messagePort,
 			createSandboxedHandler(
 				script,
 				allowedGlobals,

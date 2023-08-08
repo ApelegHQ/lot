@@ -17,17 +17,19 @@ import '../../lib/nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
 
 import * as nodejsSandboxInit from 'inline:./nodejsSandboxInit.inline.js';
 import vm from 'node:vm';
-import type { MessagePort } from 'node:worker_threads';
-import { isMainThread, parentPort, workerData } from 'node:worker_threads';
+import {
+	isMainThread,
+	moveMessagePortToContext,
+	workerData,
+} from 'node:worker_threads';
 import { createWrapperFn } from '../../lib/genericSandbox.js';
 import hardenGlobals from '../../lib/hardenGlobals.js';
 import scopedTimerFunction from '../../lib/scopedTimerFunction.js';
-import type workerSandboxInner from '../worker/workerSandboxInner.js';
+import { INTERNAL_SOURCE_STRING } from './constants.js';
 
-if (isMainThread || !parentPort) throw new Error('Invalid environment');
+if (isMainThread) throw new Error('Invalid environment');
 
 const {
-	EventTarget: g_EventTarget,
 	Function: g_Function,
 	Object: g_Object,
 	String: g_String,
@@ -38,43 +40,9 @@ const {
 	clearTimeout: g_clearTimeout,
 	setInterval: g_setInterval,
 	setTimeout: g_setTimeout,
-	structuredClone: g_structuredClone,
-	MessageEvent: g_ME,
 } = global;
 const close = process.exit.bind(process, 0);
 const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
-
-// This is an ugly hack to support the lack of postMessage or the ability to set
-// isTrusted in events (although Node 19 seems to allow this). isTrusted is
-// used in workerSandbox, and disabling the check or the ability to do so could
-// affect the sandbox integrity in browsers.
-// A better longer term solution would be not checking for event.isTrusted
-// in the worker sandbox, or to add a build-time flag to detect building for
-// Node.js and adjusting accordingly, in a way that doesn't also affect browser
-// bundles.
-class TrustedMessageEvent<T> /* extends MessageEvent<T> */ {
-	constructor(type: string, eventInitDict?: MessageEventInit<T>) {
-		// super(type, eventInitDict);
-		g_Object.defineProperty(this, 'defaultPrevented', { ['value']: false });
-		g_Object.defineProperty(this, 'isTrusted', { ['value']: true });
-		g_Object.defineProperty(this, 'type', { ['value']: type });
-		const realEvent = new g_ME(type, eventInitDict);
-		g_Object.setPrototypeOf(this, realEvent);
-	}
-}
-
-const postMessageFactory =
-	(target: EventTarget, origin?: string): typeof postMessage =>
-	(message: unknown) => {
-		target.dispatchEvent(
-			new TrustedMessageEvent('message', {
-				...(message !== undefined && {
-					['data']: g_structuredClone(message),
-				}),
-				['origin']: origin,
-			}) as unknown as MessageEvent,
-		);
-	};
 
 const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
 	o &&
@@ -88,14 +56,10 @@ const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
 			});
 };
 
-const INTERNAL_SOURCE_STRING = 'function source() { [provided externally] }';
-
 const nodejsSandbox = (
-	parentPort: MessagePort,
+	messagePort: MessagePort,
 	script: string,
-	allowedGlobals?: string[] | null | undefined,
 	externalMethodKeys?: string[] | null | undefined,
-	abort?: boolean | null | undefined,
 ) => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethodKeys) {
 		throw new g_TypeError(
@@ -106,10 +70,7 @@ const nodejsSandbox = (
 	const context = g_Object.create(null);
 	const wrapperFn = createWrapperFn(script, g_String);
 
-	const eventTargetIncoming = new g_EventTarget();
-	const eventTargetOutgoing = new g_EventTarget();
-
-	const postMessageOutgoing = postMessageFactory(eventTargetOutgoing);
+	const postMessageOutgoing = messagePort.postMessage.bind(messagePort);
 
 	const [scopedSetTimeout, scopedClearTimeout] =
 		__buildtimeSettings__.scopedTimerFunctions
@@ -169,21 +130,18 @@ const nodejsSandbox = (
 		['addEventListener']: {
 			['writable']: true,
 			['configurable']: true,
-			['value']:
-				eventTargetOutgoing.addEventListener.bind(eventTargetOutgoing),
+			['value']: EventTarget.prototype.addEventListener.bind(messagePort),
 		},
 		['removeEventListener']: {
 			['writable']: true,
 			['configurable']: true,
 			['value']:
-				eventTargetOutgoing.removeEventListener.bind(
-					eventTargetOutgoing,
-				),
+				EventTarget.prototype.removeEventListener.bind(messagePort),
 		},
 		['postMessage']: {
 			['writable']: true,
 			['configurable']: true,
-			['value']: postMessageFactory(eventTargetIncoming),
+			['value']: postMessageOutgoing,
 		},
 		['close']: {
 			['writable']: true,
@@ -202,11 +160,6 @@ const nodejsSandbox = (
 				},
 			}),
 		},
-		/* ['self']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: context,
-		}, */
 		['globalThis']: {
 			['writable']: true,
 			['configurable']: true,
@@ -250,6 +203,11 @@ const nodejsSandbox = (
 			wasm: false,
 		},
 	});
+
+	// TODO: Move to context
+	// This breaks stuff (probably related to the sanitisation below)
+	// moveMessagePortToContext(messagePort as ReturnType<typeof eval>, context);
+	void moveMessagePortToContext;
 
 	const displayErrors = process.env['NODE_ENV'] !== 'production';
 
@@ -314,33 +272,12 @@ const nodejsSandbox = (
 	vm.runInContext(nodejsSandboxInit.default, context, {
 		['displayErrors']: displayErrors,
 	});
-
-	parentPort.on('message', (message) => {
-		postMessageOutgoing(message);
-	});
-
-	eventTargetIncoming.addEventListener('message', (event) => {
-		parentPort.postMessage((event as MessageEvent).data);
-	});
-
-	postMessageOutgoing([
-		EMessageTypes.SANDBOX_READY,
-		INTERNAL_SOURCE_STRING,
-		!!abort,
-		allowedGlobals,
-		externalMethodKeys,
-	] as [
-		EMessageTypes.SANDBOX_READY,
-		...Parameters<typeof workerSandboxInner>,
-	]);
 };
 
 hardenGlobals();
 
 nodejsSandbox(
-	parentPort,
+	workerData['messagePort'],
 	workerData['script'],
-	workerData['allowedGlobals'],
 	workerData['externalMethodKeys'],
-	workerData['abort'],
 );

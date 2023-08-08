@@ -32,7 +32,6 @@ const browserSandbox: ISandbox = async (
 		);
 	}
 
-	const secret = getRandomSecret();
 	const initMesssageKeyA = getRandomSecret();
 	const initMesssageKeyB = getRandomSecret();
 	const nonce = getRandomSecret();
@@ -91,6 +90,8 @@ const browserSandbox: ISandbox = async (
 
 	const sandboxIframeCW = iframe.contentWindow;
 
+	const messageChannel = new MessageChannel();
+
 	const sendSourceEventListener = (event: MessageEvent) => {
 		if (
 			!event.isTrusted ||
@@ -104,29 +105,32 @@ const browserSandbox: ISandbox = async (
 
 		self.removeEventListener('message', sendSourceEventListener, false);
 
-		postMessageOutgoing([
-			initMesssageKeyB,
-			EMessageTypes.SANDBOX_READY,
-			...([
-				String(script),
-				!!abort,
-				allowedGlobals?.map(String),
-				externalMethods && Object.keys(externalMethods),
-				self.location.origin,
-				secret,
-				options,
-			] as Parameters<typeof iframeSandboxInner>),
-		]);
+		messageChannel.port1.start();
+
+		sandboxIframeCW.postMessage(
+			[
+				initMesssageKeyB,
+				EMessageTypes.SANDBOX_READY,
+				...([
+					messageChannel.port2,
+					String(script),
+					!!abort,
+					allowedGlobals?.map(String),
+					externalMethods && Object.keys(externalMethods),
+					options,
+				] as Parameters<typeof iframeSandboxInner>),
+			],
+			// The targetOrigin is set to '*' because the correct value of
+			// 'null' is not accepted as a valid origin. Although this is not
+			// ideal, it's also not much worse than setting it to a opaque
+			// origin 'null', since it still doesn't fully and uniquely
+			// identify the origin
+			'*',
+			[messageChannel.port2],
+		);
 	};
 
 	self.addEventListener('message', sendSourceEventListener);
-
-	// The targetOrigin is set to '*' because the correct value of 'null' is not
-	// accepted as a valid origin. Although this is not ideal, it's also not much
-	// worse than setting it to 'null', since it still doesn't fully an uniquely
-	// identify the origin
-	const postMessageOutgoing = (data: unknown[]) =>
-		sandboxIframeCW.postMessage([secret, ...data], '*');
 
 	const onDestroy = () => {
 		self.removeEventListener('message', sendSourceEventListener, false);
@@ -137,12 +141,8 @@ const browserSandbox: ISandbox = async (
 	abort?.addEventListener('abort', onDestroy, false);
 
 	return setupSandboxListeners(
-		self,
-		'null',
-		sandboxIframeCW,
-		secret,
+		messageChannel.port1,
 		false,
-		postMessageOutgoing,
 		Promise.resolve.bind(Promise),
 		externalMethods,
 		abort,

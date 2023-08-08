@@ -43,9 +43,7 @@ import {
  */
 const performTaskFactory = (
 	revocable: boolean,
-	postMessageOutgoing: {
-		(data: unknown[]): void;
-	},
+	postMessageOutgoing: MessagePort['postMessage'],
 ): [IPerformTask, { (data: unknown[]): void }, { (): void }] => {
 	const pendingTasks: Record<string, (typeof Function.prototype)[]> =
 		oCreate(null);

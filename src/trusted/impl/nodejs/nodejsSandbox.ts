@@ -16,8 +16,9 @@
 import * as nodejsSandboxVm from 'inline:../../../untrusted/impl/nodejs/nodejsSandboxVm.inline.js';
 import { Worker } from 'node:worker_threads';
 import { ISandbox } from '../../../types/index.js';
+import { INTERNAL_SOURCE_STRING } from '../../../untrusted/impl/nodejs/constants.js';
+import type workerSandboxInner from '../../../untrusted/impl/worker/workerSandboxInner.js';
 import { extractErrorInformation } from '../../../untrusted/lib/errorModem.js';
-import getRandomUuid from '../../lib/getRandomUuid.js';
 import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
 
 const nodejsSandbox: ISandbox = async (
@@ -32,85 +33,80 @@ const nodejsSandbox: ISandbox = async (
 		);
 	}
 
-	const eventTargetIncoming = new EventTarget();
-	const originIncoming = 'urn:uuid:' + getRandomUuid();
+	const messageChannel = new MessageChannel();
 
 	const worker = new Worker(nodejsSandboxVm.default, {
 		['workerData']: {
-			['abort']: !!abort,
+			['messagePort']: messageChannel.port2,
+			['script']: script,
+			['revocable']: !!abort,
 			['allowedGlobals']: allowedGlobals,
 			['externalMethodKeys']:
 				externalMethods && Object.keys(externalMethods),
-			['script']: script,
 		},
 		['env']: Object.create(null),
 		['eval']: true,
+		['transferList']: [messageChannel.port2 as ReturnType<typeof eval>],
 	});
 
-	const messageEventHandler = (message: unknown) => {
-		eventTargetIncoming.dispatchEvent(
-			new MessageEvent('message', {
-				...(message !== undefined && { data: message }),
-				['origin']: originIncoming,
-			}),
-		);
-	};
 	const errorEventHandler = (e: unknown) => {
 		worker.terminate();
-		eventTargetIncoming.dispatchEvent(
+		messageChannel.port1.dispatchEvent(
 			new MessageEvent('message', {
-				data: [
+				['data']: [
 					EMessageTypes.GLOBAL_ERROR,
 					extractErrorInformation(
 						e === undefined ? new Error('Unknown global error') : e,
 					),
 				],
-				['origin']: originIncoming,
 			}),
 		);
 		onDestroy();
 	};
 	const exitEventHandler = (code: number) => {
-		eventTargetIncoming.dispatchEvent(
+		messageChannel.port1.dispatchEvent(
 			new MessageEvent('message', {
-				data: [
+				['data']: [
 					EMessageTypes.GLOBAL_ERROR,
 					extractErrorInformation(
 						new Error(`Worker thread ended with code ${code}`),
 					),
 				],
-				['origin']: originIncoming,
 			}),
 		);
 		onDestroy();
 	};
 	const onDestroy = () => {
-		worker.on('message', messageEventHandler);
 		worker.on('error', errorEventHandler);
 		worker.on('exit', exitEventHandler);
 		abort?.removeEventListener('abort', onDestroy, false);
 		worker.terminate();
 	};
 
-	const postMessageOutgoing = (message: unknown) => {
-		worker.postMessage(message);
-	};
-
-	worker.on('message', messageEventHandler);
 	worker.on('error', errorEventHandler);
 	worker.on('exit', exitEventHandler);
 
 	abort?.addEventListener('abort', onDestroy, false);
 
+	messageChannel.port1.postMessage([
+		EMessageTypes.SANDBOX_READY,
+		INTERNAL_SOURCE_STRING,
+		!!abort,
+		allowedGlobals,
+		externalMethods && Object.keys(externalMethods),
+	] as [
+		EMessageTypes.SANDBOX_READY,
+		...Parameters<typeof workerSandboxInner>,
+	]);
+
+	messageChannel.port1.start();
+	messageChannel.port2.start();
+
 	return setupSandboxListeners(
-		eventTargetIncoming,
-		originIncoming,
-		null,
-		undefined,
+		messageChannel.port1,
 		true,
-		postMessageOutgoing,
 		// empty manager since data are passed as workerData
-		async () => {},
+		Promise.resolve.bind(Promise),
 		externalMethods,
 		abort,
 	);

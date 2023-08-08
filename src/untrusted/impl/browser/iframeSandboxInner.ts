@@ -25,21 +25,23 @@ import workerSandboxManager from '../../../neutral/impl/worker/workerSandboxMana
 import iframeSoleSandboxManager from './iframeSoleSandboxManager.js';
 
 const iframeSandboxInner = async (
+	messagePort: MessagePort,
 	script: string,
 	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
-	origin: string,
-	secret: string,
 	options?: TSandboxOptions,
 ): Promise<void> => {
 	Logger.info('Iframe created, setting up worker');
 
 	let error: unknown;
 
-	const parent = self.parent;
-
 	const close = self['close'].bind(self);
+	const start = messagePort['start'].bind(messagePort);
+	const postInit = () => {
+		tightenCsp();
+		start();
+	};
 
 	recursivelyDeleteProperty(self, 'close');
 	recursivelyDeleteProperty(self, 'postMessage');
@@ -84,30 +86,11 @@ const iframeSandboxInner = async (
 
 	hardenGlobals();
 
-	const postMessage = (() => {
-		// If origin is not a valid URL, a DOMException gets thrown
-		// In such cases, set origin to '*'
-		// This happens with the 'null' origin (e.g., if the parent is 'about:blank')
-		const outgoingOrigin = (() => {
-			try {
-				new URL(origin);
-				return origin;
-			} catch {
-				return '*';
-			}
-		})();
-
-		return (data: unknown[]) =>
-			parent.postMessage([secret, ...data], outgoingOrigin);
-	})();
+	const postMessage = messagePort.postMessage.bind(messagePort);
 
 	const createMessageEventListener = createMessageEventListenerFactory(
 		addEventListener,
 		removeEventListener,
-		self,
-		origin,
-		parent,
-		secret,
 		false,
 	);
 	const createErrorEventListener = createErrorEventListenerFactory(
@@ -121,6 +104,7 @@ const iframeSandboxInner = async (
 		if (typeof Worker === 'function') {
 			try {
 				return await workerSandboxManager(
+					messagePort,
 					script,
 					revocable,
 					allowedGlobals,
@@ -129,7 +113,7 @@ const iframeSandboxInner = async (
 					createErrorEventListener,
 					postMessage,
 					options,
-				).then(tightenCsp);
+				).then(postInit);
 			} catch (e) {
 				Logger.warn(
 					'Error setting up worker, falling back to direct execution if enabled',
@@ -157,15 +141,15 @@ const iframeSandboxInner = async (
 		}
 		try {
 			return await iframeSoleSandboxManager(
+				messagePort,
 				script,
 				revocable,
 				allowedGlobals,
 				externalMethodsList,
 				createMessageEventListener,
 				createErrorEventListener,
-				postMessage,
 				close,
-			);
+			).then(postInit);
 		} catch (e) {
 			Logger.warn('Error setting up direct execution sandbox', e);
 			error = e;

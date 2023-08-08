@@ -62,6 +62,7 @@ const createWorker = (
 };
 
 const workerSandboxManager = async (
+	messagePort: MessagePort,
 	script: string,
 	revocable: boolean,
 	allowedGlobals: string[] | undefined | null,
@@ -80,6 +81,7 @@ const workerSandboxManager = async (
 		Logger.info('Sandbox ready. Setting up event listeners.');
 
 		const revokeRootMessageEventListener = createMessageEventListener(
+			messagePort,
 			(data: unknown[]) => {
 				if (
 					[
@@ -133,6 +135,7 @@ const workerSandboxManager = async (
 		const revokeRootErrorEventListener = createErrorEventListener();
 
 		const revokeWorkerMessageEventListener = createMessageEventListener(
+			worker,
 			(data: unknown[]) => {
 				if (
 					![
@@ -164,7 +167,6 @@ const workerSandboxManager = async (
 
 				postMessage(data);
 			},
-			worker,
 		);
 
 		const revokeWorkerErrorEventListener = createErrorEventListener(
@@ -226,6 +228,7 @@ const workerSandboxManager = async (
 		);
 
 		const revokeWorkerInitMessageEventListener = createMessageEventListener(
+			workerSandbox[0],
 			(data: unknown[]) => {
 				if (
 					![
@@ -245,7 +248,6 @@ const workerSandboxManager = async (
 					reject(reconstructErrorInformation(data[1]));
 				}
 			},
-			workerSandbox[0],
 		);
 
 		const revokeWorkerInitErrorEventListener = createErrorEventListener(

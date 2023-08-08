@@ -27,10 +27,9 @@ const listener = (event: MessageEvent) => {
 		!event.isTrusted ||
 		event.source !== parent ||
 		!aIsArray(event.data) ||
-		event.data[2] !== EMessageTypes.SANDBOX_READY ||
-		event.data[0] !== event.data[8] ||
-		event.data[1] !== initMesssageKeyB ||
-		(event.data.length !== 9 && event.data.length !== 10)
+		event.data[1] !== EMessageTypes.SANDBOX_READY ||
+		event.data[0] !== initMesssageKeyB ||
+		(event.data.length !== 7 && event.data.length !== 8)
 	)
 		return;
 
@@ -38,7 +37,7 @@ const listener = (event: MessageEvent) => {
 
 	self.removeEventListener('message', listener, false);
 
-	fnApply(iframeSandboxInner, null, aSlice(event.data, 3));
+	fnApply(iframeSandboxInner, null, aSlice(event.data, 2));
 };
 
 Logger.info('Iframe loaded, registering event listener');

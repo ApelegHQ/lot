@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { TE, aIsArray, aSlice, fnCall } from './utils.js';
+import { aIsArray, fnCall } from './utils.js';
 
 /**
  * Factory function that creates a message event listener and attaches it to
@@ -22,13 +22,6 @@ import { TE, aIsArray, aSlice, fnCall } from './utils.js';
  * attach the event listener.
  * @param removeEventListener - The `removeEventListener` function of the
  * target to remove the event listener.
- * @param defaultEventTarget - The default event target to use when `worker` is
- * not provided.
- * @param parentOrigin - The expected origin of the parent window for secure
- * communication.
- * @param parent - The expected parent message source (or null) for secure
- * communication.
- * @param secret - An optional secret to validate the received message data.
  * @param allowUntrusted - If true, allows untrusted events to be processed.
  * @returns Returns a function to detach the created event listener from the
  * target.
@@ -39,48 +32,20 @@ const createMessageEventListenerFactory =
 	(
 		addEventListener: typeof EventTarget.prototype.addEventListener,
 		removeEventListener: typeof EventTarget.prototype.addEventListener,
-		defaultEventTarget: EventTarget,
-		parentOrigin: string,
-		parent: MessageEventSource | null,
-		secret: string | undefined,
 		allowUntrusted: boolean,
 	) =>
 	(
+		target: MessagePort | Worker,
 		handler: {
 			(data: unknown[]): void;
 		},
-		worker?: Worker,
 	) => {
-		if (
-			worker &&
-			typeof Worker === 'function' &&
-			!(worker instanceof Worker)
-		) {
-			throw TE(
-				"'addEventListener' called on an object that does not implement interface EventTarget.",
-			);
-		}
+		const eventListener = (event: MessageEvent) => {
+			if ((!allowUntrusted && !event.isTrusted) || !aIsArray(event.data))
+				return;
 
-		const target = worker ? worker : defaultEventTarget;
-
-		const eventListener = worker
-			? (event: MessageEvent) => {
-					if (!event.isTrusted || !aIsArray(event.data)) return;
-
-					handler(event.data);
-			  }
-			: (event: MessageEvent) => {
-					if (
-						(!allowUntrusted && !event.isTrusted) ||
-						event.origin !== parentOrigin ||
-						event.source !== parent ||
-						!aIsArray(event.data) ||
-						(secret && event.data[0] !== secret)
-					)
-						return;
-
-					handler(secret ? aSlice(event.data, 1) : event.data);
-			  };
+			handler(event.data);
+		};
 
 		fnCall(
 			addEventListener,

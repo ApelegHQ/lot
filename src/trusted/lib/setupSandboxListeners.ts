@@ -23,12 +23,8 @@ import requestHandler from '../../untrusted/lib/requestHandler.js';
 const ERROR_TIMEOUT = __buildtimeSettings__.sandboxInitDeadlineInMs;
 
 const setupSandboxListeners = (
-	eventTargetIncoming: EventTarget,
-	originIncoming: string,
-	sourceIncoming: MessageEventSource | null,
-	secretIncoming: string | undefined,
+	messagePort: MessagePort,
 	allowUntrusted: boolean,
-	postMessageOutgoing: MessagePort['postMessage'],
 	manager: { (): Promise<void> },
 	externalMethods?: Record<string, typeof Function.prototype> | null,
 	abort?: AbortSignal,
@@ -39,20 +35,19 @@ const setupSandboxListeners = (
 		);
 	}
 
+	// TODO postMessage
 	const [performTask, resultHandler, destroyTaskPerformer] =
-		performTaskFactory(!!abort, postMessageOutgoing);
+		performTaskFactory(!!abort, messagePort.postMessage.bind(messagePort));
 
 	const eventListener = (event: MessageEvent) => {
+		// TODO: FIX TRusTED
 		if (
-			(!allowUntrusted && !event.isTrusted) ||
-			event.origin !== originIncoming ||
-			event.source !== sourceIncoming ||
-			!Array.isArray(event.data) ||
-			(secretIncoming && event.data[0] !== secretIncoming)
+			(false && !allowUntrusted && !event.isTrusted) ||
+			!Array.isArray(event.data)
 		)
 			return;
 
-		const data = secretIncoming ? event.data.slice(1) : event.data;
+		const data = event.data;
 
 		if (__buildtimeSettings__.bidirectionalMessaging) {
 			if (data[0] === EMessageTypes.REQUEST) {
@@ -73,7 +68,7 @@ const setupSandboxListeners = (
 				}
 
 				requestHandler(
-					postMessageOutgoing,
+					messagePort.postMessage.bind(messagePort),
 					externalMethods,
 					data[1],
 					data[2],
@@ -88,9 +83,9 @@ const setupSandboxListeners = (
 	};
 
 	const onDestroy = () => {
-		postMessageOutgoing([EMessageTypes.DESTROY]);
+		messagePort.postMessage([EMessageTypes.DESTROY]);
 		destroyTaskPerformer();
-		eventTargetIncoming.removeEventListener(
+		messagePort.removeEventListener(
 			'message',
 			eventListener as { (event: Event): void },
 			false,
@@ -106,7 +101,7 @@ const setupSandboxListeners = (
 
 		const onInitResult = () => {
 			clearTimeout(errorTimeout);
-			eventTargetIncoming.removeEventListener(
+			messagePort.removeEventListener(
 				'message',
 				readyEventListener as { (event: Event): void },
 				false,
@@ -139,14 +134,11 @@ const setupSandboxListeners = (
 		const readyEventListener = (event: MessageEvent) => {
 			if (
 				(!allowUntrusted && !event.isTrusted) ||
-				event.origin !== originIncoming ||
-				event.source !== sourceIncoming ||
-				!Array.isArray(event.data) ||
-				(secretIncoming && event.data[0] !== secretIncoming)
+				!Array.isArray(event.data)
 			)
 				return;
 
-			const data = secretIncoming ? event.data.slice(1) : event.data;
+			const data = event.data;
 
 			if (
 				![
@@ -157,7 +149,7 @@ const setupSandboxListeners = (
 				return;
 
 			if (data[0] === EMessageTypes.SANDBOX_READY) {
-				eventTargetIncoming.addEventListener(
+				messagePort.addEventListener(
 					'message',
 					eventListener as { (event: Event): void },
 					false,
@@ -171,7 +163,7 @@ const setupSandboxListeners = (
 
 		abort?.addEventListener('abort', reject, false);
 
-		eventTargetIncoming.addEventListener(
+		messagePort.addEventListener(
 			'message',
 			readyEventListener as { (event: Event): void },
 			false,

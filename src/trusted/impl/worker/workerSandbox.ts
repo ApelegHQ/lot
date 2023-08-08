@@ -38,15 +38,10 @@ const workerSandbox: ISandbox = async (
 	const channel = new MessageChannel();
 
 	const postMessageIncoming = channel.port2.postMessage.bind(channel.port2);
-	const postMessageOutgoing = channel.port1.postMessage.bind(channel.port1);
 
 	const createMessageEventListener = createMessageEventListenerFactory(
 		addEventListener,
 		removeEventListener,
-		channel.port2,
-		'',
-		null,
-		undefined,
 		true,
 	);
 
@@ -64,16 +59,13 @@ const workerSandbox: ISandbox = async (
 
 	return setupSandboxListeners(
 		channel.port1,
-		'',
-		null,
-		undefined,
 		true,
-		postMessageOutgoing,
 		() => {
 			channel.port1.start();
 			channel.port2.start();
 
 			return workerSandboxManager(
+				channel.port2,
 				script,
 				!!abort,
 				allowedGlobals,
