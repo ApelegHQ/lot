@@ -13,5 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export const INTERNAL_SOURCE_STRING =
 	'function source() { [provided externally] }';
