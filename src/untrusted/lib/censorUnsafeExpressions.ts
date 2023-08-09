@@ -28,6 +28,8 @@ import { sReplace } from './utils.js';
  */
 const censorUnsafeExpressions = (script: string): string => {
 	// Remove import expresions from the code by introducing an escape sequence
+	// TODO: While simple, this breaks template strings.
+	// E.g., String.raw`import` will be broken
 	return sReplace(script, /\bimport\b/g, 'im\\u0070ort');
 };
 
