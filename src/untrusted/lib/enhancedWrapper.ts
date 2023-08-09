@@ -74,6 +74,7 @@ const enhancedWrapper = (script: string): string => {
 				'('.repeat(guardCount) +
 				// Function arguments to shadow canary values
 				`function(__canary$${canaryStart}__,__canary${canaryMid}__){` +
+				'\r\n' +
 				script +
 				// Prevent the script from excluding the following code
 				// via comments or template strings
@@ -115,6 +116,7 @@ const enhancedWrapper = (script: string): string => {
 				'(' +
 				// Function arguments to shadow canary values
 				'function(__canary$zzby$s__,__canary$zzby$f__){' +
+				'\r\n' +
 				script +
 				// Prevent the script from excluding the following code
 				// via comments or template strings

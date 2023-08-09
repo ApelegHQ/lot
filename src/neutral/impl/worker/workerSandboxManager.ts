@@ -46,6 +46,7 @@ const createWorker = (
 		EMessageTypes.SANDBOX_READY,
 		script,
 		revocable,
+		false,
 		allowedGlobals,
 		externalMethodsList,
 	] as [

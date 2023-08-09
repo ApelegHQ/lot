@@ -35,17 +35,23 @@ const nodejsSandbox: ISandbox = async (
 
 	const messageChannel = new MessageChannel();
 
+	const sandboxId = (0, Math.random)().toFixed(12).slice(2);
+
+	const externalMethodKeys =
+		__buildtimeSettings__.bidirectionalMessaging && externalMethods
+			? Object.keys(externalMethods)
+			: null;
+
 	const worker = new Worker(nodejsSandboxVm.default, {
 		['workerData']: {
-			['messagePort']: messageChannel.port2,
-			['script']: script,
-			['revocable']: !!abort,
-			['allowedGlobals']: allowedGlobals,
-			['externalMethodKeys']:
-				externalMethods && Object.keys(externalMethods),
+			['%id']: sandboxId,
+			['%messagePort']: messageChannel.port2,
+			['%script']: script,
+			['%externalMethodKeys']: externalMethodKeys,
 		},
 		['env']: Object.create(null),
 		['eval']: true,
+		['name']: sandboxId,
 		['transferList']: [messageChannel.port2 as ReturnType<typeof eval>],
 	});
 
@@ -92,8 +98,9 @@ const nodejsSandbox: ISandbox = async (
 		EMessageTypes.SANDBOX_READY,
 		INTERNAL_SOURCE_STRING,
 		!!abort,
+		true,
 		allowedGlobals,
-		externalMethods && Object.keys(externalMethods),
+		externalMethodKeys,
 	] as [
 		EMessageTypes.SANDBOX_READY,
 		...Parameters<typeof workerSandboxInner>,

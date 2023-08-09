@@ -23,10 +23,10 @@ import recursivelyDeleteProperty from '../../lib/recursivelyDeleteProperty.js';
 import { aIsArray } from '../../lib/utils.js';
 
 const createMessageEventListener = (() => {
-	return (handler: { (data: unknown[]): void }) => {
+	return (handler: { (data: unknown[]): void }, allowUntrusted: boolean) => {
 		const eventListener = (event: MessageEvent) => {
 			if (
-				// !event.isTrusted || TODO FIXME (Node.js)
+				(!allowUntrusted && !event.isTrusted) ||
 				!aIsArray(event.data) ||
 				![
 					EMessageTypes.REQUEST,
@@ -51,6 +51,7 @@ const createMessageEventListener = (() => {
 const workerSandboxInner = (
 	script: string,
 	revocable: boolean,
+	allowUntrusted: boolean,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 ) => {
@@ -63,10 +64,6 @@ const workerSandboxInner = (
 		// Remove methods from DedicatedWorkerGlobalScope
 		recursivelyDeleteProperty(globalThis, 'close');
 		recursivelyDeleteProperty(globalThis, 'postMessage');
-		globalThis.postMessage = () => {
-			const e = new Error('Called globalThis.postMessage!');
-			throw e;
-		};
 
 		hardenGlobals();
 		disableURLStaticMethods();
@@ -85,6 +82,7 @@ const workerSandboxInner = (
 					  }
 					: undefined,
 			),
+			allowUntrusted,
 		);
 
 		Logger.info(

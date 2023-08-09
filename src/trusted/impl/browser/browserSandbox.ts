@@ -111,14 +111,16 @@ const browserSandbox: ISandbox = async (
 			[
 				initMesssageKeyB,
 				EMessageTypes.SANDBOX_READY,
-				...([
-					messageChannel.port2,
-					String(script),
-					!!abort,
-					allowedGlobals?.map(String),
-					externalMethods && Object.keys(externalMethods),
-					options,
-				] as Parameters<typeof iframeSandboxInner>),
+				messageChannel.port2,
+				String(script),
+				!!abort,
+				allowedGlobals?.map(String),
+				externalMethods && Object.keys(externalMethods),
+				options,
+			] as [
+				string,
+				EMessageTypes.SANDBOX_READY,
+				...Parameters<typeof iframeSandboxInner>,
 			],
 			// The targetOrigin is set to '*' because the correct value of
 			// 'null' is not accepted as a valid origin. Although this is not

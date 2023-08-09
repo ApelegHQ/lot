@@ -214,4 +214,18 @@ declare namespace __buildtimeSettings__ {
 	 * breaking due to certain commonly used globals being unavailable.
 	 */
 	const fixGlobalTypes: boolean;
+
+	/**
+	 * Use a contextified MessagePort in Node.js
+	 *
+	 * Currently, it crashes the process, when used in combination with VM.
+	 * See issue #49075 (<https://github.com/nodejs/node/issues/49075>)
+	 */
+	const contextifyMessagePort: boolean;
+
+	/**
+	 * Workaround issue #49075 (<https://github.com/nodejs/node/issues/49075>)
+	 * using two message channels
+	 */
+	const contextifyMessagePortWorkaroundCrash: boolean;
 }

@@ -23,10 +23,12 @@ const l_oP = l_Object.prototype;
 const l_aFilter = l_aP.filter;
 const l_aForEach = l_aP.forEach;
 const l_aIncludes = l_aP.includes;
+const l_aIndexOf = l_aP.indexOf;
 const l_aJoin = l_aP.join;
 const l_aMap = l_aP.map;
 const l_aPush = l_aP.push;
 const l_aSlice = l_aP.slice;
+const l_aSplice = l_aP.splice;
 
 const l_Function = (() => {}).constructor;
 const l_fnpApply = l_Function.apply;
@@ -71,6 +73,11 @@ export const aIncludes = <TT>(
 	searchElement: TT,
 	fromIndex?: number | undefined,
 ): boolean => fnCall(l_aIncludes, a, searchElement, fromIndex);
+export const aIndexOf = <TT>(
+	a: TT[],
+	searchElement: TT,
+	fromIndexOf?: number | undefined,
+): number => fnCall(l_aIndexOf, a, searchElement, fromIndexOf);
 export const aJoin = <TT>(a: TT[], separator?: string | undefined): string =>
 	fnCall(l_aJoin, a, separator);
 export const aIsArray = globalThis['Array'].isArray;
@@ -86,6 +93,12 @@ export const aSlice = <TT>(
 	start?: number | undefined,
 	end?: number | undefined,
 ): TT[] => fnCall(l_aSlice, a, start, end);
+export const aSplice = <TT>(
+	a: TT[],
+	start: number | undefined,
+	deleteCount?: number | undefined,
+	...items: TT[]
+): TT[] => fnCall(l_aSplice, a, start, deleteCount, ...items);
 
 export const fnApply = <TT extends CallableFunction>(
 	fn: TT,

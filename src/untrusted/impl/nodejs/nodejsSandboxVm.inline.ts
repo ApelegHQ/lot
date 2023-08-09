@@ -50,13 +50,14 @@ const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
 			.entries(g_Object.getOwnPropertyDescriptors(o))
 			.forEach(([name, descriptor]) => {
 				if (keep?.includes(name)) return;
-				if (descriptor.configurable) {
+				if (descriptor['configurable']) {
 					delete (o as ReturnType<typeof eval>)[name];
 				}
 			});
 };
 
 const nodejsSandbox = (
+	sandboxId: string,
 	messagePort: MessagePort,
 	script: string,
 	externalMethodKeys?: string[] | null | undefined,
@@ -84,28 +85,35 @@ const nodejsSandbox = (
 	// (addEventListener, removeEventListener, postMessage) and management
 	// (close, Function)
 	g_Object.defineProperties(context, {
-		/**/
-		['addEventListener']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: EventTarget.prototype.addEventListener.bind(messagePort),
-		},
-		['removeEventListener']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']:
-				EventTarget.prototype.removeEventListener.bind(messagePort),
-		},
-		['postMessage']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: messagePort.postMessage.bind(messagePort),
-		},
-		/**/
+		...(!__buildtimeSettings__.contextifyMessagePort && {
+			['addEventListener']: {
+				['writable']: true,
+				['configurable']: true,
+				['value']:
+					EventTarget.prototype.addEventListener.bind(messagePort),
+			},
+			['removeEventListener']: {
+				['writable']: true,
+				['configurable']: true,
+				['value']:
+					EventTarget.prototype.removeEventListener.bind(messagePort),
+			},
+			['postMessage']: {
+				['writable']: true,
+				['configurable']: true,
+				['value']: messagePort.postMessage.bind(messagePort),
+			},
+		}),
 		['close']: {
 			['writable']: true,
 			['configurable']: true,
-			['value']: close,
+			['value']: () => {
+				g_setTimeout(
+					close,
+					// Necessary small delay to ensure exceptions get delivered
+					__buildtimeSettings__.contextifyMessagePort ? 5 : 0,
+				);
+			},
 		},
 		['crypto']: {
 			['configurable']: true,
@@ -163,13 +171,29 @@ const nodejsSandbox = (
 		},
 	});
 
-	// TODO: Move to context
-	// This breaks stuff (probably related to the sanitisation below)
-	/* messagePort = moveMessagePortToContext(
-		messagePort as ReturnType<typeof eval>,
-		context,
-	) as ReturnType<typeof eval>; */
-	void moveMessagePortToContext;
+	if (__buildtimeSettings__.contextifyMessagePort) {
+		if (__buildtimeSettings__.contextifyMessagePortWorkaroundCrash) {
+			const messageChannel = new MessageChannel();
+
+			messageChannel.port1.onmessage = (ev) => {
+				messagePort.postMessage(ev.data);
+			};
+
+			messagePort.onmessage = (ev) => {
+				messageChannel.port1.postMessage(ev.data);
+			};
+
+			context['__messagePort__'] = moveMessagePortToContext(
+				messageChannel.port2 as ReturnType<typeof eval>,
+				context,
+			) as ReturnType<typeof eval>;
+		} else {
+			context['__messagePort__'] = moveMessagePortToContext(
+				messagePort as ReturnType<typeof eval>,
+				context,
+			) as ReturnType<typeof eval>;
+		}
+	}
 
 	const displayErrors = process.env['NODE_ENV'] !== 'production';
 
@@ -227,8 +251,6 @@ const nodejsSandbox = (
 	]);
 	removeAllProperties(global);
 
-	// context['__messagePort__'] = messagePort;
-
 	// Due to how the Sandbox is constructed, it will attempt to dynamically
 	// execute the sandbox source using Function. However, Function will
 	// not work inside the vm context, as dynamic eval has been disabled
@@ -236,7 +258,7 @@ const nodejsSandbox = (
 	// Function is defined to return that function instead.
 	// This function will be called exactly once
 	context['__upc_js__'] = vm.compileFunction(wrapperFn, undefined, {
-		['filename']: 'upc.js',
+		['filename']: sandboxId + '-upc.vm.js',
 		['parsingContext']: context,
 	});
 	vm.runInContext(
@@ -251,11 +273,12 @@ const nodejsSandbox = (
 			'Function=Function.constructor;' +
 			`return __upc_js__;` +
 			'};' +
-			'})();' +
+			'})();\r\n' +
 			nodejsSandboxInit.default,
 		context,
 		{
 			['displayErrors']: displayErrors,
+			['filename']: sandboxId + '-system.vm.js',
 		},
 	);
 };
@@ -263,7 +286,8 @@ const nodejsSandbox = (
 hardenGlobals();
 
 nodejsSandbox(
-	workerData['messagePort'],
-	workerData['script'],
-	workerData['externalMethodKeys'],
+	workerData['%id'],
+	workerData['%messagePort'],
+	workerData['%script'],
+	workerData['%externalMethodKeys'],
 );

@@ -35,16 +35,13 @@ const setupSandboxListeners = (
 		);
 	}
 
-	// TODO postMessage
+	const postMessage = messagePort.postMessage.bind(messagePort);
+
 	const [performTask, resultHandler, destroyTaskPerformer] =
-		performTaskFactory(!!abort, messagePort.postMessage.bind(messagePort));
+		performTaskFactory(!!abort, postMessage);
 
 	const eventListener = (event: MessageEvent) => {
-		// TODO: FIX TRusTED
-		if (
-			(false && !allowUntrusted && !event.isTrusted) ||
-			!Array.isArray(event.data)
-		)
+		if ((!allowUntrusted && !event.isTrusted) || !Array.isArray(event.data))
 			return;
 
 		const data = event.data;
@@ -68,7 +65,7 @@ const setupSandboxListeners = (
 				}
 
 				requestHandler(
-					messagePort.postMessage.bind(messagePort),
+					postMessage,
 					externalMethods,
 					data[1],
 					data[2],

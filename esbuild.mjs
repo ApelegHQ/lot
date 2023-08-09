@@ -177,6 +177,8 @@ const options = {
 		'__buildtimeSettings__.censorUnsafeExpressions': 'true',
 		'__buildtimeSettings__.isolationStategyIframeSole': 'true',
 		'__buildtimeSettings__.isolationStategyIframeWorker': 'true',
+		'__buildtimeSettings__.contextifyMessagePort': 'true',
+		'__buildtimeSettings__.contextifyMessagePortWorkaroundCrash': 'true',
 		// Enums
 		'EMessageTypes.SANDBOX_READY': EMessageTypesSequence.next(),
 		'EMessageTypes.REQUEST': EMessageTypesSequence.next(),

@@ -52,7 +52,10 @@ const createWrapperFn = <T extends { (s: string): ReturnType<T> }>(
 	if (__buildtimeSettings__.enhancedWrapper) {
 		script = enhancedWrapper(script);
 	} else {
-		script = `(function(module){${script}}).call(this.globalThis,this.module);`;
+		script =
+			'(function(module){\r\n' +
+			`${script}` +
+			'\r\n}).call(this.globalThis,this.module);';
 	}
 
 	const sandboxWrapperFn = functionConstructor(script);
