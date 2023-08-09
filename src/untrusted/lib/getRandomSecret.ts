@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { S, aJoin, aMap, cGRC, mR, sFromCharCode, u8Alloc } from './utils.js';
+import { aJoin, aMap, cGRC, mR, sFromCharCode, u8Alloc } from './utils.js';
 
 /**
  * Converts a given buffer into a Base16 string (using a custom logic)
@@ -34,7 +34,7 @@ import { S, aJoin, aMap, cGRC, mR, sFromCharCode, u8Alloc } from './utils.js';
  * @param buffer - The buffer that will be converted to a string
  * @returns The string representation of the buffer using the custom logic.
  */
-const bufferToHex = (buffer: Uint8Array) =>
+const bufferToHex = (buffer: Uint8Array | number[]) =>
 	aJoin(
 		aMap(buffer as unknown as number[], (v) =>
 			sFromCharCode(
@@ -59,6 +59,12 @@ const getRandomSecret = cGRC
 			bufferToHex(
 				(cGRC as unknown as Crypto['getRandomValues'])(u8Alloc(16)),
 			)
-	: () => S(mR());
+	: () =>
+			bufferToHex(
+				aMap(
+					u8Alloc(16) as unknown as number[],
+					() => (mR() * 256) | 0,
+				),
+			);
 
 export default getRandomSecret;

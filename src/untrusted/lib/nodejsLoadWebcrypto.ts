@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-// Node.js version 18 and lower don't have globalThis.webcrypto defined
+// Node.js version 18 and lower don't have globalThis.crypto defined
 // by default
 if (
 	typeof process === 'object' &&
@@ -22,9 +22,8 @@ if (
 	!Reflect.has(globalThis, 'crypto') &&
 	typeof require === 'function'
 ) {
-	const webcrypto = Reflect.apply(require, null, ['node:crypto'])[
-		'webcrypto'
-	];
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const webcrypto = require('node:crypto')['webcrypto'];
 	if (webcrypto) {
 		Object.defineProperty(globalThis, 'crypto', {
 			['enumerable']: true,
