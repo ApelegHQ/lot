@@ -99,7 +99,7 @@ const nativeWrapperFactory =
 		});
 	};
 
-['atob', 'btoa', 'close', 'clearInterval', 'clearTimeout', 'Function'].forEach(
+['atob', 'btoa', 'close', 'clearInterval', 'clearTimeout'].forEach(
 	nativeWrapperFactory(
 		globalThis as unknown as Parameters<typeof nativeWrapperFactory>[0],
 	),
