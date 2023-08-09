@@ -56,6 +56,25 @@ const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
 			});
 };
 
+const oneTimeCtxValue = <T>(
+	sandboxId: string,
+	context: object,
+	k: PropertyKey,
+	v: T,
+) => {
+	g_Object.defineProperty(context, k, {
+		['configurable']: true,
+		['get']: vm.compileFunction(
+			'return function(){delete this[k];return v;};',
+			['k', 'v'],
+			{
+				['filename']: sandboxId + '-otcv.vm.js',
+				['parsingContext']: context,
+			},
+		)(k, v),
+	});
+};
+
 const nodejsSandbox = (
 	sandboxId: string,
 	messagePort: MessagePort,
@@ -183,15 +202,25 @@ const nodejsSandbox = (
 				messageChannel.port1.postMessage(ev.data);
 			};
 
-			context['%__messagePort__'] = moveMessagePortToContext(
-				messageChannel.port2 as ReturnType<typeof eval>,
+			oneTimeCtxValue(
+				sandboxId,
 				context,
-			) as ReturnType<typeof eval>;
+				'%__messagePort__',
+				moveMessagePortToContext(
+					messageChannel.port2 as ReturnType<typeof eval>,
+					context,
+				),
+			);
 		} else {
-			context['%__messagePort__'] = moveMessagePortToContext(
-				messagePort as ReturnType<typeof eval>,
+			oneTimeCtxValue(
+				sandboxId,
 				context,
-			) as ReturnType<typeof eval>;
+				'%__messagePort__',
+				moveMessagePortToContext(
+					messagePort as ReturnType<typeof eval>,
+					context,
+				),
+			);
 		}
 	}
 
@@ -257,24 +286,37 @@ const nodejsSandbox = (
 	// The function is provided upon vm initialisation instead, and
 	// Function is defined to return that function instead.
 	// This function will be called exactly once
-	context['%__upc_js__'] = vm.compileFunction(wrapperFn, undefined, {
-		['filename']: sandboxId + '-upc.vm.js',
-		['parsingContext']: context,
-	});
+	oneTimeCtxValue(
+		sandboxId,
+		context,
+		'%__upc_js__',
+		vm.compileFunction(wrapperFn, undefined, {
+			['filename']: sandboxId + '-upc.vm.js',
+			['parsingContext']: context,
+		}),
+	);
 	vm.runInContext(
-		'Function=(function(){' +
-			'var upc=globalThis["%__upc_js__"];' +
-			'delete globalThis["%__upc_js__"];' +
+		// Shadow Function to avoid changing the global namespace
+		'(function(Function){\r\n' +
+			nodejsSandboxInit.default +
+			'\r\n}).call(' +
+			'globalThis,' +
+			'(function(c,lio,upc){' +
+			'"use strict";' +
+			'c=c.bind(c);' +
 			'return function(src){' +
-			`if(src.lastIndexOf(${g_JSON.stringify(
-				INTERNAL_SOURCE_STRING,
-			)})===-1)` +
+			`if(c(lio,src,${g_JSON.stringify(INTERNAL_SOURCE_STRING)})===-1)` +
 			'throw "Invalid call";' +
-			'Function=Function.constructor;' +
-			`return upc;` +
+			'var l_upc=upc;' +
+			'c=lio=upc=void 0;' +
+			'return l_upc;' +
 			'};' +
-			'})();\r\n' +
-			nodejsSandboxInit.default,
+			'})(' +
+			'Function.prototype.call,' +
+			'String.prototype.lastIndexOf,' +
+			'globalThis["%__upc_js__"])' +
+			');' +
+			'delete globalThis["%__upc_js__"];',
 		context,
 		{
 			['displayErrors']: displayErrors,

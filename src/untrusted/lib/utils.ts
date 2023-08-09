@@ -33,7 +33,6 @@ const l_aSplice = l_aP.splice;
 const l_Function = (() => {}).constructor;
 const l_fnpApply = l_Function.apply;
 const l_fnpCall = l_Function.call;
-l_fnpApply.call = l_fnpCall;
 
 const l_crypto = typeof crypto === 'object' && crypto;
 const l_cGRC = l_crypto && l_crypto.getRandomValues;
@@ -100,15 +99,8 @@ export const aSplice = <TT>(
 	...items: TT[]
 ): TT[] => fnCall(l_aSplice, a, start, deleteCount, ...items);
 
-export const fnApply = <TT extends CallableFunction>(
-	fn: TT,
-	thisArg: TAny,
-	args: TAny[],
-) => l_fnpApply.call(fn, thisArg, args);
-export const fnCall = <TT extends CallableFunction>(
-	fn: TT,
-	...args: Parameters<TT['call']>
-) => fnApply(l_fnpCall, fn, args);
+export const fnApply = l_fnpCall.bind(l_fnpApply);
+export const fnCall = l_fnpCall.bind(l_fnpCall);
 
 export const oCreate = l_Object.create;
 export const oDefineProperties = l_Object.defineProperties;
