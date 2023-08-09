@@ -13,117 +13,90 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
 import './nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
 
 import assert from 'node:assert/strict';
 import createMessageEventListenerFactory from './createMessageEventListenerFactory.js';
 
+const destructuredPromiseFactory = (): [
+	Promise<void>,
+	{ (): void },
+	{ (reason?: Error): void },
+] => {
+	return (() => {
+		let resolve_: { (): void } = Boolean;
+		let reject_: { (reason?: Error): void } = Boolean;
+
+		const promise = new Promise<void>((resolve, reject) => {
+			resolve_ = resolve;
+			reject_ = reject;
+		});
+		return [promise, resolve_, reject_];
+	})();
+};
+
 describe('createMessageEventListenerFactory', () => {
 	let addEventListener: typeof EventTarget.prototype.addEventListener;
 	let removeEventListener: typeof EventTarget.prototype.addEventListener;
-	let defaultEventTarget: EventTarget;
-	let parentOrigin: string;
 
 	beforeEach(() => {
 		addEventListener = EventTarget.prototype.addEventListener;
 		removeEventListener = EventTarget.prototype.removeEventListener;
-		defaultEventTarget = new EventTarget();
-		parentOrigin = 'https://example.com';
 	});
 
 	it('should create an event listener with the given handler', async () => {
-		let called = false;
-		const handler = (data: unknown) => {
-			assert.deepEqual(data, ['test']);
-			called = true;
-		};
+		const [promise1, resolve1, reject1] = destructuredPromiseFactory();
+		const [promise2, resolve2, reject2] = destructuredPromiseFactory();
+		const [promise3, resolve3, reject3] = destructuredPromiseFactory();
 
-		const factory = createMessageEventListenerFactory(
+		const handler1 = (data: unknown) => {
+			assert.deepEqual(data, ['test']);
+			resolve1();
+		};
+		const handler2 = () =>
+			reject2(
+				Error(
+					'Handler called when isTrusted and allowUntrusted are false',
+				),
+			);
+		const handler3 = () => reject3();
+
+		const ch = new MessageChannel();
+		ch.port1.start();
+		ch.port2.start();
+
+		const factory1 = createMessageEventListenerFactory(
 			addEventListener,
 			removeEventListener,
-			defaultEventTarget,
 			true,
 		);
-		const unregister = factory(handler);
-
-		const event = new MessageEvent('message', { data: 'test' });
-		Object.defineProperty(event, 'origin', { value: parentOrigin });
-		defaultEventTarget.dispatchEvent(event);
-
-		await new Promise<void>((resolve, reject) => {
-			setTimeout(() => {
-				called
-					? resolve()
-					: reject(new Error('Handler should have been called'));
-			}, 50);
-		});
-
-		unregister(); // clean up
-	});
-
-	it("should not call handler if parent origin doesn't match", async () => {
-		let called = false;
-		const handler = () => {
-			called = true;
-		};
-
-		const factory = createMessageEventListenerFactory(
+		const factory2 = createMessageEventListenerFactory(
 			addEventListener,
 			removeEventListener,
-			defaultEventTarget,
 			false,
 		);
-		const unregister = factory(handler);
 
-		const event = new MessageEvent('message', {
-			data: 'test',
+		const unregister1 = factory1(ch.port2, handler1);
+		const unregister2 = factory2(ch.port2, handler2);
+		const unregister3 = factory1(ch.port2, handler3);
+
+		const ev = new MessageEvent('message', {
+			data: ['test'],
 		});
-		Object.defineProperty(event, 'origin', {
-			value: 'wrong+' + parentOrigin,
-		});
-		defaultEventTarget.dispatchEvent(event);
+		assert.equal(ev.isTrusted, false);
+		ch.port2.dispatchEvent(ev);
 
-		await new Promise<void>((resolve, reject) => {
-			setTimeout(() => {
-				!called
-					? resolve()
-					: reject(new Error('Handler should not have been called'));
-			}, 50);
-		});
-
-		unregister(); // clean up
-	});
-
-	it('should not call handler if event is untrusted and allowUntrusted is false', async () => {
-		let called = false;
-		const handler = () => {
-			called = true;
-		};
-
-		const factory = createMessageEventListenerFactory(
-			addEventListener,
-			removeEventListener,
-			defaultEventTarget,
-			false,
+		setTimeout(
+			() => reject1(Error('Timed out waiting for handler to be called')),
+			64,
 		);
-		const unregister = factory(handler);
+		setTimeout(resolve2, 128);
+		setTimeout(resolve3, 64);
 
-		const event = new MessageEvent('message', {
-			data: 'test',
-		});
-		Object.defineProperty(event, 'origin', { value: parentOrigin });
-		defaultEventTarget.dispatchEvent(event);
+		await Promise.all([promise1, promise2, assert.rejects(promise3)]);
 
-		await new Promise<void>((resolve, reject) => {
-			setTimeout(() => {
-				!called
-					? resolve()
-					: reject(new Error('Handler should not have been called'));
-			}, 50);
-		});
-
-		unregister(); // clean up
+		unregister1(); // clean up
+		unregister2(); // clean up
+		unregister3(); // clean up
 	});
 });
-*/
