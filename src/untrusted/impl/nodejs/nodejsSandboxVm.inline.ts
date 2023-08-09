@@ -183,12 +183,12 @@ const nodejsSandbox = (
 				messageChannel.port1.postMessage(ev.data);
 			};
 
-			context['__messagePort__'] = moveMessagePortToContext(
+			context['%__messagePort__'] = moveMessagePortToContext(
 				messageChannel.port2 as ReturnType<typeof eval>,
 				context,
 			) as ReturnType<typeof eval>;
 		} else {
-			context['__messagePort__'] = moveMessagePortToContext(
+			context['%__messagePort__'] = moveMessagePortToContext(
 				messagePort as ReturnType<typeof eval>,
 				context,
 			) as ReturnType<typeof eval>;
@@ -257,21 +257,21 @@ const nodejsSandbox = (
 	// The function is provided upon vm initialisation instead, and
 	// Function is defined to return that function instead.
 	// This function will be called exactly once
-	context['__upc_js__'] = vm.compileFunction(wrapperFn, undefined, {
+	context['%__upc_js__'] = vm.compileFunction(wrapperFn, undefined, {
 		['filename']: sandboxId + '-upc.vm.js',
 		['parsingContext']: context,
 	});
 	vm.runInContext(
-		'Function=(function(__upc_js__){' +
-			'__upc_js__=globalThis["__upc_js__"];' +
-			'delete globalThis["__upc_js__"];' +
+		'Function=(function(){' +
+			'var upc=globalThis["%__upc_js__"];' +
+			'delete globalThis["%__upc_js__"];' +
 			'return function(src){' +
 			`if(src.lastIndexOf(${g_JSON.stringify(
 				INTERNAL_SOURCE_STRING,
 			)})===-1)` +
 			'throw "Invalid call";' +
 			'Function=Function.constructor;' +
-			`return __upc_js__;` +
+			`return upc;` +
 			'};' +
 			'})();\r\n' +
 			nodejsSandboxInit.default,

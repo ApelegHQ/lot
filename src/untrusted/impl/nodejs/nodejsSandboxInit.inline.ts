@@ -109,14 +109,14 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 	const messagePort = (() => {
 		// Local copy to please TypeScript
 		const gT = globalThis as unknown as {
-			['__messagePort__']?: MessagePort;
+			['%__messagePort__']?: MessagePort;
 			[k: PropertyKey]: unknown;
 		};
-		const messagePort = gT['__messagePort__'];
+		const messagePort = gT['%__messagePort__'];
 		if (typeof messagePort !== 'object') {
-			throw 'Missing __messagePort__';
+			throw 'Missing %__messagePort__';
 		}
-		delete gT['__messagePort__'];
+		delete gT['%__messagePort__'];
 		return messagePort;
 	})();
 
