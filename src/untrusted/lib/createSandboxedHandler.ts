@@ -15,10 +15,11 @@
 
 import { extractErrorInformation } from './errorModem.js';
 import genericSandbox from './genericSandbox.js';
+import global from './global.js';
 import * as Logger from './Logger.js';
 import performTaskFactory from './performTaskFactory.js';
 import requestHandler from './requestHandler.js';
-import { aIncludes, aIsArray, aSlice, RE } from './utils.js';
+import { aIncludes, aIsArray, aSlice, E, oDefineProperty, RE } from './utils.js';
 
 const FERAL_FUNCTION = Proxy.revocable(Function, {});
 
@@ -56,6 +57,21 @@ const createSandboxedHandler = (
 		externalMethodsList.length
 			? performTaskFactory(!!cleanup, postMessage)
 			: undefined;
+
+	if (__buildtimeSettings__.sandboxContainmentProbe) {
+		const error = E('ACCESS VIOLATION: THIS VALUE SHOULD NOT BE VISIBLE');
+		error['name'] = 'SandboxContainmentError';
+
+		oDefineProperty(global, '__sandbox_containment_probe__', {
+			['enumerable']: true,
+			['get']() {
+				throw error;
+			},
+			['set']() {
+				throw error;
+			},
+		});
+	}
 
 	const sandbox = genericSandbox(
 		script,

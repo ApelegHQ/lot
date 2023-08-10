@@ -15,7 +15,7 @@
 
 import { extractErrorInformation } from './errorModem.js';
 import * as Logger from './Logger.js';
-import { fnApply, oHasOwnProperty, RE } from './utils.js';
+import { fnApply, oHasOwnProperty, RE, TE } from './utils.js';
 
 /**
  * Handles a request for executing a task with the specified operation (op)
@@ -55,9 +55,14 @@ const requestHandler = (
 			op as keyof typeof ctx
 		];
 
+		if (typeof fn !== 'function' && args.length !== 0) {
+			throw TE(`${op} is not a function`);
+		}
+
 		const result = typeof fn === 'function' ? fnApply(fn, null, args) : fn;
 
 		if (
+			result !== null &&
 			typeof result === 'object' &&
 			'then' in result &&
 			typeof result['then'] === 'function'
@@ -75,6 +80,7 @@ const requestHandler = (
 			});
 
 			if (
+				thenable !== null &&
 				typeof thenable === 'object' &&
 				'catch' in thenable &&
 				typeof thenable['catch'] === 'function'

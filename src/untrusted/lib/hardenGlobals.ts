@@ -27,6 +27,18 @@ import {
 	oSetPrototypeOf,
 } from './utils.js';
 
+/**
+ * Ensures that a constructor and its properties are inert, preventing potential
+ * tampering or modification by malicious code. The resulting 'constructor' is
+ * not a constructor and cannot be used to dynamically execute code.
+ *
+ * This function helps maintain the security guarantees of the sandbox
+ * by ensuring that critical properties of constructors cannot be altered.
+ *
+ * @param constructorRef - Reference to the constructor whose properties need to be made inert.
+ * @param errorFnName - The name of the function to show in error messages
+ * @returns An inert constructor
+ */
 const inertConstructorProperty = (
 	prototype: typeof Function.prototype,
 	errorFnName: string,
@@ -61,6 +73,15 @@ const inertConstructorProperty = (
 	};
 };
 
+/**
+ * Tames the global `setTimeout` and `setInterval` functions to ensure
+ * they can't be exploited or misused to execute code dynamically by passing
+ * a string.
+ *
+ * @param f - The original global setTimeout function.
+ * @returns Tamed versions of setTimeout and setInterval that only accept
+ * functions as callback arguments
+ */
 const tameSetTimerFn = (f: 'setTimeout' | 'setInterval') => {
 	const feralFn = global[f];
 
@@ -92,6 +113,13 @@ const tameSetTimerFn = (f: 'setTimeout' | 'setInterval') => {
 	});
 };
 
+/**
+ * Harden global objects and their properties, ensuring they're non-configurable
+ * and immutable to prevent tampering.
+ *
+ * This is a security measure to ensure that malicious scripts cannot modify
+ * global objects, potentially changing their behavior to bypass security measures.
+ */
 const hardenGlobals: { (): void } = __buildtimeSettings__.hardenGlobals
 	? () => {
 			const FERAL_FUNCTION = hardenGlobals.constructor;
@@ -189,6 +217,14 @@ const hardenGlobals: { (): void } = __buildtimeSettings__.hardenGlobals
 	  }
 	: Boolean;
 
+/**
+ * Disables static methods on the URL object that could be misused for probing
+ * or information disclosure or to cause certain DoS attacks.
+ *
+ * By removing or wrapping potentially harmful static methods, the URL object
+ * remains safe to use without risk of information leakage or other unexpected
+ * behaviour.
+ */
 const disableURLStaticMethods = () => {
 	global.URL &&
 		oDefineProperties(global.URL, {

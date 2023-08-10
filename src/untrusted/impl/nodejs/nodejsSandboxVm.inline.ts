@@ -289,9 +289,9 @@ const nodejsSandbox = (
 	oneTimeCtxValue(
 		sandboxId,
 		context,
-		'%__upc_js__',
+		'%__user_text__',
 		vm.compileFunction(wrapperFn, undefined, {
-			['filename']: sandboxId + '-upc.vm.js',
+			['filename']: sandboxId + '-usertext.vm.js',
 			['parsingContext']: context,
 		}),
 	);
@@ -301,22 +301,22 @@ const nodejsSandbox = (
 			nodejsSandboxInit.default +
 			'\r\n}).call(' +
 			'globalThis,' +
-			'(function(c,lio,upc){' +
+			'(function(c,lio,ut){' +
 			'"use strict";' +
 			'c=c.bind(c);' +
 			'return function(src){' +
 			`if(c(lio,src,${g_JSON.stringify(INTERNAL_SOURCE_STRING)})===-1)` +
 			'throw "Invalid call";' +
-			'var l_upc=upc;' +
-			'c=lio=upc=void 0;' +
-			'return l_upc;' +
+			'var tmp=ut;' +
+			'c=lio=ut=void 0;' +
+			'return tmp;' +
 			'};' +
 			'})(' +
 			'Function.prototype.call,' +
 			'String.prototype.lastIndexOf,' +
-			'globalThis["%__upc_js__"])' +
+			'globalThis["%__user_text__"])' +
 			');' +
-			'delete globalThis["%__upc_js__"];',
+			'delete globalThis["%__user_text__"];',
 		context,
 		{
 			['displayErrors']: displayErrors,

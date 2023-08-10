@@ -15,6 +15,27 @@
 
 import { oCreate } from './utils.js';
 
+/**
+ * A property descriptor that defines properties for a CommonJS-like module
+ * object.
+ *
+ * This descriptor is structured to support the `module.exports` pattern,
+ * commonly found in CommonJS module systems. The `exports` property within
+ * allows the assignment of exported values, separating internal logic
+ * from what is shared or exported to other modules.
+ *
+ * @property value - An object representing the main property attributes.
+ * @property value.exports - An object created with a null prototype to store
+ * exported values.
+ * @property value.exports.value - The value to be exported, initially an empty
+ * object.
+ * @property value.exports.writable - Indicates if the `exports` property can be
+ * changed.
+ * @property value.exports.enumerable - Makes the `exports` property show up
+ * during enumeration.
+ * @property value.exports.configurable - Indicates if the property can be
+ * deleted or changed.
+ */
 const modulePropertyDescriptor: PropertyDescriptor = {
 	['value']: oCreate(null, {
 		['exports']: {

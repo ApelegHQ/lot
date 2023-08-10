@@ -26,6 +26,21 @@ type TProxyMaybeRevocable = {
 	};
 };
 
+/**
+ * Creates either a revocable or non-revocable Proxy based on the value of
+ * `revocable`.
+ *
+ * When `revocable` is true, a standard revocable Proxy is created using
+ * `Proxy.revocable()`.
+ * If `revocable` is false or not provided, a regular object is constructed.
+ * If `revocable` is `null`, the first argument from `args` is returned as
+ * the `proxy` without modification.
+ *
+ * @param revocable - Determines the type of Proxy to create.
+ * @param args - Arguments to pass to the Proxy or custom Proxy constructor.
+ * @returns An object containing the Proxy and a revoke function, mimicking the
+ * structure returned by `Proxy.revocable`.
+ */
 const proxyMaybeRevocable: TProxyMaybeRevocable = (revocable, ...args) => {
 	if (revocable) {
 		return Proxy.revocable(...args);

@@ -37,5 +37,8 @@
 	[
 		"((x,o)=>o.keys(o.getOwnPropertyDescriptors(x)).map(k=>{try{delete x[k]}catch{}}))(globalThis,Object)",
 		true
-	]
+	],
+	["if(this!==null&&this!==globalThis)throw 'Error'", true],
+	["return {then:_=>_(null)}", true],
+	["return new Proxy({then:_=>_(null)},{})", true]
 ]

@@ -29,6 +29,12 @@ declare namespace __buildtimeSettings__ {
 	const buildType: 'release' | 'debug';
 
 	/**
+	 * Defines a value called `__sandbox_containment_probe__` in the global
+	 * context, which may be used to detect sandbox escapes during testing.
+	 */
+	const sandboxContainmentProbe: boolean;
+
+	/**
 	 * An array of default allowed global properties.
 	 *
 	 * A default list is already provided by the distribution in the file

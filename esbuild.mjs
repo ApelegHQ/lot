@@ -165,6 +165,7 @@ const options = {
 		'__buildtimeSettings__.defaultAllowedGlobalProps': JSON.stringify(
 			defaultAllowedGlobalProps,
 		),
+		'__buildtimeSettings__.sandboxContainmentProbe': 'false',
 		'__buildtimeSettings__.fixGlobalTypes': 'true',
 		'__buildtimeSettings__.dynamicCodeGeneration': 'true',
 		'__buildtimeSettings__.bidirectionalMessaging': 'true',

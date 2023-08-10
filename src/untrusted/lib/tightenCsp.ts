@@ -13,9 +13,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-// This CSP will prevent loading any new scripts or dynamically executing code
-// such as by using Function(), eval(), etc.
-// Once this strict CSP is set, it cannot be removed
+/**
+ * Tightens the Content Security Policy (CSP) to prevent the loading of any
+ * new scripts or the dynamic execution of code.
+ *
+ * This function sets a strict CSP using a meta tag, ensuring that no new
+ * scripts can be loaded and code cannot be dynamically executed through
+ * methods like `Function()`, `eval()` and similar.
+ *
+ * Once this strict CSP is applied, it cannot be removed, thus providing
+ * a robust layer of security against potential code injections or other
+ * malicious behaviours.
+ */
 const tightenCsp = () => {
 	const metaCsp = document.createElement('meta');
 	metaCsp.setAttribute('http-equiv', 'content-security-policy');

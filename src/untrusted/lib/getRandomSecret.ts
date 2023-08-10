@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { aJoin, aMap, cGRC, mR, sFromCharCode, u8Alloc } from './utils.js';
+import { aJoin, aMap, cGRV, mR, sFromCharCode, u8Alloc } from './utils.js';
 
 /**
  * Converts a given buffer into a Base16 string (using a custom logic)
@@ -54,12 +54,16 @@ const bufferToHex = (buffer: Uint8Array | number[]) =>
  *
  * @returns The randomly generated secret as a string.
  */
-const getRandomSecret = cGRC
-	? (): string =>
+const getRandomSecret = cGRV
+	? // If crypto.getRandomValues is available, use that.
+	  (): string =>
 			bufferToHex(
-				(cGRC as unknown as Crypto['getRandomValues'])(u8Alloc(16)),
+				(cGRV as unknown as Crypto['getRandomValues'])(u8Alloc(16)),
 			)
-	: () =>
+	: // Otherwise, use fall back to Math.random. The values might be
+	  // predictable, but it should be fine as the strings generated are not
+	  // used in contexts that require secrecy as an absolute requirement.
+	  (): string =>
 			bufferToHex(
 				aMap(
 					u8Alloc(16) as unknown as number[],

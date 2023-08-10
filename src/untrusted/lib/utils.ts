@@ -35,7 +35,7 @@ const l_fnpApply = l_Function.apply;
 const l_fnpCall = l_Function.call;
 
 const l_crypto = typeof crypto === 'object' && crypto;
-const l_cGRC = l_crypto && l_crypto.getRandomValues;
+const l_cGRV = l_crypto && l_crypto.getRandomValues;
 
 export const S = String;
 export const E = Error;
@@ -141,7 +141,7 @@ export const sSplit = <T extends string>(
 
 export const u8Alloc = (n: number) => new l_Uint8Array(n);
 
-export const cGRC =
-	l_cGRC &&
+export const cGRV =
+	l_cGRV &&
 	(<T extends ArrayBufferView | null>(array: T): T =>
-		fnCall(l_cGRC, l_crypto, array));
+		fnCall(l_cGRV, l_crypto, array));
