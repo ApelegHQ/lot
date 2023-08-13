@@ -19,7 +19,14 @@ import global from './global.js';
 import * as Logger from './Logger.js';
 import performTaskFactory from './performTaskFactory.js';
 import requestHandler from './requestHandler.js';
-import { aIncludes, aIsArray, aSlice, E, oDefineProperty, RE } from './utils.js';
+import {
+	aIncludes,
+	aIsArray,
+	aSlice,
+	E,
+	oDefineProperty,
+	RE,
+} from './utils.js';
 
 const FERAL_FUNCTION = Proxy.revocable(Function, {});
 

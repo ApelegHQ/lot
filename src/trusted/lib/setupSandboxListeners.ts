@@ -80,7 +80,7 @@ const setupSandboxListeners = (
 	};
 
 	const onDestroy = () => {
-		messagePort.postMessage([EMessageTypes.DESTROY]);
+		postMessage([EMessageTypes.DESTROY]);
 		destroyTaskPerformer();
 		messagePort.removeEventListener(
 			'message',

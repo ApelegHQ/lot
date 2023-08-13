@@ -110,15 +110,7 @@ const requestHandler = (
 					' (sync)',
 			);
 
-			try {
-				postMessage([EMessageTypes.RESULT, id, result]);
-			} catch (e) {
-				postMessage([
-					EMessageTypes.ERROR,
-					id,
-					extractErrorInformation(e),
-				]);
-			}
+			postMessage([EMessageTypes.RESULT, id, result]);
 		}
 	} catch (e) {
 		Logger.debug(
