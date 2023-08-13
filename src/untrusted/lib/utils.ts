@@ -34,8 +34,8 @@ const l_Function = (() => {}).constructor;
 const l_fnpApply = l_Function.apply;
 const l_fnpCall = l_Function.call;
 
-const l_crypto = typeof crypto === 'object' && crypto;
-const l_cGRV = l_crypto && l_crypto.getRandomValues;
+const l_crypto = typeof crypto === 'object' ? crypto : undefined;
+const l_cGRV = l_crypto?.getRandomValues;
 
 export const S = String;
 export const E = Error;

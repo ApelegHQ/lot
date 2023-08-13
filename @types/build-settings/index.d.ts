@@ -48,26 +48,6 @@ declare namespace __buildtimeSettings__ {
 	const defaultAllowedGlobalProps: string[];
 
 	/**
-	 * Flag to indicate whether dynamic code generation is enabled.
-	 *
-	 * This flag is at the moment relevant only in combination with the
-	 * `enhancedWrapper` flag, although in the future it may find additional
-	 * uses.
-	 * When this flag is enabled, steps are taken to minimise the use of
-	 * non-deterministic generated code, so that in theory every piece of code
-	 * executed can be known in advance, and used in combination with other
-	 * protection mechanisms, such as SRI. In practice, the browser security
-	 * model still requires broad permissions that provide little benefit to
-	 * disabling dynamic code generation.
-	 *
-	 * WARNING: This flag has security implications and you should not disable
-	 * it without careful consideration. Disabling generated code could result
-	 * in especially crafted but non syntactically-valid code being able to
-	 * escape confinement and gain access the global scope.
-	 */
-	const dynamicCodeGeneration: boolean;
-
-	/**
 	 * Deadline in milliseconds for sandbox initialisation.
 	 */
 	const sandboxInitDeadlineInMs: number;
@@ -78,27 +58,12 @@ declare namespace __buildtimeSettings__ {
 	const innerSandboxInitDeadlineInMs: number;
 
 	/**
-	 * Flag to indicate whether enhanced wrapper is enabled.
-	 *
-	 * Enabling this flag will wrap any user-provided code within a `with`
-	 * statement to limit its scope, as well activate some additional measures,
-	 * such as 'fixing' missing or wrongly-set globals and enforcing strict
-	 * mode.
-	 *
-	 * WARNING: This flag has security implications and you should not disable
-	 * it without careful consideration.
-	 */
-	const enhancedWrapper: boolean;
-
-	/**
 	 * Flag to indicate whether emulated global context is enabled.
 	 *
 	 * Enabling this flag will create a Proxy that emulates the global scope,
 	 * such that the sandboxed code does not have direct access to alter the
 	 * global scope (but it may still affect the global scope through shared
 	 * references).
-	 *
-	 * This flag is most effective in combination with `enhancedWrapper`.
 	 *
 	 * WARNING: This flag has security implications and you should not disable
 	 * it without careful consideration.

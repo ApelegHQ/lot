@@ -22,7 +22,7 @@ import {
 	moveMessagePortToContext,
 	workerData,
 } from 'node:worker_threads';
-import { createWrapperFn } from '../../lib/genericSandbox.js';
+import createWrapperFn from '../../lib/createWrapperFn.js';
 import hardenGlobals from '../../lib/hardenGlobals.js';
 import scopedTimerFunction from '../../lib/scopedTimerFunction.js';
 import { INTERNAL_SOURCE_STRING } from './constants.js';
@@ -32,7 +32,6 @@ if (isMainThread) throw new Error('Invalid environment');
 const {
 	JSON: g_JSON,
 	Object: g_Object,
-	String: g_String,
 	TypeError: g_TypeError,
 	atob: g_atob,
 	btoa: g_btoa,
@@ -88,7 +87,6 @@ const nodejsSandbox = (
 	}
 
 	const context = g_Object.create(null);
-	const wrapperFn = createWrapperFn(script, g_String);
 
 	const [scopedSetTimeout, scopedClearTimeout] =
 		__buildtimeSettings__.scopedTimerFunctions
@@ -280,21 +278,20 @@ const nodejsSandbox = (
 	]);
 	removeAllProperties(global);
 
+	const wrapperFn = createWrapperFn(script, (s: string) => {
+		return vm.compileFunction(s, undefined, {
+			['filename']: sandboxId + '-usertext.vm.js',
+			['parsingContext']: context,
+		});
+	});
+
 	// Due to how the Sandbox is constructed, it will attempt to dynamically
 	// execute the sandbox source using Function. However, Function will
 	// not work inside the vm context, as dynamic eval has been disabled
 	// The function is provided upon vm initialisation instead, and
 	// Function is defined to return that function instead.
 	// This function will be called exactly once
-	oneTimeCtxValue(
-		sandboxId,
-		context,
-		'%__user_text__',
-		vm.compileFunction(wrapperFn, undefined, {
-			['filename']: sandboxId + '-usertext.vm.js',
-			['parsingContext']: context,
-		}),
-	);
+	oneTimeCtxValue(sandboxId, context, '%__user_text__', wrapperFn);
 	vm.runInContext(
 		// Shadow Function to avoid changing the global namespace
 		'(function(Function){\r\n' +
@@ -307,6 +304,9 @@ const nodejsSandbox = (
 			'return function(src){' +
 			`if(c(lio,src,${g_JSON.stringify(INTERNAL_SOURCE_STRING)})===-1)` +
 			'throw "Invalid call";' +
+			// If source includes /*lint*/, the constructor is called just for
+			// syntax validation
+			'if(c(lio,src,"/*lint*/")!==-1)return;' +
 			'var tmp=ut;' +
 			'c=lio=ut=void 0;' +
 			'return tmp;' +

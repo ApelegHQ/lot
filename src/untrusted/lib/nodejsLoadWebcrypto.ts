@@ -17,9 +17,10 @@
 // by default
 if (
 	typeof process === 'object' &&
+	process !== null &&
 	/^v(\d+)\./.test(process.version) &&
 	parseInt(process.version.slice(1)) <= 18 &&
-	!Reflect.has(globalThis, 'crypto') &&
+	!('crypto' in globalThis) &&
 	typeof require === 'function'
 ) {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
