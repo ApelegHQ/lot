@@ -25,6 +25,7 @@
  * `this` keyword.
  *
  * @param script - The raw user-provided script to be wrapped.
+ * @param preamble - Additional code to execute before the user-provided script
  * @returns The script wrapped with security enhancements.
  */
 const functionContextWrapper = (script: string, preamble?: string): string => {
@@ -34,15 +35,15 @@ const functionContextWrapper = (script: string, preamble?: string): string => {
 
 	// The 'with' block restricts access to the global scope
 	return (
-		'with(this){' +
+		'/*@user text(wrapper)@*/with(this){' +
 		preamble +
 		`(function(){` +
-		"'use strict';" +
+		'"use strict";' +
 		'(' +
-		'function(){' +
+		'function(){/*@user text(start)@*/' +
 		'\r\n' +
 		script +
-		'\r\n}' +
+		'\r\n/*@user text(end)@*/}' +
 		')' +
 		'.call(globalThis);' +
 		'}).call(this);' +

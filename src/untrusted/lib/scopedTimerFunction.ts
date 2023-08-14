@@ -17,6 +17,24 @@ import { oCreate, oHasOwnProperty } from './utils.js';
 
 type TSetTimer = typeof setImmediate | typeof setInterval | typeof setTimeout;
 
+/**
+ * Creates a scoped timer function which maps to a unique identifier and
+ * provides a way to clear the timer. The goal of this function is to allow
+ * using, e.g., setTimeout and clearTimeout without exposing values that
+ * may be used to control these functions in the global scope.
+ *
+ * @template T
+ * @param setTimer - The timer function, like `setImmediate`,
+ * `setInterval`, or `setTimeout`.
+ * @param clearTimer - A function to clear the timer with the same type as
+ * the setTimer.
+ * @returns - A tuple containing the scoped set timer and clear timer functions.
+ *
+ * @example
+ * const [scopedSetTimeout, scopedClearTimeout] = scopedTimerFunction(setTimeout, clearTimeout);
+ * const timerId = scopedSetTimeout(() => console.log('Hello, world!'), 1000);
+ * scopedClearTimeout(timerId);
+ */
 const scopedTimerFunction = <T extends TSetTimer>(
 	setTimer: T,
 	clearTimer: { (id?: ReturnType<T>): void },

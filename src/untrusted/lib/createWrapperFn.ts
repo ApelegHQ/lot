@@ -19,7 +19,7 @@ import functionContextWrapper from './functionContextWrapper.js';
 import { TE } from './utils.js';
 
 const syntaxCheckWrapper = (script: string) =>
-	'"use strict";for(;;)/*lint*/;\r\n' + script;
+	'"use strict";for(;;)/*@lint@*/;\r\n' + script;
 
 /**
  * Create a sandboxed wrapper function.

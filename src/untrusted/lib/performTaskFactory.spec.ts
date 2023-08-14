@@ -13,9 +13,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-Reflect.set(globalThis, '__buildtimeSettings__', {
-	buildType: 'debug',
-});
+if (typeof __buildtimeSettings__ !== 'object')
+	Reflect.set(globalThis, '__buildtimeSettings__', {});
+
+Reflect.set(__buildtimeSettings__, 'buildType', 'debug');
 
 import assert from 'node:assert/strict';
 import performTaskFactory from './performTaskFactory.js';

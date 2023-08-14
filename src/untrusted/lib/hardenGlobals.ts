@@ -19,6 +19,7 @@ import {
 	aFilter,
 	aForEach,
 	aMap,
+	fnApply,
 	oDefineProperties,
 	oDefineProperty,
 	oFreeze,
@@ -91,7 +92,7 @@ const tameSetTimerFn = (f: 'setTimeout' | 'setInterval') => {
 		if (typeof args[0] !== 'function') {
 			throw EE(`call to eval() blocked by CSP`);
 		}
-		feralFn.apply(global, args);
+		return fnApply(feralFn, global, args);
 	};
 	try {
 		oDefineProperty(

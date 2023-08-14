@@ -15,6 +15,25 @@
 
 import { extractErrorInformation } from './errorModem.js';
 
+/**
+ * Wraps the given postMessage function to provide error handling.
+ *
+ * This wrapper attempts ensures that messages are sent successfully, despite
+ * errors when sending a message. If an error occurs during message sending,
+ * it tries to send an error message with detailed information.
+ * If that fails, it sends a generic error message. If even that fails, it does
+ * nothing and the error is silently caught. This function is meant to be used
+ * for returning the result of running tasks (when communicating across
+ * realms). For task requests, having sending a message fail does not require
+ * special handling, as the error is delivered locally.
+ *
+ * @param postMessage - The original postMessage function.
+ * @returns A wrapped postMessage function with error handling.
+ *
+ * @example
+ * const wrappedPostMessage = postMessageWrapper(originalPostMessage);
+ * wrappedPostMessage(["DATA", "Some Data"]);
+ */
 const postMessageWrapper =
 	(postMessage: { (data: unknown[]): void }) => (data: unknown[]) => {
 		try {
