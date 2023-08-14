@@ -18,7 +18,7 @@ if (typeof __buildtimeSettings__ !== 'object')
 
 Reflect.set(__buildtimeSettings__, 'bidirectionalMessaging', true);
 Reflect.set(__buildtimeSettings__, 'defaultAllowedGlobalProps', []);
-2;
+
 import assert from 'node:assert/strict';
 import createContext, { setupExternalMethods } from './createContext.js';
 

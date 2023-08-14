@@ -35,7 +35,7 @@ describe('Hardened functions', () => {
 
 		it('should make Function inert', () => {
 			assert.throws(() => {
-				Function('2 + 2');
+				void Function('2 + 2');
 			}, /call to Function\(\) blocked by CSP/);
 		});
 
