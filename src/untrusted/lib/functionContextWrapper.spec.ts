@@ -28,7 +28,7 @@ describe('functionContextWrapper', () => {
 
 		assert.ok(result.includes(script));
 
-		assert.doesNotThrow(() => Function(result));
+		assert.doesNotThrow(() => (void 0, Function)(result));
 	});
 
 	it('should wrap script with preamble correctly', () => {
@@ -44,7 +44,7 @@ describe('functionContextWrapper', () => {
 		assert.ok(result.includes(script));
 		assert.ok(result.includes(preamble));
 
-		assert.doesNotThrow(() => Function(result));
+		assert.doesNotThrow(() => (void 0, Function)(result));
 	});
 
 	it('illegal code causes a syntax error', () => {
@@ -52,7 +52,7 @@ describe('functionContextWrapper', () => {
 
 		const result = functionContextWrapper(script);
 
-		assert.throws(() => Function(result), SyntaxError);
+		assert.throws(() => (void 0, Function)(result), SyntaxError);
 	});
 
 	it('illegal preamble causes a syntax error', () => {
@@ -62,8 +62,11 @@ describe('functionContextWrapper', () => {
 		const resultWithPreamble = functionContextWrapper(script, preamble);
 		const resultWithoutPreamble = functionContextWrapper(script);
 
-		assert.doesNotThrow(() => Function(resultWithoutPreamble));
+		assert.doesNotThrow(() => (void 0, Function)(resultWithoutPreamble));
 
-		assert.throws(() => Function(resultWithPreamble), SyntaxError);
+		assert.throws(
+			() => (void 0, Function)(resultWithPreamble),
+			SyntaxError,
+		);
 	});
 });

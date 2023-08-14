@@ -29,50 +29,56 @@ describe('Hardened functions', () => {
 
 		it('should make eval inert', () => {
 			assert.throws(() => {
-				eval('2 + 2');
+				(void 0, eval)('2 + 2');
 			}, /call to eval\(\) blocked by CSP/);
 		});
 
 		it('should make Function inert', () => {
 			assert.throws(() => {
-				void Function('2 + 2');
+				(void 0, Function)('2 + 2');
 			}, /call to Function\(\) blocked by CSP/);
 		});
 
 		it('should make (()=>{}).constructor inert', () => {
 			assert.throws(() => {
-				(() => {}).constructor('2 + 2');
+				(void 0, (() => {}).constructor)('2 + 2');
 			}, /call to Function\(\) blocked by CSP/);
 		});
 
 		it('should make (async ()=>{}).constructor inert', () => {
 			assert.throws(() => {
-				(async () => {}).constructor('2 + 2');
+				(void 0, (async () => {}).constructor)('2 + 2');
 			}, /call to Function\(\) blocked by CSP/);
 		});
 
 		it('should make (function* () {}).constructor inert', () => {
 			assert.throws(() => {
-				(function* () {}).constructor('2 + 2');
+				(void 0, function* () {}.constructor)('2 + 2');
 			}, /call to Function\(\) blocked by CSP/);
 		});
 
 		it('should make (async function* () {}).constructor inert', () => {
 			assert.throws(() => {
-				(async function* () {}).constructor('2 + 2');
+				(void 0, async function* () {}.constructor)('2 + 2');
 			}, /call to Function\(\) blocked by CSP/);
 		});
 
 		it('should make setTimeout only accept functions as callbacks', () => {
+			let id;
 			assert.throws(() => {
-				setTimeout('console.log("hi")', 1000);
+				id = setTimeout('console.log("hi")', 1000);
 			}, /call to eval\(\) blocked by CSP/);
+
+			clearTimeout(id);
 		});
 
 		it('should make setInterval only accept functions as callbacks', () => {
+			let id;
 			assert.throws(() => {
-				setInterval('console.log("hi")', 1000);
+				id = setInterval('console.log("hi")', 1000);
 			}, /call to eval\(\) blocked by CSP/);
+
+			clearInterval(id);
 		});
 	});
 

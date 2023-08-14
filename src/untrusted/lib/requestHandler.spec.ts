@@ -53,8 +53,6 @@ describe('requestHandler', () => {
 
 		requestHandler(postMessageStub, ctx, id, op, ...args);
 
-		console.log(JSON.stringify(postMessageStub.calls));
-
 		// Check that postMessage was called with the expected result message
 		assert.deepEqual(postMessageStub.calls, [
 			{ args: [[EMessageTypes.RESULT, id, 5]] },

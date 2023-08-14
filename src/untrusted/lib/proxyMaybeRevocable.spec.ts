@@ -30,7 +30,7 @@ describe('proxyMaybeRevocable', () => {
 		revoke();
 
 		assert.throws(() => {
-			proxy.someNonExistentProp;
+			void proxy.someNonExistentProp;
 		}, TypeError);
 	});
 
