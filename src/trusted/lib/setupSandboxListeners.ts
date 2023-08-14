@@ -22,6 +22,26 @@ import requestHandler from '../../untrusted/lib/requestHandler.js';
 // Timeout for sandbox initialisation (in ms)
 const ERROR_TIMEOUT = __buildtimeSettings__.sandboxInitDeadlineInMs;
 
+/**
+ * Set up sandbox listeners to facilitate (uni- or bidirectional) communication
+ * between the main context and a sandbox.
+ * This function ensures messages are appropriately handled and processed.
+ *
+ * @param messagePort - The communication port used to send and receive
+ * messages.
+ * @param allowUntrusted - A flag to determine if untrusted messages (i.e.,
+ * events with the `isTrusted` flag set to false) should be processed.
+ * @param manager - A function responsible for additional set up tasks, if
+ * needed.
+ * @param externalMethods - An optional object of external methods that can be
+ * invoked via messages.
+ * @param abort - An optional abort signal to stop processing or listening for
+ * messages.
+ * @returns A promise resolving to a performTask function, allowing the caller
+ * to initiate tasks.
+ * @throws {TypeError} Throws if bidirectional messaging is disabled but
+ * externalMethods is provided.
+ */
 const setupSandboxListeners = (
 	messagePort: MessagePort,
 	allowUntrusted: boolean,

@@ -27,6 +27,20 @@ import {
 
 const MAX_DEPTH = 3;
 
+/* General note about this file:
+
+Since most communication happens through the MessagePort interface, these
+functions are technically not needed. However, in practice it is, because
+`structuredClone` doesn't work as it should.
+
+  - On Firefox, `structuredClone(Error())` results in a DOMException
+    (DataCloneError)
+  - On Node.js, `try { structuredClone(structuredClone) } catch (e) {
+    structuredClone(e) }` incorrectly results in an empty object (instead of
+    cloning a DataCloneError).
+
+*/
+
 /**
  * Extracts error information from the given value, optionally including information about
  * nested causes to a specified depth.
