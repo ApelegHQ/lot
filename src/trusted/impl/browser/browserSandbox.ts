@@ -19,6 +19,28 @@ import type iframeSandboxInner from '../../../untrusted/impl/browser/iframeSandb
 import getRandomSecret from '../../../untrusted/lib/getRandomSecret.js';
 import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
 
+// This is mostly to avoid accidentally invalid syntax, as the constructed
+// source should come from trusted inputs
+const safeXml = (
+	template: TemplateStringsArray,
+	...substitutions: string[]
+) => {
+	// Because the inputs should be trusted, do validation only instead of
+	// substitution
+	// Potentially unsafe XML values:
+	//    '&': Cannot stand alone. Could also be an entity, which is unexpected.
+	//    '<': Start of tag. Must be escaped, and it is unexpected.
+	//    '>': End of tag. Must be escaped, and it is unexpected.
+	//    "'": Could start or close an attribute, and it is unexpected.
+	//    '"': Could start or close an attribute, and it is unexpected.
+	substitutions.forEach((s) => {
+		if (typeof s !== 'string' || /[&<>'"]/.test(s))
+			throw new TypeError('Invalid XML attribute value');
+	});
+
+	return String.raw(template, ...substitutions);
+};
+
 const browserSandbox: ISandbox = async (
 	script,
 	allowedGlobals,
@@ -32,14 +54,22 @@ const browserSandbox: ISandbox = async (
 		);
 	}
 
-	const initMesssageKeyA = getRandomSecret();
-	const initMesssageKeyB = getRandomSecret();
+	const initMessageKeyA = getRandomSecret();
+	const initMessageKeyB = getRandomSecret();
 	const nonce = getRandomSecret();
 
-	const html = `<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Sandbox</title><script crossorigin="anonymous" integrity="${iframeSandboxInit.sri}" nonce="${nonce}" src="data:text/javascript;base64,${iframeSandboxInit.contentBase64}"></script></head><body></body></html>`;
+	const html =
+		'<!DOCTYPE html>' +
+		'<html lang="zxx" xml:lang="zxx" xmlns="http://www.w3.org/1999/xhtml">' +
+		'<head>' +
+		'<title>Sandbox</title>' +
+		safeXml`<script crossorigin="anonymous" integrity="${iframeSandboxInit.sri}" nonce="${nonce}" src="data:text/javascript;base64,${iframeSandboxInit.contentBase64}"></script>` +
+		'</head>' +
+		'<body></body>' +
+		'</html>';
 
 	const iframe = document.createElement('iframe');
-	const blob = new Blob([html], { type: 'application/xhtml+xml' });
+	const blob = new Blob([html], { ['type']: 'application/xhtml+xml' });
 
 	// Request that the iframe be isolated from its parent, with the ability
 	// to run scripts.
@@ -66,22 +96,25 @@ const browserSandbox: ISandbox = async (
 			: "default-src 'none'",
 	);
 	const iframeSrcUrl = self.URL.createObjectURL(blob);
+	iframe.setAttribute('role', 'none');
 	iframe.setAttribute(
 		'src',
-		iframeSrcUrl + '#' + initMesssageKeyA + '-' + initMesssageKeyB,
+		iframeSrcUrl + '#' + initMessageKeyA + '-' + initMessageKeyB,
 	);
 	Object.assign(iframe.style, {
 		['display']: 'none',
-		['position']: 'absolute',
-		['visibility']: 'hidden',
-		['opacity']: '0',
-		['top']: '-9999px',
-		['left']: '-9999px',
-		['width']: '1px',
 		['height']: '1px',
+		['left']: '-9999px',
+		['opacity']: '0',
+		['position']: 'absolute',
+		['top']: '-9999px',
+		['visibility']: 'hidden',
+		['width']: '1px',
 	});
-	iframe.setAttribute('role', 'none');
-	// iframes are flow content and should be placed in the body
+
+	// iframes are flow content and should be placed in the body, although
+	// placing it in the head would not require the styles above for hiding
+	// it
 	document.body.appendChild(iframe);
 
 	if (!iframe.contentWindow) {
@@ -99,7 +132,7 @@ const browserSandbox: ISandbox = async (
 			!Array.isArray(event.data) ||
 			event.data.length !== 2 ||
 			event.data[1] !== EMessageTypes.SANDBOX_READY ||
-			event.data[0] !== initMesssageKeyA
+			event.data[0] !== initMessageKeyA
 		)
 			return;
 
@@ -109,7 +142,7 @@ const browserSandbox: ISandbox = async (
 
 		sandboxIframeCW.postMessage(
 			[
-				initMesssageKeyB,
+				initMessageKeyB,
 				EMessageTypes.SANDBOX_READY,
 				messageChannel.port2,
 				String(script),

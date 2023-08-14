@@ -17,8 +17,10 @@ import * as Logger from '../../lib/Logger.js';
 import { aIsArray, aSlice, fnApply, sSlice, sSplit } from '../../lib/utils.js';
 import iframeSandboxInner from './iframeSandboxInner.js';
 
+const location = self.location;
+
 const [initMesssageKeyA, initMesssageKeyB] = sSplit(
-	sSlice(self.location.hash, 1),
+	sSlice(location.hash, 1),
 	'-',
 );
 
@@ -43,8 +45,15 @@ const listener = (event: MessageEvent) => {
 Logger.info('Iframe loaded, registering event listener');
 self.addEventListener('message', listener, false);
 
+const parentOrigin =
+	'ancestorOrigins' in location &&
+	location['ancestorOrigins'] &&
+	location['ancestorOrigins'][0] &&
+	location['ancestorOrigins'][0] !== 'null'
+		? location['ancestorOrigins'][0]
+		: '*';
+
 parent.postMessage(
 	[initMesssageKeyA, EMessageTypes.SANDBOX_READY],
-	// We don't know the origin yet
-	'*',
+	parentOrigin,
 );

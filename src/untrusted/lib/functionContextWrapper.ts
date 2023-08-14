@@ -43,7 +43,7 @@ const functionContextWrapper = (script: string, preamble?: string): string => {
 		'function(){/*@user text(start)@*/' +
 		'\r\n' +
 		script +
-		'\r\n/*@user text(end)@*/}' +
+		'\r\n/*@user text(end)@*/;}' +
 		')' +
 		'.call(globalThis);' +
 		'}).call(this);' +
