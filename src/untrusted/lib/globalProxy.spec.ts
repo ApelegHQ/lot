@@ -27,7 +27,7 @@ describe('globalProxy', () => {
 		// Test normal property access
 		assert.equal(proxy.prop, 42);
 
-		// Test 'module' property behavior
+		// Test 'module' property behaviour
 		assert.notEqual(proxy.module, 'testModule');
 		assert.equal(typeof proxy.module, 'object');
 		assert.ok(

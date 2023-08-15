@@ -119,7 +119,8 @@ const tameSetTimerFn = (f: 'setTimeout' | 'setInterval') => {
  * and immutable to prevent tampering.
  *
  * This is a security measure to ensure that malicious scripts cannot modify
- * global objects, potentially changing their behavior to bypass security measures.
+ * global objects, potentially changing their behaviuor to bypass security
+ * measures.
  */
 const hardenGlobals: { (): void } = __buildtimeSettings__.hardenGlobals
 	? () => {

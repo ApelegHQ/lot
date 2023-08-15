@@ -24,6 +24,25 @@ import type { TSandboxOptions } from '../../../types/index.js';
 import workerSandboxManager from '../../../neutral/impl/worker/workerSandboxManager.js';
 import iframeSoleSandboxManager from './iframeSoleSandboxManager.js';
 
+/**
+ * Sets up a sandboxed environment within an iframe.
+ *
+ * This function modifies and restricts global properties and methods to
+ * enhance security. It also sets up message event listeners for communication
+ * between the iframe and its parent context. Depending on the build settings,
+ * it either uses web workers within the iframe for isolated script execution
+ * or directly executes the provided script in the iframe's context.
+ *
+ * @param messagePort - The communication channel to the main context.
+ * @param script - The script to be executed in the iframe or its worker.
+ * @param revocable - Determines if the sandbox can be torn down.
+ * @param allowedGlobals - List of global properties/methods that should remain
+ * accessible.
+ * @param externalMethodsList - List of external methods available to the
+ * sandboxed environment.
+ * @param options - Optional configuration parameters.
+ * @returns Settles once the sandbox setup is complete or if an error occurs.
+ */
 const iframeSandboxInner = async (
 	messagePort: MessagePort,
 	script: string,

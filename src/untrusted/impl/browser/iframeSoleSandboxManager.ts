@@ -21,6 +21,26 @@ import { disableURLStaticMethods } from '../../lib/hardenGlobals.js';
 import * as Logger from '../../lib/Logger.js';
 import tightenCsp from '../../lib/tightenCsp.js';
 
+/**
+ * Manages the sandbox environment for an iframe, either setting it up or
+ * handling any encountered errors.
+ *
+ * @param messagePort - The port for sending/receiving messages.
+ * @param script - The script content to be executed inside the sandbox.
+ * @param revocable - Determines if the sandbox can be torn down.
+ * @param allowedGlobals - List of global properties/methods that should remain
+ * accessible.
+ * @param externalMethodsList - List of external methods available to the
+ * sandboxed environment.
+ * @param createMessageEventListener - A factory function to create a message
+ * event listener.
+ * @param createErrorEventListener - A factory function to create an error
+ * event listener.
+ * @param close - A function to close the sandbox environment and release
+ * resources
+ * @returns A promise that settles when the setup is complete or on error.
+ * @throws Will throw an error if there's an issue with setting up the iframe
+ */
 const iframeSoleSandboxManager = async (
 	messagePort: MessagePort,
 	script: string,

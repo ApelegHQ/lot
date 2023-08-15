@@ -31,6 +31,10 @@ const l_Function = (() => {}).constructor;
 const l_String = String;
 const l_ePrototype = Error.prototype;
 
+/**
+ * Handles incoming messages and initialises the sandbox if necessary.
+ * @param event - The incoming message event.
+ */
 const listener = (event: MessageEvent) => {
 	if (
 		/* !event.isTrusted || */ // Node.js doesn't set isTrusted
@@ -48,6 +52,12 @@ const listener = (event: MessageEvent) => {
 	fnApply(workerSandboxInner, null, aSlice(event.data, 1));
 };
 
+/**
+ * Recreates an error object from a given input.
+ * This ensures that no references are leaked when errors occur.
+ * @param e - The input that may be an error.
+ * @returns The recreated error object.
+ */
 const recreateError = (e: unknown): Error => {
 	const newError = oCreate(l_ePrototype);
 	// try-catch block to prevent leaking references if this function itself
@@ -71,10 +81,16 @@ const recreateError = (e: unknown): Error => {
 	return newError;
 };
 
-// These need to be wrapped because they contain references to the parent
-// environment
-// Then, the parent needs to delete these functions, which it can do when
-// it receives SANDBOX_READY in the next step
+/**
+ * Factory function to create a wrapper for native functions.
+ * This wrapper ensures that function calls don't leak references and
+ * safely handles any exceptions, recreating them to prevent reference leakage.
+ *
+ * @template T
+ * @param obj - The object containing the function to be wrapped.
+ * @returns A function that, when called with a function name, wraps that
+ * function.
+ */
 const nativeWrapperFactory =
 	<T extends Record<string, typeof Function.prototype>>(obj: T) =>
 	(name: keyof T) => {
@@ -99,6 +115,10 @@ const nativeWrapperFactory =
 		});
 	};
 
+// These need to be wrapped because they contain references to the parent
+// environment
+// Then, the parent needs to delete these functions, which it can do when
+// it receives SANDBOX_READY in the next step
 ['atob', 'btoa', 'close', 'clearInterval', 'clearTimeout'].forEach(
 	nativeWrapperFactory(
 		globalThis as unknown as Parameters<typeof nativeWrapperFactory>[0],
@@ -129,6 +149,14 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 	};
 	messagePort.start();
 
+	/**
+	 * Shim function for the `addEventListener` method.
+	 * This ensures that messages passed to the listeners are cloned to prevent
+	 * reference leaks, by using the provided MessagePort.
+	 * @template T
+	 * @param type - The type of event (only `message` is supported)
+	 * @param listener - The event listener function.
+	 */
 	globalThis.addEventListener = function <T extends keyof WindowEventMap>(
 		type: T,
 		listener: { (e: WindowEventMap[T]): ReturnType<typeof eval> },
@@ -137,6 +165,13 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 		aPush(eventListeners, listener);
 	}.bind(globalThis) as typeof addEventListener;
 
+	/**
+	 * Shim function for the `removeEventListener` method using the
+	 * provided MessagePort.
+	 * @template T
+	 * @param type - The type of event.
+	 * @param listener - The event listener function.
+	 */
 	globalThis.removeEventListener = function <T extends keyof WindowEventMap>(
 		type: T,
 		listener: { (e: WindowEventMap[T]): ReturnType<typeof eval> },
@@ -182,11 +217,20 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 		return fnApply(l_wmpSet, wm, args);
 	};
 
-	// Local copy to prevent it from being overwritten
+	/**
+	 * Provides a shim for the structuredClone function, relying on JSON
+	 * Tries to clone a given data object and throws an error if the data
+	 * can't be cloned.
+	 * @template T
+	 * @param {T} data - The data to be cloned.
+	 * @returns {T} A clone of the input data.
+	 */
 	const l_structuredClone =
 		typeof structuredClone === 'function'
-			? structuredClone
-			: (() => {
+			? // Local copy to prevent it from being overwritten
+			  structuredClone
+			: // JSON-based shim
+			  (() => {
 					// Fallback for when structuredClone is unavailable
 					// The goal is to ensure that we don't get references to the
 					// parent context. Although structuredClone would be ideal,
@@ -254,6 +298,14 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 			typeof Function.prototype
 		>();
 
+		/**
+		 * Wrapper function for the `addEventListener` method.
+		 * This ensures that messages passed to the listeners are cloned to
+		 * prevent reference leaks.
+		 * @template T
+		 * @param type - The type of event (only `message` is supported)
+		 * @param listener - The event listener function.
+		 */
 		globalThis.addEventListener = (
 			function (...args: Parameters<typeof globalThis.addEventListener>) {
 				const [type, listener] = args;
@@ -283,6 +335,12 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 			} as typeof globalThis.addEventListener
 		).bind(globalThis);
 
+		/**
+		 * Wrapper function for the `removeEventListener` method.
+		 * @template T
+		 * @param type - The type of event.
+		 * @param listener - The event listener function.
+		 */
 		globalThis.removeEventListener = (
 			function (...args: Parameters<typeof rEL>) {
 				const [type, listener] = args;
@@ -341,6 +399,13 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 
 	if (typeof grv !== 'function') return;
 
+	/**
+	 * Wrapper function for the `crypto.getRandomValues` method.
+	 * Safely retrieves random values and ensures there's no reference leakage.
+	 * @template T
+	 * @param array - The TypedArray for the random values.
+	 * @returns The array filled with random values.
+	 */
 	globalThis.crypto.getRandomValues = function <
 		T extends ArrayBufferView | null,
 	>(array: T): T {

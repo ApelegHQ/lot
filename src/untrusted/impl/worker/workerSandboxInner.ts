@@ -22,6 +22,18 @@ import * as Logger from '../../lib/Logger.js';
 import recursivelyDeleteProperty from '../../lib/recursivelyDeleteProperty.js';
 import { aIsArray } from '../../lib/utils.js';
 
+/**
+ * Factory function to create an event listener for 'message' events.
+ *
+ * The created event listener filters incoming message events based on given
+ * criteria (shape, isTrusted attribute and message type) and then invokes the
+ * provided handler function if the criteria are met.
+ *
+ * @returns A function that takes in a handler function to be executed when the
+ * message event criteria are met and a flag determining if untrusted messages
+ * should be allowed. This returned function, when invoked, returns a cleanup
+ * function that can be used to remove the added event listener.
+ */
 const createMessageEventListener = (() => {
 	return (handler: { (data: unknown[]): void }, allowUntrusted: boolean) => {
 		const eventListener = (event: MessageEvent) => {
@@ -48,6 +60,22 @@ const createMessageEventListener = (() => {
 	};
 })();
 
+/**
+ * Setups up a sandboxed environment for the web worker and initiates execution
+ * of the provided script.
+ *
+ * This function also sets up message event listeners to communicate with the
+ * main thread and revokes or restricts global properties and methods to
+ * enhance security.
+ *
+ * @param script - The script to be executed in the worker.
+ * @param revocable - Determines if the sandbox can be torn down.
+ * @param allowUntrusted - Determines if untrusted messages should be allowed.
+ * @param allowedGlobals - List of global properties/methods that should remain
+ * accessible.
+ * @param externalMethodsList - List of external methods available to the
+ * sandboxed environment.
+ */
 const workerSandboxInner = (
 	script: string,
 	revocable: boolean,

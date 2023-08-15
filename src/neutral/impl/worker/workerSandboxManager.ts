@@ -24,6 +24,20 @@ import type workerSandboxInner from '../../../untrusted/impl/worker/workerSandbo
 // Timeout for worker initialisation (in ms)
 const ERROR_TIMEOUT = __buildtimeSettings__.innerSandboxInitDeadlineInMs;
 
+/**
+ * Create a Web Worker instance with provided scripts and configurations.
+ *
+ * @param script - The script content to be executed inside the worker.
+ * @param script - The script to be executed in the iframe or its worker.
+ * @param revocable - Determines if the sandbox can be torn down.
+ * @param allowedGlobals - List of global properties/methods that should remain
+ * accessible.
+ * @param externalMethodsList - List of external methods available to the
+ * sandboxed environment.
+ * @param options - Optional configuration parameters.
+ * @returns Tuple containing the worker instance and a function to revoke the
+ * worker source URL.
+ */
 const createWorker = (
 	script: string,
 	revocable: boolean,
@@ -62,6 +76,29 @@ const createWorker = (
 	return [worker, revokeWorkerSrcUrl];
 };
 
+/**
+ * Manages the Web Worker sandbox environment, either setting it up or handling
+ * any encountered errors.
+ *
+ * @param messagePort - The communication channel to the main context.
+ * @param script - The script to be executed in the iframe or its worker.
+ * @param revocable - Determines if the sandbox can be torn down.
+ * @param allowedGlobals - List of global properties/methods that should remain
+ * accessible.
+ * @param externalMethodsList - List of external methods available to the
+ * sandboxed environment.
+ * @param createMessageEventListener - A factory function to create message
+ * event listeners.
+ * @param createErrorEventListener - A factory function to create an error event
+ * listeners.
+ * @param postMessage - A function to post outgoing messages to the main
+ * context.
+ * @param options - Optional configuration parameters.
+ * @param teardown - Optional function to release resources.
+ * @returns A promise that settles when the setup is complete or on error.
+ * @throws Will throw an error if there's an issue with setting up the
+ * worker sandbox.
+ */
 const workerSandboxManager = async (
 	messagePort: MessagePort,
 	script: string,
