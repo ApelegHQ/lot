@@ -107,6 +107,10 @@
 		"ts-node": "^10.9.1",
 		"typescript": "^5.1.6"
 	},
+	"engines" : { 
+		"npm" : ">=8.0.0",
+		"node" : ">=16.0.0"
+	},
 	"keywords": [
 		"Node.js",
 		"browser",

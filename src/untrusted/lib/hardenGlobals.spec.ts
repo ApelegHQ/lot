@@ -87,11 +87,13 @@ describe('Hardened functions', () => {
 			disableURLStaticMethods();
 		});
 
-		it('should replace URL.createObjectURL', () => {
-			const obj = new Blob([]);
-			const result = URL.createObjectURL(obj);
-			assert.equal(typeof result, 'string');
-		});
+		if (typeof Blob === 'function') {
+			it('should replace URL.createObjectURL', () => {
+				const obj = new Blob([]);
+				const result = URL.createObjectURL(obj);
+				assert.equal(typeof result, 'string');
+			});
+		}
 
 		it('should replace URL.revokeObjectURL', () => {
 			const result = URL.revokeObjectURL('test');

@@ -13,22 +13,23 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-const { trace, debug, info, log } =
-	__buildtimeSettings__.buildType === 'debug' && typeof console === 'object'
-		? console
-		: {
-				trace: /* @__PURE__ */ Boolean,
-				debug: /* @__PURE__ */ Boolean,
-				info: /* @__PURE__ */ Boolean,
-				log: /* @__PURE__ */ Boolean,
-		  };
+const noop: { (...args: unknown[]): unknown } = /* @__PURE__ */ () => {};
 
-const { warn, error } =
-	typeof console === 'object'
-		? console
-		: {
-				warn: /* @__PURE__ */ Boolean,
-				error: /* @__PURE__ */ Boolean,
-		  };
+const debugOnlyLogWrapper = <T extends object>(o: T, v: keyof T) =>
+	__buildtimeSettings__.buildType === 'debug' && typeof o === 'object'
+		? o[v]
+		: noop;
+
+const logWrapper = <T extends object>(o: T, v: keyof T) =>
+	__buildtimeSettings__.buildType === 'debug' && typeof o === 'object'
+		? o[v]
+		: noop;
+
+const trace = debugOnlyLogWrapper(console, 'trace');
+const debug = debugOnlyLogWrapper(console, 'debug');
+const info = debugOnlyLogWrapper(console, 'info');
+const log = debugOnlyLogWrapper(console, 'log');
+const warn = logWrapper(console, 'warn');
+const error = logWrapper(console, 'error');
 
 export { trace, debug, info, log, warn, error };
