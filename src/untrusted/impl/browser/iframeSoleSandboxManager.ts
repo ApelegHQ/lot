@@ -13,13 +13,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import type createErrorEventListenerFactory from '../../lib/createErrorEventEventListenerFactory.js';
-import type createMessageEventListenerFactory from '../../lib/createMessageEventListenerFactory.js';
-import createSandboxedHandler from '../../lib/createSandboxedHandler.js';
-import { extractErrorInformation } from '../../lib/errorModem.js';
-import { disableURLStaticMethods } from '../../lib/hardenGlobals.js';
-import * as Logger from '../../lib/Logger.js';
-import tightenCsp from '../../lib/tightenCsp.js';
+import type createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
+import type createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
+import createSandboxedHandler from '~untrusted/lib/createSandboxedHandler.js';
+import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
+import { disableURLStaticMethods } from '~untrusted/lib/hardenGlobals.js';
+import * as Logger from '~untrusted/lib/Logger.js';
+import tightenCsp from '~untrusted/lib/tightenCsp.js';
 
 /**
  * Manages the sandbox environment for an iframe, either setting it up or

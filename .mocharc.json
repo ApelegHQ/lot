@@ -1,4 +1,4 @@
 {
 	"extension": ["ts"],
-	"loader": "ts-node/esm"
+	"loader": "./loader.mjs"
 }

@@ -27,7 +27,7 @@ import {
 	PM,
 } from './utils.js';
 
-import type { IPerformTask } from '../../types/index.js';
+import type { IPerformTask } from '~/types/index.js';
 import { reconstructErrorInformation } from './errorModem.js';
 import getRandomSecret from './getRandomSecret.js';
 import * as Logger from './Logger.js';

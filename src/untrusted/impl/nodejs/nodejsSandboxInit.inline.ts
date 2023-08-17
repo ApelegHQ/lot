@@ -23,10 +23,10 @@ import {
 	fnApply,
 	oCreate,
 	oDefineProperty,
-} from '../../lib/utils.js';
+} from '~untrusted/lib/utils.js';
 
-import * as Logger from '../../lib/Logger.js';
-import workerSandboxInner from '../worker/workerSandboxInner.js';
+import workerSandboxInner from '~untrusted/impl/worker/workerSandboxInner.js';
+import * as Logger from '~untrusted/lib/Logger.js';
 
 const l_Function = (() => {}).constructor;
 const l_String = String;

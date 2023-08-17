@@ -13,13 +13,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import * as workerSandboxInit from 'inline:../../../untrusted/impl/worker/workerSandboxInit.inline.js';
-import * as Logger from '../../../untrusted/lib/Logger.js';
-import type createErrorEventListenerFactory from '../../../untrusted/lib/createErrorEventEventListenerFactory.js';
-import type createMessageEventListenerFactory from '../../../untrusted/lib/createMessageEventListenerFactory.js';
-import { reconstructErrorInformation } from '../../../untrusted/lib/errorModem.js';
-import type { TSandboxOptions } from '../../../types/index.js';
-import type workerSandboxInner from '../../../untrusted/impl/worker/workerSandboxInner.js';
+import * as workerSandboxInit from 'inline:~untrusted/impl/worker/workerSandboxInit.inline.js';
+import * as Logger from '~untrusted/lib/Logger.js';
+import type createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
+import type createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
+import { reconstructErrorInformation } from '~untrusted/lib/errorModem.js';
+import type { TSandboxOptions } from '~/types/index.js';
+import type workerSandboxInner from '~untrusted/impl/worker/workerSandboxInner.js';
 
 // Timeout for worker initialisation (in ms)
 const ERROR_TIMEOUT = __buildtimeSettings__.innerSandboxInitDeadlineInMs;

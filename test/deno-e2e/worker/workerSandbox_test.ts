@@ -15,12 +15,12 @@
 
 /// <reference types="deno-types" />
 
-import m from '../../../dist/exports/worker.mjs';
+import m from '@dist/exports/worker.mjs';
 
 import * as assert from 'https://deno.land/std@0.197.0/testing/asserts.ts';
-import assertRejectsWithFactory from '../../lib/assertRejectsWithFactory.ts';
-import baseTests from '../../lib/baseTests.json' assert { type: 'json' };
-import wrapper from '../../lib/wrapper.ts';
+import assertRejectsWithFactory from '@test/lib/assertRejectsWithFactory.ts';
+import baseTests from '@test/lib/baseTests.json' assert { type: 'json' };
+import wrapper from '@test/lib/wrapper.ts';
 
 const assertRejectsWith = assertRejectsWithFactory((predicate, c) =>
 	assert.assertRejects(() => predicate, c),

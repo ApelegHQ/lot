@@ -4,7 +4,7 @@
 		"composite": true,
 		"rootDir": ".",
 		"lib": ["es2022", "dom"],
-		"outDir": "../../dist"
+		"outDir": "dist/e2e"
 	},
 	"references": [{ "path": "../.." }, { "path": "../lib" }],
 	"include": ["**/*", "**/*.json"]

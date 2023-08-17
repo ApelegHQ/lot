@@ -13,11 +13,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { IPerformTask } from '../../types/index.js';
-import { reconstructErrorInformation } from '../../untrusted/lib/errorModem.js';
-import * as Logger from '../../untrusted/lib/Logger.js';
-import performTaskFactory from '../../untrusted/lib/performTaskFactory.js';
-import requestHandler from '../../untrusted/lib/requestHandler.js';
+import { IPerformTask } from '~/types/index.js';
+import { reconstructErrorInformation } from '~untrusted/lib/errorModem.js';
+import * as Logger from '~untrusted/lib/Logger.js';
+import performTaskFactory from '~untrusted/lib/performTaskFactory.js';
+import requestHandler from '~untrusted/lib/requestHandler.js';
 
 // Timeout for sandbox initialisation (in ms)
 const ERROR_TIMEOUT = __buildtimeSettings__.sandboxInitDeadlineInMs;

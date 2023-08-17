@@ -31,7 +31,7 @@ import {
 	oGetPrototypeOf,
 } from './utils.js';
 
-import { IPerformTask, TContext } from '../../types/index.js';
+import { IPerformTask, TContext } from '~/types/index.js';
 import $global from './global.js';
 
 /**

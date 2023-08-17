@@ -20,13 +20,13 @@ import {
 	fnApply,
 	sSlice,
 	sSplit,
-} from '../../lib/utils.js';
+} from '~untrusted/lib/utils.js';
 
 if (parent === self || self === top) {
 	throw E('Iframe cannot be detached');
 }
 
-import * as Logger from '../../lib/Logger.js';
+import * as Logger from '~untrusted/lib/Logger.js';
 import iframeSandboxInner from './iframeSandboxInner.js';
 
 const location = self.location;

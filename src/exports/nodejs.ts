@@ -13,4 +13,4 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default } from '../trusted/impl/nodejs/nodejsSandbox.js';
+export { default } from '~trusted/impl/nodejs/nodejsSandbox.js';

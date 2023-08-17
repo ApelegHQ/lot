@@ -13,6 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import runBrowserTest from '../../lib/runBrowserTest.js';
+import runBrowserTest from '@test/lib/runBrowserTest.js';
 
 runBrowserTest('workerSandbox');

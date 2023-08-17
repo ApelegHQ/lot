@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import '../../lib/nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
+import '~untrusted/lib/nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
 
 import * as nodejsSandboxInit from 'inline:./nodejsSandboxInit.inline.js';
 import vm from 'node:vm';
@@ -22,9 +22,9 @@ import {
 	moveMessagePortToContext,
 	workerData,
 } from 'node:worker_threads';
-import createWrapperFn from '../../lib/createWrapperFn.js';
-import hardenGlobals from '../../lib/hardenGlobals.js';
-import scopedTimerFunction from '../../lib/scopedTimerFunction.js';
+import createWrapperFn from '~untrusted/lib/createWrapperFn.js';
+import hardenGlobals from '~untrusted/lib/hardenGlobals.js';
+import scopedTimerFunction from '~untrusted/lib/scopedTimerFunction.js';
 import { INTERNAL_SOURCE_STRING } from './constants.js';
 
 if (isMainThread) throw new Error('Invalid environment');

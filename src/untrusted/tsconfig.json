@@ -2,9 +2,9 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"rootDir": ".",
-		"composite": true,
-		"lib": ["es2022", "dom"],
-		"outDir": "dist"
+		"outDir": "../../dist/untrusted",
+		"composite": true
 	},
+	"references": [{ "path": "../types" }],
 	"include": ["**/*", "**/*.json"]
 }

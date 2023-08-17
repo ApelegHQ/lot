@@ -15,10 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import webdriver from 'selenium-webdriver';
 import getCodeHelper from './lib/getCodeHelper.mjs';
-import { dirname } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

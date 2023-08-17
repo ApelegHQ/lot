@@ -13,11 +13,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import * as iframeSandboxInit from 'inline:../../../untrusted/impl/browser/iframeSandboxInit.inline.js';
-import { ISandbox } from '../../../types/index.js';
-import type iframeSandboxInner from '../../../untrusted/impl/browser/iframeSandboxInner.js';
-import getRandomSecret from '../../../untrusted/lib/getRandomSecret.js';
-import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
+import * as iframeSandboxInit from 'inline:~untrusted/impl/browser/iframeSandboxInit.inline.js';
+import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
+import { ISandbox } from '~/types/index.js';
+import type iframeSandboxInner from '~untrusted/impl/browser/iframeSandboxInner.js';
+import getRandomSecret from '~untrusted/lib/getRandomSecret.js';
 
 // This is mostly to avoid accidentally invalid syntax, as the constructed
 // source should come from trusted inputs

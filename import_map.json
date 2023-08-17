@@ -1,0 +1,9 @@
+{
+	"imports": {
+		"~/": "./src/",
+		"@test/": "./test/",
+		"~trusted/": "./src/trusted/",
+		"~untrusted/": "./src/untrusted/",
+		"@dist/": "./dist/"
+	}
+}

@@ -13,11 +13,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import workerSandboxManager from '../../../neutral/impl/worker/workerSandboxManager.js';
-import { ISandbox } from '../../../types/index.js';
-import createErrorEventListenerFactory from '../../../untrusted/lib/createErrorEventEventListenerFactory.js';
-import createMessageEventListenerFactory from '../../../untrusted/lib/createMessageEventListenerFactory.js';
-import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
+import workerSandboxManager from '~untrusted/impl/worker/workerSandboxManager.js';
+import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
+import { ISandbox } from '~/types/index.js';
+import createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
+import createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
 
 const workerSandbox: ISandbox = async (
 	script,

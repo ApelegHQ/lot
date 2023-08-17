@@ -13,15 +13,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { aIsArray } from '../../lib/utils.js';
+import { aIsArray } from '~untrusted/lib/utils.js';
 
-import createSandboxedHandler from '../../lib/createSandboxedHandler.js';
-import { extractErrorInformation } from '../../lib/errorModem.js';
+import createSandboxedHandler from '~untrusted/lib/createSandboxedHandler.js';
+import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
 import hardenGlobals, {
 	disableURLStaticMethods,
-} from '../../lib/hardenGlobals.js';
-import * as Logger from '../../lib/Logger.js';
-import recursivelyDeleteProperty from '../../lib/recursivelyDeleteProperty.js';
+} from '~untrusted/lib/hardenGlobals.js';
+import * as Logger from '~untrusted/lib/Logger.js';
+import recursivelyDeleteProperty from '~untrusted/lib/recursivelyDeleteProperty.js';
 
 /**
  * Factory function to create an event listener for 'message' events.

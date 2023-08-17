@@ -24,6 +24,15 @@ module.exports = {
 		'prettier',
 		'plugin:prettier/recommended',
 	],
+	settings: {
+		'import/resolver': {
+			alias: {
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				map: Object.entries(require('./import_map.json').imports),
+				extensions: ['.cjs', '.mjs', '.mts', '.js', '.json', '.tsx'],
+			},
+		},
+	},
 	rules: {
 		'@typescript-eslint/naming-convention': [
 			'error',

@@ -13,15 +13,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import createErrorEventListenerFactory from '../../lib/createErrorEventEventListenerFactory.js';
-import createMessageEventListenerFactory from '../../lib/createMessageEventListenerFactory.js';
-import { extractErrorInformation } from '../../lib/errorModem.js';
-import hardenGlobals from '../../lib/hardenGlobals.js';
-import * as Logger from '../../lib/Logger.js';
-import recursivelyDeleteProperty from '../../lib/recursivelyDeleteProperty.js';
-import tightenCsp from '../../lib/tightenCsp.js';
-import type { TSandboxOptions } from '../../../types/index.js';
-import workerSandboxManager from '../../../neutral/impl/worker/workerSandboxManager.js';
+import workerSandboxManager from '~/untrusted/impl/worker/workerSandboxManager.js';
+import type { TSandboxOptions } from '~/types/index.js';
+import * as Logger from '~untrusted/lib/Logger.js';
+import createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
+import createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
+import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
+import hardenGlobals from '~untrusted/lib/hardenGlobals.js';
+import recursivelyDeleteProperty from '~untrusted/lib/recursivelyDeleteProperty.js';
+import tightenCsp from '~untrusted/lib/tightenCsp.js';
 import iframeSoleSandboxManager from './iframeSoleSandboxManager.js';
 
 /**

@@ -15,7 +15,7 @@
 
 import { TE, aIsArray, oCreate } from './utils.js';
 
-import type { IPerformTask, TContext } from '../../types/index.js';
+import type { IPerformTask, TContext } from '~/types/index.js';
 import createContext, { setupExternalMethods } from './createContext.js';
 import createWrapperFn from './createWrapperFn.js';
 import global from './global.js';

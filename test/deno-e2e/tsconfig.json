@@ -5,7 +5,7 @@
 		"module": "esnext",
 		"rootDir": ".",
 		"lib": ["es2022", "dom"],
-		"outDir": "../../dist",
+		"outDir": "dist/deno-e2e",
 		"allowImportingTsExtensions": true
 	},
 	"references": [{ "path": "../.." }, { "path": "../lib" }],

@@ -13,13 +13,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import * as nodejsSandboxVm from 'inline:../../../untrusted/impl/nodejs/nodejsSandboxVm.inline.js';
+import * as nodejsSandboxVm from 'inline:~untrusted/impl/nodejs/nodejsSandboxVm.inline.js';
 import { Worker } from 'node:worker_threads';
-import { ISandbox } from '../../../types/index.js';
-import { INTERNAL_SOURCE_STRING } from '../../../untrusted/impl/nodejs/constants.js';
-import type workerSandboxInner from '../../../untrusted/impl/worker/workerSandboxInner.js';
-import { extractErrorInformation } from '../../../untrusted/lib/errorModem.js';
-import setupSandboxListeners from '../../lib/setupSandboxListeners.js';
+import { ISandbox } from '~/types/index.js';
+import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
+import { INTERNAL_SOURCE_STRING } from '~untrusted/impl/nodejs/constants.js';
+import type workerSandboxInner from '~untrusted/impl/worker/workerSandboxInner.js';
+import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
 
 const nodejsSandbox: ISandbox = async (
 	script,

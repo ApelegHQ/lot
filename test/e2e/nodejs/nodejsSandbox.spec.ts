@@ -13,13 +13,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import '../../../src/untrusted/lib/nodejsLoadWebcrypto.js'; // MUST BE AT THE TOP
+import '~untrusted/lib/nodejsLoadWebcrypto.js'; // MUST BE AT THE TOP
 
+import { nodejsSandbox as m } from '@dist/index';
+import assertRejectsWithFactory from '@test/lib/assertRejectsWithFactory.js';
+import baseTests from '@test/lib/baseTests.json';
+import wrapper from '@test/lib/wrapper.js';
 import assert from 'node:assert/strict';
-import { nodejsSandbox as m } from '../../../dist/index';
-import assertRejectsWithFactory from '../../lib/assertRejectsWithFactory.js';
-import baseTests from '../../lib/baseTests.json';
-import wrapper from '../../lib/wrapper.js';
 
 const assertRejectsWith = assertRejectsWithFactory((predicate, c) =>
 	assert.rejects(predicate, c),
