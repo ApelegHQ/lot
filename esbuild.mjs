@@ -204,17 +204,19 @@ plugins.push(
 
 options.plugins = plugins;
 
+const esmOpts = {
+	format: 'esm',
+	outExtension: {
+		'.js': '.mjs',
+	},
+};
+
 await Promise.all(
 	[
 		{
 			format: 'cjs',
 		},
-		{
-			format: 'esm',
-			outExtension: {
-				'.js': '.mjs',
-			},
-		},
+		esmOpts,
 	].map((extra) =>
 		esbuild.build({
 			...options,
@@ -233,12 +235,7 @@ await Promise.all(
 				'.js': '.cjs',
 			},
 		},
-		{
-			format: 'esm',
-			outExtension: {
-				'.js': '.mjs',
-			},
-		},
+		esmOpts,
 	].map((extra) =>
 		esbuild.build({
 			...options,
@@ -284,86 +281,39 @@ const umdOpts = {
 	},
 };
 
-await Promise.all(
-	[
-		{
-			format: 'cjs',
-			outExtension: {
-				'.js': '.cjs',
+/**
+ * @param {string[]} entryPoints
+ * @returns {Promise<void>}
+ */
+const browserBuild = (entryPoints) =>
+	Promise.all(
+		[
+			{
+				format: 'cjs',
+				outExtension: {
+					'.js': '.cjs',
+				},
 			},
-		},
-		{
-			format: 'esm',
-			outExtension: {
-				'.js': '.mjs',
-			},
-		},
-		umdOpts,
-	].map((extra) =>
-		esbuild.build({
-			...options,
-			...extra,
-			entryPoints: [
-				'./src/exports/browser.ts',
-				'./src/exports/worker.ts',
-			],
-			outdir: 'dist/exports',
-		}),
-	),
-);
+			esmOpts,
+			umdOpts,
+		].map((extra) =>
+			esbuild.build({
+				...options,
+				...extra,
+				entryPoints,
+				outdir: 'dist/exports',
+			}),
+		),
+	);
+
+await browserBuild(['./src/exports/browser.ts', './src/exports/worker.ts']);
 
 options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'false';
 options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'true';
 
-await Promise.all(
-	[
-		{
-			format: 'cjs',
-			outExtension: {
-				'.js': '.cjs',
-			},
-		},
-		{
-			format: 'esm',
-			outExtension: {
-				'.js': '.mjs',
-			},
-		},
-		umdOpts,
-	].map((extra) =>
-		esbuild.build({
-			...options,
-			...extra,
-			entryPoints: ['./src/exports/browser-worker.ts'],
-			outdir: 'dist/exports',
-		}),
-	),
-);
+await browserBuild(['./src/exports/browser-worker.ts']);
 
 options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'true';
 options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'false';
 
-await Promise.all(
-	[
-		{
-			format: 'cjs',
-			outExtension: {
-				'.js': '.cjs',
-			},
-		},
-		{
-			format: 'esm',
-			outExtension: {
-				'.js': '.mjs',
-			},
-		},
-		umdOpts,
-	].map((extra) =>
-		esbuild.build({
-			...options,
-			...extra,
-			entryPoints: ['./src/exports/browser-window.ts'],
-			outdir: 'dist/exports',
-		}),
-	),
-);
+await browserBuild(['./src/exports/browser-window.ts']);
