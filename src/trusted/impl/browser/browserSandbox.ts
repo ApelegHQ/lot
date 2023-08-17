@@ -62,13 +62,14 @@ const browserSandbox: ISandbox = async (
 		'<!DOCTYPE html>' +
 		'<html lang="zxx" xml:lang="zxx" xmlns="http://www.w3.org/1999/xhtml">' +
 		'<head>' +
-		'<title>Sandbox</title>' +
 		safeXml`<script crossorigin="anonymous" integrity="${iframeSandboxInit.sri}" nonce="${nonce}" src="data:text/javascript;base64,${iframeSandboxInit.contentBase64}"></script>` +
 		'</head>' +
 		'<body></body>' +
 		'</html>';
 
 	const iframe = document.createElement('iframe');
+	const iframeContainer = document.createElement('emacript-sandbox');
+	iframeContainer.setAttribute('role', 'none');
 	const blob = new Blob([html], { ['type']: 'application/xhtml+xml' });
 
 	// Request that the iframe be isolated from its parent, with the ability
@@ -97,11 +98,13 @@ const browserSandbox: ISandbox = async (
 	);
 	const iframeSrcUrl = self.URL.createObjectURL(blob);
 	iframe.setAttribute('role', 'none');
+	iframe.setAttribute('title', '');
 	iframe.setAttribute(
 		'src',
 		iframeSrcUrl + '#' + initMessageKeyA + '-' + initMessageKeyB,
 	);
-	Object.assign(iframe.style, {
+
+	const iframeStyles = {
 		['display']: 'none',
 		['height']: '1px',
 		['left']: '-9999px',
@@ -110,12 +113,20 @@ const browserSandbox: ISandbox = async (
 		['top']: '-9999px',
 		['visibility']: 'hidden',
 		['width']: '1px',
-	});
+	};
+	Object.assign(iframeContainer.style, iframeStyles);
+
+	if (typeof HTMLElement.prototype.attachShadow === 'function') {
+		const shadow = iframeContainer.attachShadow({ ['mode']: 'closed' });
+		shadow.appendChild(iframe);
+	} else {
+		iframeContainer.appendChild(iframe);
+	}
+	document.body.appendChild(iframeContainer);
 
 	// iframes are flow content and should be placed in the body, although
 	// placing it in the head would not require the styles above for hiding
 	// it
-	document.body.appendChild(iframe);
 
 	if (!iframe.contentWindow) {
 		throw new Error('Unable to get iframe content window');
@@ -170,7 +181,7 @@ const browserSandbox: ISandbox = async (
 	const onDestroy = () => {
 		self.removeEventListener('message', sendSourceEventListener, false);
 		abort?.removeEventListener('abort', onDestroy, false);
-		iframe.remove();
+		iframeContainer.remove();
 	};
 
 	abort?.addEventListener('abort', onDestroy, false);

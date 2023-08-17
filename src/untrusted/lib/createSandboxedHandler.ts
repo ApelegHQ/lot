@@ -13,12 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { extractErrorInformation } from './errorModem.js';
-import genericSandbox from './genericSandbox.js';
-import global from './global.js';
-import * as Logger from './Logger.js';
-import performTaskFactory from './performTaskFactory.js';
-import requestHandler from './requestHandler.js';
 import {
 	aIncludes,
 	aIsArray,
@@ -27,6 +21,13 @@ import {
 	oDefineProperty,
 	RE,
 } from './utils.js';
+
+import { extractErrorInformation } from './errorModem.js';
+import genericSandbox from './genericSandbox.js';
+import global from './global.js';
+import * as Logger from './Logger.js';
+import performTaskFactory from './performTaskFactory.js';
+import requestHandler from './requestHandler.js';
 
 const FERAL_FUNCTION = Proxy.revocable(Function, {});
 

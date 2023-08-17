@@ -13,8 +13,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import {
+	E,
+	aIsArray,
+	aSlice,
+	fnApply,
+	sSlice,
+	sSplit,
+} from '../../lib/utils.js';
+
+if (parent === self || self === top) {
+	throw E('Iframe cannot be detached');
+}
+
 import * as Logger from '../../lib/Logger.js';
-import { aIsArray, aSlice, fnApply, sSlice, sSplit } from '../../lib/utils.js';
 import iframeSandboxInner from './iframeSandboxInner.js';
 
 const location = self.location;

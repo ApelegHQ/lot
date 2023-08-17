@@ -13,11 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import type { IPerformTask } from '../../types/index.js';
-import { reconstructErrorInformation } from './errorModem.js';
-import getRandomSecret from './getRandomSecret.js';
-import * as Logger from './Logger.js';
-import proxyMaybeRevocable from './proxyMaybeRevocable.js';
 import {
 	aForEach,
 	aIncludes,
@@ -31,6 +26,12 @@ import {
 	oKeys,
 	PM,
 } from './utils.js';
+
+import type { IPerformTask } from '../../types/index.js';
+import { reconstructErrorInformation } from './errorModem.js';
+import getRandomSecret from './getRandomSecret.js';
+import * as Logger from './Logger.js';
+import proxyMaybeRevocable from './proxyMaybeRevocable.js';
 
 /**
  * Factory function to create a performTask instance.

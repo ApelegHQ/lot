@@ -13,8 +13,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import * as Logger from '../../lib/Logger.js';
 import { aIsArray, aSlice, fnApply } from '../../lib/utils.js';
+
+import * as Logger from '../../lib/Logger.js';
 import workerSandboxInner from './workerSandboxInner.js';
 
 const listener = (event: MessageEvent) => {

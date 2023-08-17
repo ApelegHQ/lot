@@ -13,6 +13,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import { aIsArray } from '../../lib/utils.js';
+
 import createSandboxedHandler from '../../lib/createSandboxedHandler.js';
 import { extractErrorInformation } from '../../lib/errorModem.js';
 import hardenGlobals, {
@@ -20,7 +22,6 @@ import hardenGlobals, {
 } from '../../lib/hardenGlobals.js';
 import * as Logger from '../../lib/Logger.js';
 import recursivelyDeleteProperty from '../../lib/recursivelyDeleteProperty.js';
-import { aIsArray } from '../../lib/utils.js';
 
 /**
  * Factory function to create an event listener for 'message' events.

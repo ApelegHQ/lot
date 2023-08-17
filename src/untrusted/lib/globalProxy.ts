@@ -13,17 +13,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import modulePropertyDescriptor from './modulePropertyDescriptor.js';
 import {
 	oCreate,
 	oDefineProperty,
 	oGetOwnPropertyDescriptor,
 	oGetPrototypeOf,
+	oHasOwnProperty,
 	oKeys,
 } from './utils.js';
 
+import modulePropertyDescriptor from './modulePropertyDescriptor.js';
+
 type TGlobalProxy<T> = T & {
 	['module']: { ['exports']: unknown };
+	['exports']: unknown;
 };
 
 /**
@@ -53,70 +56,82 @@ const globalProxy = <T extends object>(
 	['proxy']: TGlobalProxy<T>;
 	['revoke']: { (): void };
 } => {
-	const proxyObj = Proxy.revocable<TGlobalProxy<T>>(
-		oCreate(oGetPrototypeOf(ctx), {
-			// 'module' property is special because it acts as if it weren't
-			// globabally scoped (i.e., module !== globalThis.module)
-			['module']: modulePropertyDescriptor,
-		}),
-		{
-			['defineProperty'](_, p, a) {
-				if (p === 'module') return false;
-				oDefineProperty(ctx, p, a);
+	const globalProxyTarget = oCreate(oGetPrototypeOf(ctx), {
+		// 'module' property is special because it acts as if it weren't
+		// globabally scoped (i.e., module !== globalThis.module)
+		['module']: modulePropertyDescriptor,
+	});
+	globalProxyTarget['exports'] = globalProxyTarget['module']['exports'];
+
+	const proxyObj = Proxy.revocable<TGlobalProxy<T>>(globalProxyTarget, {
+		['defineProperty'](o, p, a) {
+			if (p === 'module') return false;
+			if (p === 'exports' && oHasOwnProperty(o, p)) {
+				oDefineProperty(o, p, a);
 				return true;
-			},
-			['deleteProperty']: (_, p) => {
-				if (p === 'module') return false;
-				return delete ctx[p as keyof T];
-			},
-			['get'](o, p) {
-				// Block getting symbols
-				// This is especially relevant for [Symbol.unscopables]
-				// Getting/setting symbols on the inner proxy (using
-				// a self reference) should work fine
-				if (typeof p !== 'string') {
-					// This never throws because the proxy is just for
-					// an empty object
-					return;
-				}
-				if (p === 'module') return o[p];
-				return ctx[p as keyof T];
-			},
-			['getOwnPropertyDescriptor'](o, p) {
-				// Block getting symbols
-				// This is especially relevant for [Symbol.unscopables]
-				// Getting/setting symbols on the inner proxy (using
-				// a self reference) should work fine
-				if (typeof p !== 'string') {
-					return;
-				}
-				if (p === 'module') {
-					return oGetOwnPropertyDescriptor(o, p);
-				}
-				return oGetOwnPropertyDescriptor(ctx, p);
-			},
-			['has']() {
-				// This is crucial to ensure that the `with` statement
-				// remains contrained and does not access the real
-				// global scope. `has` must always return `true`.
-				return true;
-			},
-			['ownKeys']() {
-				return oKeys(ctx);
-			},
-			['preventExtensions']() {
-				return false;
-			},
-			['set'](_, p, v) {
-				if (p === 'module') return false;
-				ctx[p as keyof T] = v;
-				return true;
-			},
-			['setPrototypeOf']() {
-				return false;
-			},
+			}
+			oDefineProperty(ctx, p, a);
+			return true;
 		},
-	);
+		['deleteProperty']: (o, p) => {
+			if (p === 'module') return false;
+			if (p === 'exports' && oHasOwnProperty(o, p)) {
+				return delete o[p];
+			}
+			return delete ctx[p as keyof T];
+		},
+		['get'](o, p) {
+			// Block getting symbols
+			// This is especially relevant for [Symbol.unscopables]
+			// Getting/setting symbols on the inner proxy (using
+			// a self reference) should work fine
+			if (typeof p !== 'string') {
+				// This never throws because the proxy is just for
+				// an empty object
+				return;
+			}
+			if (p === 'module' || (p === 'exports' && oHasOwnProperty(o, p)))
+				return o[p];
+			return ctx[p as keyof T];
+		},
+		['getOwnPropertyDescriptor'](o, p) {
+			// Block getting symbols
+			// This is especially relevant for [Symbol.unscopables]
+			// Getting/setting symbols on the inner proxy (using
+			// a self reference) should work fine
+			if (typeof p !== 'string') {
+				return;
+			}
+			if (p === 'module' || (p === 'exports' && oHasOwnProperty(o, p))) {
+				return oGetOwnPropertyDescriptor(o, p);
+			}
+			return oGetOwnPropertyDescriptor(ctx, p);
+		},
+		['has']() {
+			// This is crucial to ensure that the `with` statement
+			// remains contrained and does not access the real
+			// global scope. `has` must always return `true`.
+			return true;
+		},
+		['ownKeys']() {
+			return oKeys(ctx);
+		},
+		['preventExtensions']() {
+			return false;
+		},
+		['set'](o, p, v) {
+			if (p === 'module') return false;
+			if (p === 'exports' && oHasOwnProperty(o, p)) {
+				o[p] = v;
+				return true;
+			}
+			ctx[p as keyof T] = v;
+			return true;
+		},
+		['setPrototypeOf']() {
+			return false;
+		},
+	});
 
 	return proxyObj;
 };

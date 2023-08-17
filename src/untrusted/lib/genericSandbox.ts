@@ -13,13 +13,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { IPerformTask, TContext } from '../../types/index.js';
+import { TE, aIsArray, oCreate } from './utils.js';
+
+import type { IPerformTask, TContext } from '../../types/index.js';
 import createContext, { setupExternalMethods } from './createContext.js';
 import createWrapperFn from './createWrapperFn.js';
 import global from './global.js';
 import globalProxy from './globalProxy.js';
 import modulePropertyDescriptor from './modulePropertyDescriptor.js';
-import { TE, aIsArray, oCreate } from './utils.js';
 
 type TGenericSandbox = {
 	(
@@ -117,6 +118,7 @@ const genericSandbox: TGenericSandbox = (
 			},
 			['module']: modulePropertyDescriptor,
 		});
+		ctx['exports'] = ctx['module']['exports'];
 
 		return {
 			fn: sandboxWrapperFn.bind(ctx),

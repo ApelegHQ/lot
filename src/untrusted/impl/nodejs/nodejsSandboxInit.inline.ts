@@ -13,7 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import * as Logger from '../../lib/Logger.js';
 import {
 	aFrom,
 	aIndexOf,
@@ -25,6 +24,8 @@ import {
 	oCreate,
 	oDefineProperty,
 } from '../../lib/utils.js';
+
+import * as Logger from '../../lib/Logger.js';
 import workerSandboxInner from '../worker/workerSandboxInner.js';
 
 const l_Function = (() => {}).constructor;

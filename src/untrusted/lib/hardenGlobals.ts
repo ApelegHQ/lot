@@ -13,7 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import global from './global.js';
 import {
 	EE,
 	aFilter,
@@ -27,6 +26,8 @@ import {
 	oGetPrototypeOf,
 	oSetPrototypeOf,
 } from './utils.js';
+
+import global from './global.js';
 
 /**
  * Ensures that a constructor and its properties are inert, preventing potential

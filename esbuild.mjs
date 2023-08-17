@@ -269,11 +269,57 @@ await Promise.all(
 			format: 'iife',
 			globalName: '__export__',
 			banner: {
-				js: `define(function(){`,
+				js: `(function(){(function (global, factory) {
+					if (typeof define === 'function' && define['amd']) {
+						define(factory);
+					} else if (typeof module === 'object' && typeof exports !== 'undefined' && module['exports'] === exports) {
+						module['exports'] = factory();
+					} else {
+						var mod = Object.create(null, {
+							['exports']: {
+								['configurable']: true,
+								['enumerable']: true,
+								['writable']: true,
+								['value']: factory(),
+							}
+						});
+						global['index'] = mod.exports;
+					}
+				})(
+					typeof globalThis !== 'undefined'
+						? globalThis
+						: typeof self !== 'undefined'
+						? self
+						: this,
+					function () {`,
 			},
 			footer: {
-				js: `return __export__;});`,
+				js: ';return __export__;});})();',
 			},
+			/* banner: {
+				js: `(function (g,factory){console.log('fact',factory);
+console.log('top', module.exports !== exports);
+					var exports = module.exports;
+					if (typeof define==="function"&&define.amd) {
+						console.log("using define")1
+					  define(factory());
+					} else if (
+					  typeof exports==="object"&&typeof exports.nodeNam !=="string"
+					) {
+						console.log("@module.exports", globalThis.__export__ === factory9);
+					  factory(exports)
+					  console.log("@module.exports", exports);
+					} else {
+						console.log('error');
+					  // Browser globals
+					  // TODO: Handle errors
+					  factory(exports);
+					}
+				  })(typeof self !== "undefined" ? self : this, function(__export__){`,
+			},
+			footer: {
+				js: `});`,
+			},/* */
 		},
 	].map((extra) =>
 		esbuild.build({
