@@ -25,6 +25,7 @@ import {
 	oHasOwnProperty,
 	oKeys,
 	PM,
+	TE,
 } from './utils.js';
 
 import type { IPerformTask } from '~/types/index.js';
@@ -81,6 +82,10 @@ const performTaskFactory = (
 	};
 
 	const performTask: IPerformTask = async (op, ...args) => {
+		if (typeof op !== 'string') {
+			throw TE('Operation must be of string type');
+		}
+
 		const taskId = getRandomSecret();
 
 		Logger.debug('Sending REQUEST for task [' + taskId + '] ' + op);
