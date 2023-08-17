@@ -46,4 +46,4 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
-      - run: deno test -import-map=import_map.json test
+      - run: deno test --import-map=import_map.json test

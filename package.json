@@ -8,10 +8,24 @@
 		".": {
 			"browser": {
 				"types": "./dist/exports/browser.d.ts",
-				"amd": "./dist/exports/browser.mjs",
+				"amd": "./dist/exports/browser.js",
 				"import": "./dist/exports/browser.mjs",
 				"require": "./dist/exports/browser.cjs",
 				"default": "./dist/exports/browser.mjs"
+			},
+			"browser-window": {
+				"types": "./dist/exports/browser-window.d.ts",
+				"amd": "./dist/exports/browser-window.js",
+				"import": "./dist/exports/browser-window.mjs",
+				"require": "./dist/exports/browser-window.cjs",
+				"default": "./dist/exports/browser-window.mjs"
+			},
+			"browser-worker": {
+				"types": "./dist/exports/browser-window.d.ts",
+				"amd": "./dist/exports/browser-window.js",
+				"import": "./dist/exports/browser-window.mjs",
+				"require": "./dist/exports/browser-window.cjs",
+				"default": "./dist/exports/browser-window.mjs"
 			},
 			"deno": {
 				"types": "./dist/exports/worker.d.ts",
@@ -38,6 +52,34 @@
 			"require": {
 				"types": "./dist/exports/browser.d.ts",
 				"default": "./dist/exports/browser.cjs"
+			}
+		},
+		"./browser-window": {
+			"amd": {
+				"types": "./dist/exports/browser-window.d.ts",
+				"default": "./dist/exports/browser-window.js"
+			},
+			"import": {
+				"types": "./dist/exports/browser-window.d.ts",
+				"default": "./dist/exports/browser-window.mjs"
+			},
+			"require": {
+				"types": "./dist/exports/browser-window.d.ts",
+				"default": "./dist/exports/browser-window.cjs"
+			}
+		},
+		"./browser-worker": {
+			"amd": {
+				"types": "./dist/exports/browser-worker.d.ts",
+				"default": "./dist/exports/browser-worker.js"
+			},
+			"import": {
+				"types": "./dist/exports/browser-worker.d.ts",
+				"default": "./dist/exports/browser-worker.mjs"
+			},
+			"require": {
+				"types": "./dist/exports/browser-worker.d.ts",
+				"default": "./dist/exports/browser-worker.cjs"
 			}
 		},
 		"./nodejs": {

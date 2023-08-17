@@ -251,6 +251,39 @@ await Promise.all(
 
 plugins.unshift(exactRealtyClosureBuilderPlugin);
 
+const umdOpts = {
+	format: 'iife',
+	globalName: '__export__',
+	banner: {
+		js: `(function(){(function (global, factory) {
+			if (typeof define === 'function' && define['amd']) {
+				define(factory);
+			} else if (typeof module === 'object' && typeof exports !== 'undefined' && module['exports'] === exports) {
+				module['exports'] = factory();
+			} else {
+				var mod = Object.create(null, {
+					['exports']: {
+						['configurable']: true,
+						['enumerable']: true,
+						['writable']: true,
+						['value']: factory(),
+					}
+				});
+				global['index'] = mod.exports;
+			}
+		})(
+			typeof globalThis !== 'undefined'
+				? globalThis
+				: typeof self !== 'undefined'
+				? self
+				: this,
+			function () {`,
+	},
+	footer: {
+		js: ';return __export__;});})();',
+	},
+};
+
 await Promise.all(
 	[
 		{
@@ -265,62 +298,7 @@ await Promise.all(
 				'.js': '.mjs',
 			},
 		},
-		{
-			format: 'iife',
-			globalName: '__export__',
-			banner: {
-				js: `(function(){(function (global, factory) {
-					if (typeof define === 'function' && define['amd']) {
-						define(factory);
-					} else if (typeof module === 'object' && typeof exports !== 'undefined' && module['exports'] === exports) {
-						module['exports'] = factory();
-					} else {
-						var mod = Object.create(null, {
-							['exports']: {
-								['configurable']: true,
-								['enumerable']: true,
-								['writable']: true,
-								['value']: factory(),
-							}
-						});
-						global['index'] = mod.exports;
-					}
-				})(
-					typeof globalThis !== 'undefined'
-						? globalThis
-						: typeof self !== 'undefined'
-						? self
-						: this,
-					function () {`,
-			},
-			footer: {
-				js: ';return __export__;});})();',
-			},
-			/* banner: {
-				js: `(function (g,factory){console.log('fact',factory);
-console.log('top', module.exports !== exports);
-					var exports = module.exports;
-					if (typeof define==="function"&&define.amd) {
-						console.log("using define")1
-					  define(factory());
-					} else if (
-					  typeof exports==="object"&&typeof exports.nodeNam !=="string"
-					) {
-						console.log("@module.exports", globalThis.__export__ === factory9);
-					  factory(exports)
-					  console.log("@module.exports", exports);
-					} else {
-						console.log('error');
-					  // Browser globals
-					  // TODO: Handle errors
-					  factory(exports);
-					}
-				  })(typeof self !== "undefined" ? self : this, function(__export__){`,
-			},
-			footer: {
-				js: `});`,
-			},/* */
-		},
+		umdOpts,
 	].map((extra) =>
 		esbuild.build({
 			...options,
@@ -329,6 +307,62 @@ console.log('top', module.exports !== exports);
 				'./src/exports/browser.ts',
 				'./src/exports/worker.ts',
 			],
+			outdir: 'dist/exports',
+		}),
+	),
+);
+
+options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'false';
+options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'true';
+
+await Promise.all(
+	[
+		{
+			format: 'cjs',
+			outExtension: {
+				'.js': '.cjs',
+			},
+		},
+		{
+			format: 'esm',
+			outExtension: {
+				'.js': '.mjs',
+			},
+		},
+		umdOpts,
+	].map((extra) =>
+		esbuild.build({
+			...options,
+			...extra,
+			entryPoints: ['./src/exports/browser-worker.ts'],
+			outdir: 'dist/exports',
+		}),
+	),
+);
+
+options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'true';
+options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'false';
+
+await Promise.all(
+	[
+		{
+			format: 'cjs',
+			outExtension: {
+				'.js': '.cjs',
+			},
+		},
+		{
+			format: 'esm',
+			outExtension: {
+				'.js': '.mjs',
+			},
+		},
+		umdOpts,
+	].map((extra) =>
+		esbuild.build({
+			...options,
+			...extra,
+			entryPoints: ['./src/exports/browser-window.ts'],
 			outdir: 'dist/exports',
 		}),
 	),
