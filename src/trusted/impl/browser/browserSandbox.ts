@@ -68,7 +68,7 @@ const browserSandbox: ISandbox = async (
 		'</html>';
 
 	const iframe = document.createElement('iframe');
-	const iframeContainer = document.createElement('emacript-sandbox');
+	const iframeContainer = document.createElement('ecmacript-sandbox');
 	iframeContainer.setAttribute('role', 'none');
 	const blob = new Blob([html], { ['type']: 'application/xhtml+xml' });
 
