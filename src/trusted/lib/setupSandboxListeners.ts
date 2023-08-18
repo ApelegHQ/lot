@@ -46,7 +46,7 @@ const setupSandboxListeners = (
 	messagePort: MessagePort,
 	allowUntrusted: boolean,
 	manager: { (): Promise<void> },
-	externalMethods?: Record<string, typeof Function.prototype> | null,
+	externalMethods?: Record<string, unknown> | null,
 	abort?: AbortSignal,
 ): Promise<IPerformTask> => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {

@@ -21,7 +21,7 @@ export interface ISandbox {
 	(
 		script: string,
 		allowedGlobals?: string[] | undefined | null,
-		externalMethods?: Record<string, typeof Function.prototype> | null,
+		externalMethods?: Record<string, unknown> | null,
 		abort?: AbortSignal,
 		options?: TSandboxOptions,
 	): Promise<IPerformTask>;

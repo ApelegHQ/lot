@@ -18,7 +18,6 @@ import {
 	aIncludes,
 	aIsArray,
 	aMap,
-	aPush,
 	E,
 	oCreate,
 	oFreeze,
@@ -47,8 +46,10 @@ const performTaskFactory = (
 	revocable: boolean,
 	postMessageOutgoing: MessagePort['postMessage'],
 ): [IPerformTask, { (data: unknown[]): void }, { (): void }] => {
-	const pendingTasks: Record<string, (typeof Function.prototype)[]> =
-		oCreate(null);
+	const pendingTasks: Record<
+		string,
+		[typeof Function.prototype, typeof Function.prototype]
+	> = oCreate(null);
 
 	const resultHandler = (data: unknown[]) => {
 		if (
@@ -90,10 +91,8 @@ const performTaskFactory = (
 
 		Logger.debug('Sending REQUEST for task [' + taskId + '] ' + op);
 
-		pendingTasks[taskId] = [];
-
 		const taskPromise = new PM((resolve, reject) => {
-			aPush(pendingTasks[taskId], resolve, reject);
+			pendingTasks[taskId] = [resolve, reject];
 		});
 
 		try {
