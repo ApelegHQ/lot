@@ -64,6 +64,7 @@ const exactRealtyClosureBuilderPlugin = {
 							process_closure_primitives: false,
 							apply_input_source_maps: false,
 							warning_level: 'QUIET',
+							isolate_polyfills: true,
 							externs: './closure-externs.js',
 							assume_function_wrapper: origFmt !== 'iife',
 							...(origFmt === 'esm' && {
@@ -76,6 +77,8 @@ const exactRealtyClosureBuilderPlugin = {
 									? 'ES_MODULES'
 									: 'GLOBAL_NAMESPACE', */
 							env: 'BROWSER',
+							// process_common_js_modules: true, // TODO
+							// module_resolution: 'NODE', // TODO
 						});
 						return new Promise((resolve, reject) => {
 							const process = compiler.run(

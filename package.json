@@ -1,6 +1,6 @@
 {
-	"name": "@exact-realty/ecmascript-sandbox",
-	"version": "0.0.16",
+	"name": "@exact-realty/lot",
+	"version": "0.0.17",
 	"description": "Sandbox for isolating ECMAScript code",
 	"main": "dist/index.js",
 	"module": "./dist/index.mjs",
@@ -126,7 +126,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Exact-Realty/ecmascript-sandbox.git"
+		"url": "git+https://github.com/Exact-Realty/lot.git"
 	},
 	"author": "Exact Realty Limited",
 	"license": "ISC",
