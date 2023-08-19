@@ -281,6 +281,9 @@ const umdOpts = {
 	},
 };
 
+options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'true';
+options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'true';
+
 /**
  * @param {string[]} entryPoints
  * @returns {Promise<void>}

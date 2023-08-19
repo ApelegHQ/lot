@@ -14,6 +14,14 @@
  */
 
 /**
+ * Module that does not exist, specifically to trigger build time errors
+ * @module
+ */
+declare module '[[BUILDTIME_ERROR]]' {
+	// empty
+}
+
+/**
  * Namespace that encapsulates various build-time settings.
  * @namespace
  */

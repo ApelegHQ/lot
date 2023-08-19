@@ -48,6 +48,14 @@ const browserSandbox: ISandbox = async (
 	abort,
 	options,
 ) => {
+	if (
+		!__buildtimeSettings__.isolationStategyIframeSole &&
+		!__buildtimeSettings__.isolationStategyIframeWorker
+	) {
+		// At least one strategy must be chosen
+		throw new Error('Not implemented');
+	}
+
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(
 			'Invalid value for externalMethods. Bidirectional messaging is disabled',

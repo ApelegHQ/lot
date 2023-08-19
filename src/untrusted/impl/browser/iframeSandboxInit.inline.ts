@@ -13,6 +13,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+if (
+	!__buildtimeSettings__.isolationStategyIframeSole &&
+	!__buildtimeSettings__.isolationStategyIframeWorker
+) {
+	// At least one strategy must be chosen
+	throw new Error('Not implemented');
+}
+
 import {
 	E,
 	aIsArray,

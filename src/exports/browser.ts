@@ -13,4 +13,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+if (
+	!__buildtimeSettings__.isolationStategyIframeSole &&
+	!__buildtimeSettings__.isolationStategyIframeWorker
+) {
+	// At least one strategy must be chosen
+	void import('[[BUILDTIME_ERROR]]');
+	throw new Error('Build time constraint failed');
+}
+
 export { default } from '~trusted/impl/browser/browserSandbox.js';
