@@ -27,7 +27,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
-      - run: deno test test
+      - run: deno test --import-map=import_map.json test
 
   run-tests-windows:
     runs-on: windows-latest

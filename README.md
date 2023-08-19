@@ -33,11 +33,11 @@ in various environments.
 To install, run:
 
 ```sh
-npm install "@exact-realty/ecmascript-sandbox"
+npm install "@exact-realty/lot"
 ```
 
 ```sh
-yarn add "@exact-realty/ecmascript-sandbox"
+yarn add "@exact-realty/lot"
 ```
 
 ### 📚 Usage
