@@ -19,11 +19,11 @@
  *
  * - If it is invoked as a function (e.g., `singleUseFunctionConstructor(...)`,
  * it behaves like the `Function` constructor, then immediately revokes itself
- * after the function has been created.
+ * after the function has been called.
  * - If it is invoked using the `new` keyword (e.g.,
  * `new singleUseFunctionConstructor(...)`, it behaves like the `Function`
- * constructor, then immediately revokes itself after the function has been
- * instantiated.
+ * constructor, then immediately revokes itself after function instantiated has
+ * been called.
  *
  * @returns {Function} A revocable version of the native `Function` constructor.
  *
@@ -35,16 +35,40 @@
 const singleUseFunctionConstructor = (() => {
 	const FERAL_FUNCTION = Proxy.revocable(Function, {});
 
+	const revocables: { (): void }[] = [];
+
+	const p = <T extends typeof Function.prototype>(o: T) =>
+		Proxy.revocable(o, {
+			['apply'](target, thisArg, argArray) {
+				FERAL_FUNCTION.revoke();
+				for (let i = 0; i < revocables.length; i++) {
+					revocables[i]();
+				}
+				revocables.length = 0;
+				const result = target.apply(thisArg, argArray);
+				return result;
+			},
+			['construct']() {
+				return undefined as unknown as object;
+			},
+			['getOwnPropertyDescriptor']() {
+				return undefined;
+			},
+			['getPrototypeOf']() {
+				return null;
+			},
+		});
+
 	return new Proxy(FERAL_FUNCTION.proxy, {
 		['apply'](target, thisArg, argArray) {
-			const result = target.apply(thisArg, argArray);
-			FERAL_FUNCTION.revoke();
-			return result;
+			const r = p(target.apply(thisArg, argArray));
+			revocables[revocables.length] = r.revoke;
+			return r.proxy;
 		},
 		['construct'](target, argArray) {
-			const result = new target(...argArray);
-			FERAL_FUNCTION.revoke();
-			return result;
+			const r = p(new target(...argArray));
+			revocables[revocables.length] = r.revoke;
+			return r.proxy;
 		},
 		['get']() {
 			return undefined;

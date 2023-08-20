@@ -21,9 +21,11 @@ import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
 import createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
 import createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
 
+/*
+TODO: These should be exported or called upon creating bareSandbox.
+TODO: Fix issues with Node.js and freezePrototypes */
 hardenGlobals();
 freezePrototypes();
-// TODO: Freeze prototypes
 // TODO: wrap setTimeout and clearTimeout
 
 const bareSandbox: ISandbox = async (

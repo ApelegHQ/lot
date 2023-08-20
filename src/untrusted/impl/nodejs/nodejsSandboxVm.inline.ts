@@ -306,7 +306,7 @@ const nodejsSandbox = (
 			'throw "Invalid call";' +
 			// If source includes /*@lint@*/, the constructor is called just for
 			// syntax validation
-			'if(c(lio,src,"/*@lint@*/")!==-1)return;' +
+			'if(c(lio,src,"/*@lint@*/")!==-1)return function(){};' +
 			'var tmp=ut;' +
 			'c=lio=ut=void 0;' +
 			'return tmp;' +
