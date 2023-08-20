@@ -25,11 +25,13 @@ import createContext, { setupExternalMethods } from './createContext.js';
 describe('Sandbox Context Creation', () => {
 	describe('createContext', () => {
 		it('should return a sandboxed context with allowed globals', () => {
-			const allowedGlobals = ['Date', 'Math'];
+			const allowedGlobals = ['Date', 'Math', 'parseInt'];
 			const ctx = createContext(allowedGlobals);
 
 			assert.equal(typeof ctx.Date, 'function');
-			assert.notEqual(ctx.Date, global.Date);
+			assert.equal(ctx.Date, global.Date);
+			assert.equal(typeof ctx.parseInt, 'function');
+			assert.notEqual(ctx.parseInt, global.parseInt);
 			assert.equal(
 				(ctx.Date as typeof Date).prototype,
 				global.Date.prototype,

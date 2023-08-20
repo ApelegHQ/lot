@@ -126,6 +126,9 @@ const setupContextGlobalRefs = (ctx: object) => {
  */
 const createGlobalFunctionProxy = (() => {
 	return (ctx: object, fn: typeof Function.prototype) => {
+		// Do not proxy constructors
+		if (fn.prototype && fn.prototype.constructor === fn) return fn;
+
 		return new PX(fn, {
 			['apply'](o, thisArg, argArray) {
 				if (typeof o === 'function') {

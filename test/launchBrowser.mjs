@@ -23,6 +23,7 @@ import getCodeHelper from './lib/getCodeHelper.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const modules = {
+	['bare']: 'bareSandbox',
 	['browser']: 'browserSandbox',
 	['worker']: 'workerSandbox',
 };

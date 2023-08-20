@@ -91,7 +91,7 @@ const createWorker = (
  * event listeners.
  * @param createErrorEventListener - A factory function to create an error event
  * listeners.
- * @param postMessage - A function to post outgoing messages to the main
+ * @param postMessageOutgoing - A function to post outgoing messages to the main
  * context.
  * @param options - Optional configuration parameters.
  * @param teardown - Optional function to release resources.
@@ -111,10 +111,11 @@ const workerSandboxManager = async (
 	createErrorEventListener: ReturnType<
 		typeof createErrorEventListenerFactory
 	>,
-	postMessage: { (data: unknown[]): void },
 	options?: TSandboxOptions,
 	teardown?: { (): void },
 ): Promise<void> => {
+	let postMessageOutgoing = messagePort.postMessage.bind(messagePort);
+
 	const postInitSetup = (worker: Worker) => {
 		Logger.info('Sandbox ready. Setting up event listeners.');
 
@@ -153,7 +154,7 @@ const workerSandboxManager = async (
 
 					worker.postMessage(data);
 
-					postMessage = Boolean;
+					postMessageOutgoing = Boolean;
 
 					revokeRootMessageEventListener();
 					revokeRootErrorEventListener();
@@ -203,7 +204,7 @@ const workerSandboxManager = async (
 					);
 				}
 
-				postMessage(data);
+				postMessageOutgoing(data);
 			},
 		);
 
@@ -213,7 +214,7 @@ const workerSandboxManager = async (
 		);
 
 		Logger.info('Sending SANDBOX_READY to parent');
-		postMessage([EMessageTypes.SANDBOX_READY]);
+		postMessageOutgoing([EMessageTypes.SANDBOX_READY]);
 	};
 
 	const startWorker = new Promise<Worker>((resolve_, reject_) => {

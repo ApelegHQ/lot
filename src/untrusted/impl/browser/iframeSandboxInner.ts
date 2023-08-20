@@ -130,7 +130,6 @@ const iframeSandboxInner = async (
 					externalMethodsList,
 					createMessageEventListener,
 					createErrorEventListener,
-					postMessage,
 					options,
 				).then(postInit);
 			} catch (e) {

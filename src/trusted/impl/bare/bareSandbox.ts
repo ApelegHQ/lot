@@ -13,18 +13,24 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import workerSandboxManager from '~untrusted/impl/worker/workerSandboxManager.js';
-import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
 import { ISandbox } from '~/types/index.js';
+import bareSandboxManager from '~/untrusted/impl/bare/bareSandboxManager.js';
+import hardenGlobals from '~/untrusted/lib/hardenGlobals.js';
+import freezePrototypes from '~/untrusted/lib/freezePrototypes.js';
+import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
 import createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
 import createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
 
-const workerSandbox: ISandbox = async (
+hardenGlobals();
+freezePrototypes();
+// TODO: Freeze prototypes
+// TODO: wrap setTimeout and clearTimeout
+
+const bareSandbox: ISandbox = async (
 	script,
 	allowedGlobals,
 	externalMethods,
 	abort,
-	options,
 ) => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(
@@ -64,7 +70,7 @@ const workerSandbox: ISandbox = async (
 			channel.port1.start();
 			channel.port2.start();
 
-			return workerSandboxManager(
+			return bareSandboxManager(
 				channel.port2,
 				script,
 				!!abort,
@@ -72,7 +78,6 @@ const workerSandbox: ISandbox = async (
 				externalMethods && Object.keys(externalMethods),
 				createMessageEventListener,
 				createErrorEventListener,
-				options,
 				teardown,
 			);
 		},
@@ -81,4 +86,4 @@ const workerSandbox: ISandbox = async (
 	);
 };
 
-export default workerSandbox;
+export default bareSandbox;

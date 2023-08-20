@@ -29,8 +29,6 @@ import * as Logger from './Logger.js';
 import performTaskFactory from './performTaskFactory.js';
 import requestHandler from './requestHandler.js';
 
-const FERAL_FUNCTION = Proxy.revocable(Function, {});
-
 /**
  * Creates a handler function that can process messages and invoke tasks inside
  * a sandboxed environment.
@@ -52,6 +50,7 @@ const FERAL_FUNCTION = Proxy.revocable(Function, {});
  * tasks within the sandbox.
  */
 const createSandboxedHandler = (
+	functionConstructor: FunctionConstructor,
 	script: string,
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
@@ -84,14 +83,10 @@ const createSandboxedHandler = (
 	const sandbox = genericSandbox(
 		script,
 		allowedGlobals,
-		FERAL_FUNCTION.proxy,
+		functionConstructor,
 		performTaskMethods?.[0],
 		externalMethodsList,
 	);
-
-	// Although it is scoped to this file, it is still dangerous to keep a
-	// reference to Function. Revoking the proxy addresses this concern.
-	FERAL_FUNCTION.revoke();
 
 	const ctx = sandbox.ctx;
 

@@ -13,8 +13,23 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import runNodejsTests from '@test/lib/runNodejsTests.js';
+import assert from 'node:assert/strict';
+import singleUseFunctionConstructor from './singleUseFunctionConstructor.js';
 
-import { nodejsSandbox as m } from '@dist/index';
+describe('singleUseFunctionConstructor', function () {
+	it('should create a function using constructor and be unusable after a single use', () => {
+		const func = singleUseFunctionConstructor('x', 'return x * 2');
+		const result = func(5);
 
-runNodejsTests('Node.js', m);
+		assert.equal(result, 10, 'Expected function to multiply input by 2');
+
+		assert.throws(
+			() => singleUseFunctionConstructor('x', 'return x * 3'),
+			{
+				name: 'TypeError',
+				message: /revoked/,
+			},
+			'Expected constructor to throw after being used once',
+		);
+	});
+});

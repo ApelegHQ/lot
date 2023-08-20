@@ -13,8 +13,4 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import runNodejsTests from '@test/lib/runNodejsTests.js';
-
-import { nodejsSandbox as m } from '@dist/index';
-
-runNodejsTests('Node.js', m);
+export { default } from '~trusted/impl/bare/bareSandbox.js';

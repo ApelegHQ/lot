@@ -312,7 +312,11 @@ const browserBuild = (entryPoints) =>
 		),
 	);
 
-await browserBuild(['./src/exports/browser.ts', './src/exports/worker.ts']);
+await browserBuild([
+	'./src/exports/bare.ts',
+	'./src/exports/browser.ts',
+	'./src/exports/worker.ts',
+]);
 
 options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'false';
 options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'true';

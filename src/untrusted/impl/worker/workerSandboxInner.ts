@@ -13,6 +13,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import singleUseFunctionConstructor from '~/untrusted/lib/singleUseFunctionConstructor.js';
+
 import { aIsArray } from '~untrusted/lib/utils.js';
 
 import createSandboxedHandler from '~untrusted/lib/createSandboxedHandler.js';
@@ -99,6 +101,7 @@ const workerSandboxInner = (
 
 		const revokeRootMessageEventListener = createMessageEventListener(
 			createSandboxedHandler(
+				singleUseFunctionConstructor,
 				script,
 				allowedGlobals,
 				externalMethodsList,

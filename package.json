@@ -40,6 +40,20 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./bare": {
+			"amd": {
+				"types": "./dist/exports/bare.d.ts",
+				"default": "./dist/exports/bare.js"
+			},
+			"import": {
+				"types": "./dist/exports/bare.d.ts",
+				"default": "./dist/exports/bare.mjs"
+			},
+			"require": {
+				"types": "./dist/exports/bare.d.ts",
+				"default": "./dist/exports/bare.cjs"
+			}
+		},
 		"./browser": {
 			"amd": {
 				"types": "./dist/exports/browser.d.ts",

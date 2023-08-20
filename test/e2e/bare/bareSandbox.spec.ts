@@ -15,6 +15,6 @@
 
 import runNodejsTests from '@test/lib/runNodejsTests.js';
 
-import { nodejsSandbox as m } from '@dist/index';
+import { default as m } from '@dist/exports/bare';
 
-runNodejsTests('Node.js', m);
+runNodejsTests('Bare', m);

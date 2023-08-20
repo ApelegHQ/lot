@@ -13,15 +13,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import singleUseFunctionConstructor from '~/untrusted/lib/singleUseFunctionConstructor.js';
+const functionConstructor = (() => {
+	return new Proxy(Function, {});
+})();
 
 import type createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
 import type createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
 import createSandboxedHandler from '~untrusted/lib/createSandboxedHandler.js';
 import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
-import { disableURLStaticMethods } from '~untrusted/lib/hardenGlobals.js';
 import * as Logger from '~untrusted/lib/Logger.js';
-import tightenCsp from '~untrusted/lib/tightenCsp.js';
 
 /**
  * Manages the sandbox environment for an iframe, either setting it up or
@@ -43,7 +43,7 @@ import tightenCsp from '~untrusted/lib/tightenCsp.js';
  * @returns A promise that settles when the setup is complete or on error.
  * @throws Will throw an error if there's an issue with setting up the iframe
  */
-const iframeSoleSandboxManager = async (
+const bareSandboxManager = async (
 	messagePort: MessagePort,
 	script: string,
 	revocable: boolean,
@@ -60,19 +60,17 @@ const iframeSoleSandboxManager = async (
 	const postMessageOutgoing = messagePort.postMessage.bind(messagePort);
 
 	try {
-		Logger.info('Setting up iframe fallback sandbox');
-
-		disableURLStaticMethods();
+		Logger.info('Setting up bare sandbox');
 
 		const revokeRootMessageEventListener = createMessageEventListener(
 			messagePort,
 			createSandboxedHandler(
-				singleUseFunctionConstructor,
+				functionConstructor,
 				script,
 				allowedGlobals,
 				externalMethodsList,
 				postMessageOutgoing,
-				tightenCsp,
+				Boolean,
 				revocable
 					? () => {
 							revokeRootMessageEventListener();
@@ -85,13 +83,13 @@ const iframeSoleSandboxManager = async (
 		const revokeRootErrorEventListener = createErrorEventListener();
 
 		Logger.info(
-			'Finished setting up iframe fallback sandbox. Sending SANDBOX_READY to parent.',
+			'Finished setting up bare sandbox. Sending SANDBOX_READY to parent.',
 		);
 
 		postMessageOutgoing([EMessageTypes.SANDBOX_READY]);
 	} catch (e) {
 		Logger.warn(
-			'Error setting up iframe fallback sandbox. Sending GLOBAL_ERROR to parent.',
+			'Error setting up bare sandbox. Sending GLOBAL_ERROR to parent.',
 		);
 		postMessageOutgoing([
 			EMessageTypes.GLOBAL_ERROR,
@@ -100,4 +98,4 @@ const iframeSoleSandboxManager = async (
 	}
 };
 
-export default iframeSoleSandboxManager;
+export default bareSandboxManager;

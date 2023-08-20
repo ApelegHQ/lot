@@ -13,6 +13,48 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+const redefineGlobal = (() => {
+	const defineProperty = ({}.constructor as typeof Object)['defineProperty'];
+	const getOwnPropertyDescriptor = ({}.constructor as typeof Object)[
+		'getOwnPropertyDescriptor'
+	];
+
+	if (
+		typeof defineProperty !== 'function' ||
+		typeof getOwnPropertyDescriptor !== 'function'
+	) {
+		return;
+	}
+
+	return (p: string, v: unknown, bindAndRename?: boolean) => {
+		if (bindAndRename) {
+			try {
+				v = (v as typeof Function.prototype).bind(globalThis);
+				defineProperty(v, 'name', { ['value']: v });
+			} catch {
+				// empty
+			}
+		}
+
+		try {
+			const d = getOwnPropertyDescriptor(globalThis, p);
+			if (!d) {
+				defineProperty(globalThis, p, {
+					['configurable']: true,
+					['writable']: true,
+					['value']: v,
+				});
+			} else if (d['configurable'] || d['writable']) {
+				defineProperty(globalThis, p, {
+					['value']: v,
+				});
+			}
+		} catch {
+			// empty
+		}
+	};
+})();
+
 /**
  * Ensures that global type constructors (e.g., Object, Array, String, etc.)
  * and related error classes are set to expected values, fixing them if
@@ -42,45 +84,25 @@
  * Note: The function relies on `__buildtimeSettings__.fixGlobalTypes`, and if this flag is not set, the function returns without making any changes.
  */
 const fixGlobalTypes = () => {
-	if (!__buildtimeSettings__.fixGlobalTypes) return;
+	if (!__buildtimeSettings__.fixGlobalTypes || !redefineGlobal) return;
 
-	const defineProperty = ({}.constructor as typeof Object)['defineProperty'];
+	const realObject = {}.constructor as ObjectConstructor;
 
 	// Fix global types
-	if (typeof Object !== 'function' || {}.constructor !== Object) {
-		defineProperty(globalThis, 'Object', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: {}.constructor,
-		});
+	if (typeof Object !== 'function' || realObject !== Object) {
+		redefineGlobal('Object', realObject);
 	}
 	if (typeof Array !== 'function' || [].constructor !== Array) {
-		defineProperty(globalThis, 'Array', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: [].constructor,
-		});
+		redefineGlobal('Array', [].constructor);
 	}
 	if (typeof String !== 'function' || ''.constructor !== String) {
-		defineProperty(globalThis, 'String', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: ''.constructor,
-		});
+		redefineGlobal('String', ''.constructor);
 	}
 	if (typeof Number !== 'function' || (0).constructor !== Number) {
-		defineProperty(globalThis, 'Number', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: (0).constructor,
-		});
+		redefineGlobal('Number', (0).constructor);
 	}
 	if (typeof Boolean !== 'function' || (!0).constructor !== Boolean) {
-		defineProperty(globalThis, 'Boolean', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: (!0).constructor,
-		});
+		redefineGlobal('Boolean', (!0).constructor);
 	}
 	if (
 		typeof Function !== 'function' ||
@@ -88,35 +110,26 @@ const fixGlobalTypes = () => {
 			/* empty */
 		}.constructor !== Function
 	) {
-		defineProperty(globalThis, 'Function', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: function () {
+		redefineGlobal(
+			'Function',
+			function () {
 				/* empty */
 			}.constructor,
-		});
+		);
 	}
 	if (
 		typeof BigInt === 'function' &&
 		typeof BigInt(0) === 'bigint' &&
 		BigInt(0).constructor !== BigInt
 	) {
-		defineProperty(globalThis, 'BigInt', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: BigInt(0).constructor,
-		});
+		redefineGlobal('BigInt', BigInt(0).constructor);
 	}
 	if (
 		typeof Symbol === 'function' &&
 		typeof Symbol() === 'symbol' &&
 		Symbol().constructor !== Symbol
 	) {
-		defineProperty(globalThis, 'Symbol', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: Symbol().constructor,
-		});
+		redefineGlobal('Symbol', Symbol().constructor);
 	}
 
 	try {
@@ -127,11 +140,7 @@ const fixGlobalTypes = () => {
 				typeof RangeError !== 'function' ||
 				!(e instanceof RangeError)
 			) {
-				defineProperty(globalThis, 'RangeError', {
-					['configurable']: true,
-					['writable']: true,
-					['value']: (e as RangeError).constructor,
-				});
+				redefineGlobal('RangeError', (e as RangeError).constructor);
 			}
 		}
 	}
@@ -141,24 +150,17 @@ const fixGlobalTypes = () => {
 	} catch (e) {
 		if (e) {
 			if (typeof URIError !== 'function' || !(e instanceof URIError)) {
-				defineProperty(globalThis, 'URIError', {
-					['configurable']: true,
-					['writable']: true,
-					['value']: (e as URIError).constructor,
-				});
+				redefineGlobal('URIError', (e as URIError).constructor);
 			}
 		}
 	}
 
 	if (
 		typeof Error !== 'function' ||
-		Object.getPrototypeOf(RangeError) !== Error
+		(typeof realObject.getPrototypeOf === 'function' &&
+			realObject.getPrototypeOf(RangeError) !== Error)
 	) {
-		defineProperty(globalThis, 'Error', {
-			configurable: true,
-			writable: true,
-			value: Object.getPrototypeOf(RangeError),
-		});
+		redefineGlobal('Error', realObject.getPrototypeOf(RangeError));
 	}
 
 	if (typeof EvalError !== 'function') {
@@ -174,14 +176,14 @@ const fixGlobalTypes = () => {
 			}
 			return this;
 		} as unknown as ErrorConstructor;
-		evalErrorFn.prototype.message = '';
-		evalErrorFn.prototype.name = 'EvalError';
-		Object.setPrototypeOf(evalErrorFn.prototype, Error.prototype);
-		defineProperty(globalThis, 'EvalError', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: evalErrorFn,
-		});
+		try {
+			evalErrorFn.prototype.message = '';
+			evalErrorFn.prototype.name = 'EvalError';
+			realObject.setPrototypeOf(evalErrorFn.prototype, Error.prototype);
+		} catch {
+			// empty
+		}
+		redefineGlobal('EvalError', evalErrorFn);
 	}
 
 	// Missing errors: AggregateError, ReferenceError, SyntaxError
@@ -190,16 +192,8 @@ const fixGlobalTypes = () => {
 	if (typeof eval !== 'function') {
 		const fn = function () {
 			throw new EvalError('call to eval() blocked by CSP');
-		}.bind({});
-		defineProperty(fn, 'name', {
-			['configurable']: true,
-			['value']: 'eval',
-		});
-		defineProperty(globalThis, 'eval', {
-			['configurable']: true,
-			['writable']: true,
-			['value']: fn,
-		});
+		}.bind(globalThis);
+		redefineGlobal('eval', fn, true);
 	}
 };
 

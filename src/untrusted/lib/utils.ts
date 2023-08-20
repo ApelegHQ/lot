@@ -49,6 +49,7 @@ export const mR = Math.random;
 
 const l_sP = S.prototype;
 const l_sReplace = l_sP.replace;
+const l_sIndexOf = l_sP.indexOf;
 const l_sSlice = l_sP.slice;
 const l_sSplit = l_sP.split;
 
@@ -105,9 +106,11 @@ export const fnCall = l_fnpCall.bind(l_fnpCall);
 export const oCreate = l_Object.create;
 export const oDefineProperties = l_Object.defineProperties;
 export const oDefineProperty = l_Object.defineProperty;
+export const oEntries = l_Object.entries;
 export const oFreeze = l_Object.freeze;
 export const oFromEntries = l_Object.fromEntries;
 export const oGetOwnPropertyDescriptor = l_Object.getOwnPropertyDescriptor;
+export const oGetOwnPropertyDescriptors = l_Object.getOwnPropertyDescriptors;
 export const oGetPrototypeOf = l_Object.getPrototypeOf;
 export const oHasOwnProperty = (o: object, v: PropertyKey): boolean =>
 	fnCall(l_oHasOwnPropery, o, v);
@@ -115,6 +118,11 @@ export const oKeys = l_Object.keys;
 export const oSetPrototypeOf = l_Object.setPrototypeOf;
 
 export const sFromCharCode = String.fromCharCode;
+export const sIndexOf = <TT extends string>(
+	s: string,
+	searchString: TT,
+	position?: number | undefined,
+): number => fnCall(l_sIndexOf, s, searchString, position);
 export const sReplace = <TT extends string | RegExp, TU>(
 	s: string,
 	searchValue: TT,
