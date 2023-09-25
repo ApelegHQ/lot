@@ -23,7 +23,12 @@
 			"~trusted/*": ["./src/trusted/*"],
 			"~untrusted/*": ["./src/untrusted/*"]
 		},
-		"plugins": [{ "transform": "@zerollup/ts-transform-paths" }],
+		"plugins": [
+			{
+				"transform": "typescript-transform-paths",
+				"afterDeclarations": true
+			}
+		],
 		"declaration": true,
 		"allowJs": true,
 		"checkJs": false
