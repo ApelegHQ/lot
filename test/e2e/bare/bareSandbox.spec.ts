@@ -15,6 +15,26 @@
 
 import runNodejsTests from '@test/lib/runNodejsTests.js';
 
-import { default as m } from '@dist/exports/bare';
+import * as bare from '@dist/exports/bare';
 
-runNodejsTests('Bare', m);
+// TODO: Import from '@dist/exports/bare'
+import { hardenGlobals, freezePrototypes } from '@dist/index.js';
+
+hardenGlobals();
+
+// See <https://github.com/nodejs/node/issues/49259>
+if (process.version) {
+	const [major, minor] = process.version
+		.slice(1)
+		.split('.', 2)
+		.map((n) => parseInt(n));
+	if (
+		(major === 18 && minor >= 18) ||
+		(major === 20 && minor >= 6) ||
+		major > 20
+	) {
+		freezePrototypes();
+	}
+}
+
+runNodejsTests('Bare', bare.default);

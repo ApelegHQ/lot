@@ -25,11 +25,19 @@ const logWrapper = <T extends object>(o: T, v: keyof T) =>
 		? o[v]
 		: noop;
 
-const trace = debugOnlyLogWrapper(console, 'trace');
-const debug = debugOnlyLogWrapper(console, 'debug');
-const info = debugOnlyLogWrapper(console, 'info');
-const log = debugOnlyLogWrapper(console, 'log');
-const warn = logWrapper(console, 'warn');
-const error = logWrapper(console, 'error');
+const trace = debugOnlyLogWrapper(console, 'trace') as {
+	(...args: unknown[]): void;
+};
+const debug = debugOnlyLogWrapper(console, 'debug') as {
+	(...args: unknown[]): void;
+};
+const info = debugOnlyLogWrapper(console, 'info') as {
+	(...args: unknown[]): void;
+};
+const log = debugOnlyLogWrapper(console, 'log') as {
+	(...args: unknown[]): void;
+};
+const warn = logWrapper(console, 'warn') as { (...args: unknown[]): void };
+const error = logWrapper(console, 'error') as { (...args: unknown[]): void };
 
 export { trace, debug, info, log, warn, error };

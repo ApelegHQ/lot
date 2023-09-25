@@ -13,7 +13,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default as bareSandbox } from './trusted/impl/bare/bareSandbox.js';
-export { default as browserSandbox } from './trusted/impl/browser/browserSandbox.js';
-export { default as nodejsSandbox } from './trusted/impl/nodejs/nodejsSandbox.js';
-export { default as workerSandbox } from './trusted/impl/worker/workerSandbox.js';
+export { default as bareSandbox } from '~trusted/impl/bare/bareSandbox.js';
+export { default as browserSandbox } from '~trusted/impl/browser/browserSandbox.js';
+export { default as nodejsSandbox } from '~trusted/impl/nodejs/nodejsSandbox.js';
+export { default as workerSandbox } from '~trusted/impl/worker/workerSandbox.js';
+export { default as freezePrototypes } from '~untrusted/lib/freezePrototypes.js';
+export { default as hardenGlobals } from '~untrusted/lib/hardenGlobals.js';

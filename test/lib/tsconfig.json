@@ -6,6 +6,9 @@
 		"lib": ["es2022", "dom"],
 		"outDir": "dist"
 	},
-	"references": [{ "path": "../../src/types" }, { "path": "../../src/untrusted" }],
+	"references": [
+		{ "path": "../../src/types" },
+		{ "path": "../../src/untrusted" }
+	],
 	"include": ["**/*", "**/*.json"]
 }

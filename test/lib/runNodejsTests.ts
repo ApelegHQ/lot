@@ -25,7 +25,7 @@ const assertRejectsWith = assertRejectsWithFactory((predicate, c) =>
 	assert.rejects(predicate, c),
 );
 
-const runNodejsTests = (name: string, m: ISandbox, ) => {
+const runNodejsTests = (name: string, m: ISandbox) => {
 	describe(name, () => {
 		describe('Can run tasks', async () => {
 			it(

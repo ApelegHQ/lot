@@ -67,7 +67,7 @@ export const aForEach = <TT>(
 	callbackfn: { (value: TT, index: number, array: TT[]): void },
 	thisArg?: TAny,
 ): void => fnCall(l_aForEach, a, callbackfn, thisArg);
-export const aFrom = globalThis['Array'].from;
+export const aFrom = l_Array.from;
 export const aIncludes = <TT>(
 	a: TT[],
 	searchElement: TT,
@@ -80,7 +80,7 @@ export const aIndexOf = <TT>(
 ): number => fnCall(l_aIndexOf, a, searchElement, fromIndexOf);
 export const aJoin = <TT>(a: TT[], separator?: string | undefined): string =>
 	fnCall(l_aJoin, a, separator);
-export const aIsArray = globalThis['Array'].isArray;
+export const aIsArray = l_Array.isArray;
 export const aMap = <TT, TU>(
 	a: TT[],
 	callbackfn: (value: TT, index: number, array: TT[]) => TU,

@@ -15,17 +15,10 @@
 
 import { ISandbox } from '~/types/index.js';
 import bareSandboxManager from '~/untrusted/impl/bare/bareSandboxManager.js';
-import hardenGlobals from '~/untrusted/lib/hardenGlobals.js';
-import freezePrototypes from '~/untrusted/lib/freezePrototypes.js';
 import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
 import createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
 import createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
 
-/*
-TODO: These should be exported or called upon creating bareSandbox.
-TODO: Fix issues with Node.js and freezePrototypes */
-hardenGlobals();
-freezePrototypes();
 // TODO: wrap setTimeout and clearTimeout
 
 const bareSandbox: ISandbox = async (

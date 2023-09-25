@@ -14,3 +14,6 @@
  */
 
 export { default } from '~trusted/impl/bare/bareSandbox.js';
+// TODO: Fix issue with these exports in Google Closure Compiler
+// export { default as freezePrototypes } from '~untrusted/lib/freezePrototypes.js';
+// export { default as hardenGlobals } from '~untrusted/lib/hardenGlobals.js';
