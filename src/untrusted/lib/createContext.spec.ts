@@ -29,7 +29,8 @@ describe('Sandbox Context Creation', () => {
 			const ctx = createContext(allowedGlobals);
 
 			assert.equal(typeof ctx.Date, 'function');
-			assert.equal(ctx.Date, global.Date);
+			assert.notEqual(ctx.Date, global.Date);
+			assert.ok(new (ctx.Date as typeof Date)() instanceof global.Date);
 			assert.equal(typeof ctx.parseInt, 'function');
 			assert.notEqual(ctx.parseInt, global.parseInt);
 			assert.equal(
