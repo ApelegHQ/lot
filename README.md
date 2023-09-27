@@ -47,7 +47,7 @@ it with your code and any additional parameters. Here's an example using
 `browserSandbox`:
 
 ```js
-import { browserSandbox } from '@exact-realty/ecmascript-sandbox';
+import { browserSandbox } from '@exact-realty/lot';
 
 const sandbox = await browserSandbox(`
   /* sandboxed code*/;
