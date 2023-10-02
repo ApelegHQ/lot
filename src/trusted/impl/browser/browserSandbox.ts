@@ -75,8 +75,14 @@ const browserSandbox: ISandbox = async (
 		'<body></body>' +
 		'</html>';
 
-	const iframe = document.createElement('iframe');
-	const iframeContainer = document.createElement('ecmacript-sandbox');
+	const iframe = document.createElementNS(
+		'http://www.w3.org/1999/xhtml',
+		'iframe',
+	) as HTMLIFrameElement;
+	const iframeContainer = document.createElementNS(
+		'http://www.w3.org/1999/xhtml',
+		self.customElements ? 'ecmacript-sandbox' : 'div',
+	);
 	iframeContainer.setAttribute('role', 'none');
 	const blob = new Blob([html], { ['type']: 'application/xhtml+xml' });
 

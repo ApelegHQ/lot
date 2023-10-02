@@ -21,11 +21,11 @@
 				"default": "./dist/exports/browser-window.mjs"
 			},
 			"browser-worker": {
-				"types": "./dist/exports/browser-window.d.ts",
-				"amd": "./dist/exports/browser-window.js",
-				"import": "./dist/exports/browser-window.mjs",
-				"require": "./dist/exports/browser-window.cjs",
-				"default": "./dist/exports/browser-window.mjs"
+				"types": "./dist/exports/browser-worker.d.ts",
+				"amd": "./dist/exports/browser-worker.js",
+				"import": "./dist/exports/browser-worker.mjs",
+				"require": "./dist/exports/browser-worker.cjs",
+				"default": "./dist/exports/browser-worker.mjs"
 			},
 			"deno": {
 				"types": "./dist/exports/worker.d.ts",
@@ -132,7 +132,7 @@
 		"test:unit": "nyc mocha src/**/*.spec.ts",
 		"test:e2e": "mocha test/**/*.spec.ts",
 		"test": "npm run test:unit && npm run build && npm run test:e2e",
-		"prepack": "npm run build",
+		"prepack": "npm run build && rimraf -g -- 'dist/**/*.tsbuildinfo'",
 		"prepublishOnly": "npm test && npm run lint",
 		"preversion": "npm run lint",
 		"version": "npm run lint && git add -A src",
