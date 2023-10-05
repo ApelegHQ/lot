@@ -207,4 +207,17 @@ declare namespace __buildtimeSettings__ {
 	 * using two message channels
 	 */
 	const contextifyMessagePortWorkaroundCrash: boolean;
+
+	/**
+	 * Use eval to feature-detect function constructors
+	 *
+	 * If true, function constructors (e.g., AsyncFunction, Function, etc.)
+	 * will be obtained using eval (e.g., eval('(async ()=>{})')), which
+	 * works in environments that do not support the function declaration
+	 * syntax.
+	 *
+	 * If false, function constructors will be defined statically, without
+	 * feature detection.
+	 */
+	const featureDetectFunctionConstructors: boolean;
 }

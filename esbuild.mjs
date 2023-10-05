@@ -133,6 +133,37 @@ const exactRealtyClosureBuilderPlugin = {
 	},
 };
 
+/**
+ * @type {esbuild.Plugin}
+ **/
+const lotExportsBuilderPlugin = {
+	name: '@exact-realty/lot/exports',
+	setup(build) {
+		const extension = (() => {
+			switch (build.initialOptions.format) {
+				case 'cjs':
+					return 'cjs';
+				case 'esm':
+					return 'mjs';
+				case 'iife':
+					return 'js';
+			}
+		})();
+		build.onResolve(
+			{ filter: /^@exports\//, namespace: 'file' },
+			(args) => {
+				const path = `./${args.path
+					.slice(1)
+					.replace(/(?<=\.)js$/, extension)}`;
+				return {
+					path,
+					external: true,
+				};
+			},
+		);
+	},
+};
+
 const sequence = () => {
 	const generator = (function* () {
 		yield String(17);
@@ -153,7 +184,6 @@ const options = {
 	minify: true,
 	entryNames: '[name]',
 	platform: 'node',
-	external: ['esbuild'],
 	pure: ['Logger'],
 	define: {
 		'__buildtimeSettings__.buildTarget': '"generic"',
@@ -181,6 +211,7 @@ const options = {
 		'__buildtimeSettings__.isolationStategyIframeWorker': 'true',
 		'__buildtimeSettings__.contextifyMessagePort': 'true',
 		'__buildtimeSettings__.contextifyMessagePortWorkaroundCrash': 'true',
+		'__buildtimeSettings__.featureDetectFunctionConstructors': 'true',
 		// Enums
 		'EMessageTypes.SANDBOX_READY': EMessageTypesSequence.next(),
 		'EMessageTypes.REQUEST': EMessageTypesSequence.next(),
@@ -191,12 +222,11 @@ const options = {
 	},
 };
 
-void exactRealtyClosureBuilderPlugin;
-
 // TODO: Use Google Closure Compiler globally
 const plugins = [];
 
 plugins.push(
+	lotExportsBuilderPlugin,
 	inlineScripts({
 		...options,
 		target: 'es2015',

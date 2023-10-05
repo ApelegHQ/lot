@@ -13,10 +13,39 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-export { default as bareSandbox } from '@exports/bare.js';
-export { default as browserSandbox } from '@exports/browser.js';
-export { default, default as nodejsSandbox } from '@exports/nodejs.js';
-export { default as workerSandbox } from '@exports/worker.js';
+import { aFilter, aMap } from './utils.js';
 
-export { default as freezePrototypes } from '~untrusted/lib/freezePrototypes.js';
-export { default as hardenGlobals } from '~untrusted/lib/hardenGlobals.js';
+const functionTypeSpecimensList =
+	__buildtimeSettings__.featureDetectFunctionConstructors
+		? aFilter(
+				aMap(
+					[
+						'(function(){})',
+						'(function*(){})',
+						'(async function(){})',
+						'(async function*(){})',
+					],
+					(source, i) => {
+						try {
+							return (0, eval)(source);
+						} catch {
+							if (i === 0) {
+								return function () {
+									/**/
+								};
+							}
+						}
+					},
+				),
+				Boolean as unknown as {
+					(v?: FunctionConstructor): v is FunctionConstructor;
+				},
+		  )
+		: [
+				function () {},
+				function* () {},
+				async function () {},
+				async function* () {},
+		  ];
+
+export default functionTypeSpecimensList;
