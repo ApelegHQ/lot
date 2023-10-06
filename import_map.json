@@ -4,6 +4,7 @@
 		"@test/": "./test/",
 		"~trusted/": "./src/trusted/",
 		"~untrusted/": "./src/untrusted/",
+		"@exports/": "./src/exports/",
 		"@dist/": "./dist/"
 	}
 }

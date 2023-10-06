@@ -13,25 +13,39 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import runNodejsTests from '@test/lib/runNodejsTests.js';
+import { aFilter, aMap } from './utils.js';
 
-import * as bare from '@dist/exports/bare.js';
+const functionTypeSpecimensList =
+	__buildtimeSettings__.featureDetectFunctionConstructors
+		? aFilter(
+				aMap(
+					[
+						'(function(){})',
+						'(function*(){})',
+						'(async function(){})',
+						'(async function*(){})',
+					],
+					(source, i) => {
+						try {
+							return (0, eval)(source);
+						} catch {
+							if (i === 0) {
+								return function () {
+									/**/
+								};
+							}
+						}
+					},
+				),
+				Boolean as unknown as {
+					(v?: FunctionConstructor): v is FunctionConstructor;
+				},
+		  )
+		: [
+				function () {},
+				function* () {},
+				async function () {},
+				async function* () {},
+		  ];
 
-// TODO: Import from '@dist/exports/bare'
-import { hardenGlobals, freezePrototypes } from '@dist/index.js';
-
-hardenGlobals();
-
-// See <https://github.com/nodejs/node/issues/49259>
-if (process.version) {
-	const [major, minor] = process.version
-		.slice(1)
-		.split('.', 2)
-		.map((n) => parseInt(n));
-	if ((major === 20 && minor >= 6) || major > 20) {
-		freezePrototypes();
-	}
-}
-
-// Due to Node's CJS-from-ESM implementation, the import is bare.default.default
-runNodejsTests('Bare', (bare.default as unknown as typeof bare).default);
+export default functionTypeSpecimensList;

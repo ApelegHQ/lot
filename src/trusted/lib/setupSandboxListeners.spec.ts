@@ -13,10 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-if (typeof __buildtimeSettings__ !== 'object')
-	Reflect.set(globalThis, '__buildtimeSettings__', {});
-
-Reflect.set(__buildtimeSettings__, 'sandboxInitDeadlineInMs', 100);
+import '~/test/lib/buildTimeSettings.js';
 
 import setupSandboxListeners from './setupSandboxListeners.js';
 

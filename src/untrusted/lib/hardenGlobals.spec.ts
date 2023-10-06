@@ -13,10 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-if (typeof __buildtimeSettings__ !== 'object')
-	Reflect.set(globalThis, '__buildtimeSettings__', {});
-
-Reflect.set(__buildtimeSettings__, 'hardenGlobals', true);
+import '~/test/lib/buildTimeSettings.js';
 
 import assert from 'node:assert/strict';
 import hardenGlobals, { disableURLStaticMethods } from './hardenGlobals.js';

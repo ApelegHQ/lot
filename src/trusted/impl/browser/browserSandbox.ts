@@ -75,8 +75,14 @@ const browserSandbox: ISandbox = async (
 		'<body></body>' +
 		'</html>';
 
-	const iframe = document.createElement('iframe');
-	const iframeContainer = document.createElement('ecmacript-sandbox');
+	const iframe = document.createElementNS(
+		'http://www.w3.org/1999/xhtml',
+		'iframe',
+	) as HTMLIFrameElement;
+	const iframeContainer = document.createElementNS(
+		'http://www.w3.org/1999/xhtml',
+		self.customElements ? 'ecmacript-sandbox' : 'div',
+	);
 	iframeContainer.setAttribute('role', 'none');
 	const blob = new Blob([html], { ['type']: 'application/xhtml+xml' });
 
@@ -112,17 +118,19 @@ const browserSandbox: ISandbox = async (
 		iframeSrcUrl + '#' + initMessageKeyA + '-' + initMessageKeyB,
 	);
 
-	const iframeStyles = {
-		['display']: 'none',
-		['height']: '1px',
-		['left']: '-9999px',
-		['opacity']: '0',
-		['position']: 'absolute',
-		['top']: '-9999px',
-		['visibility']: 'hidden',
-		['width']: '1px',
-	};
-	Object.assign(iframeContainer.style, iframeStyles);
+	/* List of CSS rules to attempt to ensure the iframe is never visible */
+	const iframeStyles: [string, string][] = [
+		['display', 'none'],
+		['position', 'absolute'],
+		['transform', 'scale(0)'],
+	];
+	iframeStyles.forEach((descriptor) => {
+		iframeContainer.style.setProperty(
+			descriptor[0],
+			descriptor[1],
+			'important',
+		);
+	});
 
 	if (typeof HTMLElement.prototype.attachShadow === 'function') {
 		const shadow = iframeContainer.attachShadow({ ['mode']: 'closed' });

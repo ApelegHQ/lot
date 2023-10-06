@@ -14,10 +14,10 @@
  */
 
 import module from 'node:module';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { resolve as resolveTs } from 'ts-node/esm';
 import importMap from './import_map.json' assert { type: 'json' };
-import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
 
 export * from 'ts-node/esm';
 
@@ -47,10 +47,16 @@ module._resolveFilename = (...args) => {
 export const resolve = (specifier, context, defaultResolver) => {
 	if (typeof specifier === 'string') {
 		Object.entries(importMap.imports).forEach(([k, v]) => {
-			if (specifier.startsWith(absoluteBaseUrl + k))
-				specifier = specifier.replace(k, v);
+			if (specifier.startsWith(k)) {
+				specifier = specifier.replace(k, absoluteBaseUrl + v);
+			}
 		});
 	}
 
-	return resolveTs(specifier, context, defaultResolver);
+	return resolveTs(specifier, context, defaultResolver).then((v) => {
+		if (v.url.endsWith('.ts')) {
+			v.format = 'module';
+		}
+		return v;
+	});
 };

@@ -26,7 +26,10 @@
  * malicious behaviours.
  */
 const tightenCsp = () => {
-	const metaCsp = document.createElement('meta');
+	const metaCsp = document.createElementNS(
+		'http://www.w3.org/1999/xhtml',
+		'meta',
+	);
 	metaCsp.setAttribute('http-equiv', 'content-security-policy');
 	metaCsp.setAttribute('content', "default-src 'none'");
 	document.head.append(metaCsp);

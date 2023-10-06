@@ -1,6 +1,6 @@
 {
 	"name": "@exact-realty/lot",
-	"version": "0.0.18",
+	"version": "0.0.19",
 	"description": "Sandbox for isolating ECMAScript code",
 	"main": "dist/index.js",
 	"module": "./dist/index.mjs",
@@ -21,11 +21,11 @@
 				"default": "./dist/exports/browser-window.mjs"
 			},
 			"browser-worker": {
-				"types": "./dist/exports/browser-window.d.ts",
-				"amd": "./dist/exports/browser-window.js",
-				"import": "./dist/exports/browser-window.mjs",
-				"require": "./dist/exports/browser-window.cjs",
-				"default": "./dist/exports/browser-window.mjs"
+				"types": "./dist/exports/browser-worker.d.ts",
+				"amd": "./dist/exports/browser-worker.js",
+				"import": "./dist/exports/browser-worker.mjs",
+				"require": "./dist/exports/browser-worker.cjs",
+				"default": "./dist/exports/browser-worker.mjs"
 			},
 			"deno": {
 				"types": "./dist/exports/worker.d.ts",
@@ -150,7 +150,6 @@
 		"@types/selenium-webdriver": "^4.1.17",
 		"@typescript-eslint/eslint-plugin": "^6.7.2",
 		"@typescript-eslint/parser": "^6.7.2",
-		"deno-types": "^1.25.0",
 		"esbuild": "^0.19.3",
 		"eslint": "^8.50.0",
 		"eslint-config-prettier": "^9.0.0",

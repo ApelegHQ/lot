@@ -15,9 +15,7 @@
 
 import {
 	EE,
-	aFilter,
 	aForEach,
-	aMap,
 	fnApply,
 	oDefineProperties,
 	oDefineProperty,
@@ -27,6 +25,7 @@ import {
 	oSetPrototypeOf,
 } from './utils.js';
 
+import functionTypeSpecimensList from './functionTypeSpecimensList.js';
 import global from './global.js';
 
 /**
@@ -127,33 +126,9 @@ const hardenGlobals: { (): void } = __buildtimeSettings__.hardenGlobals
 	? () => {
 			const FERAL_FUNCTION = hardenGlobals.constructor;
 
-			const list = aFilter(
-				aMap(
-					[
-						'(function(){})',
-						'(function*(){})',
-						'(async function(){})',
-						'(async function*(){})',
-					],
-					(source, i) => {
-						try {
-							return (0, eval)(source);
-						} catch {
-							if (i === 0)
-								return function () {
-									/**/
-								};
-						}
-					},
-				),
-				Boolean as unknown as {
-					(v?: FunctionConstructor): v is FunctionConstructor;
-				},
-			);
-
 			try {
 				// Attempt to tame function constructors
-				aForEach(list, (fnIntrinsic) => {
+				aForEach(functionTypeSpecimensList, (fnIntrinsic) => {
 					try {
 						const prototype = oGetPrototypeOf(fnIntrinsic);
 						const origConstructor = prototype.constructor;

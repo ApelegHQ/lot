@@ -13,8 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/// <reference types="deno-types" />
-
 import m from '@dist/exports/worker.mjs';
 
 import * as assert from 'https://deno.land/std@0.197.0/testing/asserts.ts';

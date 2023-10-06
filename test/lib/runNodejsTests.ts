@@ -16,7 +16,7 @@
 import '~untrusted/lib/nodejsLoadWebcrypto.js'; // MUST BE AT THE TOP
 
 import assertRejectsWithFactory from '@test/lib/assertRejectsWithFactory.js';
-import baseTests from '@test/lib/baseTests.json';
+import baseTests from '@test/lib/baseTests.json' assert { type: 'json' };
 import wrapper from '@test/lib/wrapper.js';
 import assert from 'node:assert/strict';
 import type { ISandbox } from '~/types/index.js';
