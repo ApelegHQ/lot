@@ -15,11 +15,11 @@
 
 import assert from 'node:assert/strict';
 import webdriver from 'selenium-webdriver';
-import { Options as ChromeOptions } from 'selenium-webdriver/chrome';
-import { Options as EdgeOptions } from 'selenium-webdriver/edge';
-import { Options as FirefoxOptions } from 'selenium-webdriver/firefox';
-import { Options as SafariOptions } from 'selenium-webdriver/safari';
-import baseTests from './baseTests.json';
+import { Options as ChromeOptions } from 'selenium-webdriver/chrome.js';
+import { Options as EdgeOptions } from 'selenium-webdriver/edge.js';
+import { Options as FirefoxOptions } from 'selenium-webdriver/firefox.js';
+import { Options as SafariOptions } from 'selenium-webdriver/safari.js';
+import baseTests from './baseTests.json' assert { type: 'json' };
 
 export const enabledBrowsers = () => {
 	const webdriverBrowsers = new Set(

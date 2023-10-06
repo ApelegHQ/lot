@@ -3,8 +3,9 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"outDir": "../../dist/trusted",
+		"tsBuildInfoFile": "../../build/trusted.tsbuildinfo",
 		"composite": true
 	},
-	"references": [{ "path": "../types" }, { "path": "../untrusted" }],
+	"references": [{ "path": "../types" }, { "path": "../untrusted" }, { "path": "../test" }],
 	"include": ["**/*", "**/*.json"]
 }

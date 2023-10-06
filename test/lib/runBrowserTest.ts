@@ -13,8 +13,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import { fileURLToPath } from 'node:url';
 import getCodeHelper from './getCodeHelper.js';
 import { enabledBrowsers, webdriverTestSuites } from './webdriverTestSuites.js';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const runBrowserTest = (m: string, commonBundle?: boolean) => {
 	const code = commonBundle

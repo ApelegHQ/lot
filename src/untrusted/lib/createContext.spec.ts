@@ -13,11 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-if (typeof __buildtimeSettings__ !== 'object')
-	Reflect.set(globalThis, '__buildtimeSettings__', {});
-
-Reflect.set(__buildtimeSettings__, 'bidirectionalMessaging', true);
-Reflect.set(__buildtimeSettings__, 'defaultAllowedGlobalProps', []);
+import '~/test/lib/buildTimeSettings.js';
 
 import assert from 'node:assert/strict';
 import createContext, { setupExternalMethods } from './createContext.js';

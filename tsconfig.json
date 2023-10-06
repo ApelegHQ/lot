@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "es6",
 		"composite": true,
-		"module": "commonjs",
+		"module": "esnext",
 		"moduleResolution": "node",
 		"outDir": "dist",
 		"rootDir": "src",
@@ -35,7 +35,10 @@
 		"checkJs": false
 	},
 	"ts-node": {
-		"experimentalResolver": true
+		"experimentalResolver": true,
+		"compilerOptions": {
+			"module": "esnext"
+		}
 	},
 	"references": [
 		{ "path": "src/trusted" },

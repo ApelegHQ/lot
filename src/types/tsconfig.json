@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"outDir": "../../dist/types",
+		"tsBuildInfoFile": "../../build/types.tsbuildinfo",
 		"composite": true
 	},
 	"include": ["**/*", "**/*.json"]
