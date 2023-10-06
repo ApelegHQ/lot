@@ -1,6 +1,6 @@
 {
 	"name": "@exact-realty/lot",
-	"version": "0.0.18",
+	"version": "0.0.19",
 	"description": "Sandbox for isolating ECMAScript code",
 	"main": "dist/index.js",
 	"module": "./dist/index.mjs",
