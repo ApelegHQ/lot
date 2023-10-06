@@ -6,6 +6,10 @@
 		"tsBuildInfoFile": "../../build/trusted.tsbuildinfo",
 		"composite": true
 	},
-	"references": [{ "path": "../types" }, { "path": "../untrusted" }, { "path": "../test" }],
+	"references": [
+		{ "path": "../types" },
+		{ "path": "../untrusted" },
+		{ "path": "../test" }
+	],
 	"include": ["**/*", "**/*.json"]
 }
