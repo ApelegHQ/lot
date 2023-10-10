@@ -19,8 +19,8 @@ import inlineScripts from '@exact-realty/esbuild-plugin-inline-js';
 import esbuild from 'esbuild';
 import googleClosureCompiler from 'google-closure-compiler';
 import fs from 'node:fs/promises';
-// import path from 'node:path';
 import defaultAllowedGlobalProps from './defaultAllowedGlobalProps.config.mjs';
+import manifest from './package.json' assert { type: 'json' };
 
 let closureCompilationLevel = 'WHITESPACE_ONLY';
 
@@ -230,6 +230,12 @@ const plugins = [];
 
 const whitespace = /[ \r\n\t]/g;
 
+/**
+ * Simple JS minification
+ * @param {string[]} parts
+ * @param  {...unknown} args
+ * @returns {string}
+ */
 const minify = (parts, ...args) => {
 	const dict = Object.create(null);
 	const v = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -245,7 +251,14 @@ const minify = (parts, ...args) => {
 					dict[arg] = e = v[c++];
 				}
 			}
-			return p.replace(whitespace, ' ').replace(/[ ]+/g, ' ') + e;
+			return (
+				p
+					.replace(whitespace, ' ')
+					.replace(/[ ]+/g, ' ')
+					.replace(/([{(=?:",;&|+!)}])[ ]+/g, '$1')
+					.replace(/[ ]+([{(=?:",;&|+!)}])/g, '$1')
+					.replace(/[;,]\}/g, '}') + e
+			);
 		})
 		.join('');
 };
@@ -282,7 +295,7 @@ const umdOpts = {
 		js:
 			notice +
 			minify`
-		(function(){(function (${'global'}, ${'factory'}) {
+		(function(${'fallbackPkgName'}){(function (${'global'}, ${'factory'}) {
 			if (typeof define === "function" && define["amd"]) {
 				define(["require", "exports", "module"], ${'factory'});
 			} else {
@@ -306,21 +319,25 @@ const umdOpts = {
 				}
 
 				if (!${'cjsMod'}) {
-					${'global'}["index"] = ${'mod'}["exports"];
+					${'global'}[${'fallbackPkgName'}] = ${'mod'}["exports"];
 				}
 			}
-		})(
-			typeof globalThis === "object"
-				? globalThis
-				: typeof self === "object"
-				? self
-				: typeof global === "object"
-				? global
-				: this,
-			function (require, exports, module) {`,
+		})(this, function (require, exports, module) {`,
 	},
 	footer: {
-		js: '});})();',
+		js: `});}).call(
+			typeof globalThis === "object"
+			? globalThis
+			: typeof self === "object"
+			? self
+			: typeof global === "object"
+			? global
+			: this,
+			${JSON.stringify(manifest.name)}
+		);`
+			.replace(/[\r\n\t ]+/g, ' ')
+			.replace(/([{(=?:",;&|+!)}])[ ]+/g, '$1')
+			.replace(/[ ]+([{(=?:",;&|+!)}])/g, '$1'),
 	},
 	outExtension: {
 		'.js': '.cjs',
