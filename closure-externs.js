@@ -2,8 +2,6 @@
 
 var module = {};
 
-function define() {}
-
 // Node.js modules
 `/** @const */
 var vm = {};

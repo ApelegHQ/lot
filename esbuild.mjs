@@ -22,6 +22,8 @@ import fs from 'node:fs/promises';
 // import path from 'node:path';
 import defaultAllowedGlobalProps from './defaultAllowedGlobalProps.config.mjs';
 
+let closureCompilationLevel = 'WHITESPACE_ONLY';
+
 /**
  * @type {esbuild.Plugin}
  **/
@@ -34,14 +36,14 @@ const exactRealtyClosureBuilderPlugin = {
 
 		const origFmt = build.initialOptions.format;
 
-		if (origFmt === 'esm') {
+		if (origFmt === 'esm' && closureCompilationLevel === 'ADVANCED') {
 			// Google Closure Compiler doesn't support library exports it seems
 			// So, set format to cjs
 			build.initialOptions.format = 'cjs';
 		}
 
 		Object.assign(build.initialOptions, {
-			target: origFmt === 'iife' ? 'es2015' : 'es2020',
+			target: origFmt === 'esm' ? 'es2020' : 'es2015',
 			write: false,
 		});
 
@@ -57,7 +59,7 @@ const exactRealtyClosureBuilderPlugin = {
 					) {
 						const compiler = new googleClosureCompiler.compiler({
 							js_output_file: o.path,
-							compilation_level: 'ADVANCED',
+							compilation_level: closureCompilationLevel,
 							language_in: 'ECMASCRIPT_2020',
 							language_out: 'ECMASCRIPT_2015',
 							rewrite_polyfills: false,
@@ -66,11 +68,12 @@ const exactRealtyClosureBuilderPlugin = {
 							warning_level: 'QUIET',
 							isolate_polyfills: true,
 							externs: './closure-externs.js',
-							assume_function_wrapper: origFmt !== 'iife',
-							...(origFmt === 'esm' && {
-								output_wrapper:
-									'var module={};%output%export default module.exports.default;',
-							}),
+							assume_function_wrapper: origFmt === 'esm',
+							...(origFmt === 'esm' &&
+								closureCompilationLevel === 'ADVANCED' && {
+									output_wrapper:
+										'var module={};%output%export default module.exports.default;',
+								}),
 							// chunk_output_type: 'GLOBAL_NAMESPACE',
 							/* chunk_output_type:
 								build.initialOptions.format === 'esm'
@@ -225,6 +228,28 @@ const options = {
 // TODO: Use Google Closure Compiler globally
 const plugins = [];
 
+const whitespace = /[ \r\n\t]/g;
+
+const minify = (parts, ...args) => {
+	const dict = Object.create(null);
+	const v = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	let c = 0;
+	return parts
+		.map((p, i) => {
+			let e = '';
+			if (i < args.length) {
+				const arg = args[i];
+				if (dict[arg]) {
+					e = dict[arg];
+				} else {
+					dict[arg] = e = v[c++];
+				}
+			}
+			return p.replace(whitespace, ' ').replace(/[ ]+/g, ' ') + e;
+		})
+		.join('');
+};
+
 plugins.push(
 	lotExportsBuilderPlugin,
 	inlineScripts({
@@ -237,20 +262,73 @@ plugins.push(
 
 options.plugins = plugins;
 
+const notice =
+	'/** @copyright Copyright (C) 2023 Exact Realty Limited. All rights reserved. */';
+
 const esmOpts = {
 	format: 'esm',
+	banner: {
+		js: notice,
+	},
 	outExtension: {
 		'.js': '.mjs',
 	},
 };
 
+const umdOpts = {
+	format: 'cjs',
+	// globalName: '__export__',
+	banner: {
+		js:
+			notice +
+			minify`
+		(function(){(function (${'global'}, ${'factory'}) {
+			if (typeof define === "function" && define["amd"]) {
+				define(["require", "exports", "module"], ${'factory'});
+			} else {
+				var ${'cjsMod'} = (typeof module === "object" && typeof module["exports"] === "object") && module;
+				var ${'req'} = (typeof require === "function")
+					? require
+					: function(n) {throw Error("Cannot find module '" + n + "'");};
+				var ${'mod'} = ${'cjsMod'} || Object.create(null, {
+					"exports": {
+						["configurable"]: true,
+						["enumerable"]: true,
+						["writable"]: true,
+						["value"]: Object.create(null),
+					},
+				});
+
+				var ${'result'} = ${'factory'}(${'req'}, ${'mod'}["exports"], ${'mod'});
+
+				if (typeof ${'result'} !== "undefined") {
+					${'mod'}["exports"] = ${'result'};
+				}
+
+				if (!${'cjsMod'}) {
+					${'global'}["index"] = ${'mod'}["exports"];
+				}
+			}
+		})(
+			typeof globalThis === "object"
+				? globalThis
+				: typeof self === "object"
+				? self
+				: typeof global === "object"
+				? global
+				: this,
+			function (require, exports, module) {`,
+	},
+	footer: {
+		js: '});})();',
+	},
+	outExtension: {
+		'.js': '.cjs',
+	},
+};
+
 await Promise.all(
-	[
-		{
-			format: 'cjs',
-		},
-		esmOpts,
-	].map((extra) =>
+	[umdOpts, esmOpts].map((extra) =>
 		esbuild.build({
 			...options,
 			...extra,
@@ -261,15 +339,7 @@ await Promise.all(
 );
 
 await Promise.all(
-	[
-		{
-			format: 'cjs',
-			outExtension: {
-				'.js': '.cjs',
-			},
-		},
-		esmOpts,
-	].map((extra) =>
+	[umdOpts, esmOpts].map((extra) =>
 		esbuild.build({
 			...options,
 			...extra,
@@ -280,39 +350,7 @@ await Promise.all(
 );
 
 plugins.unshift(exactRealtyClosureBuilderPlugin);
-
-const umdOpts = {
-	format: 'iife',
-	globalName: '__export__',
-	banner: {
-		js: `(function(){(function (global, factory) {
-			if (typeof define === 'function' && define['amd']) {
-				define(factory);
-			} else if (typeof module === 'object' && typeof exports !== 'undefined' && module['exports'] === exports) {
-				module['exports'] = factory();
-			} else {
-				var mod = Object.create(null, {
-					['exports']: {
-						['configurable']: true,
-						['enumerable']: true,
-						['writable']: true,
-						['value']: factory(),
-					}
-				});
-				global['index'] = mod.exports;
-			}
-		})(
-			typeof globalThis !== 'undefined'
-				? globalThis
-				: typeof self !== 'undefined'
-				? self
-				: this,
-			function () {`,
-	},
-	footer: {
-		js: ';return __export__;});})();',
-	},
-};
+closureCompilationLevel = 'ADVANCED';
 
 options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'true';
 options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'true';
@@ -323,16 +361,7 @@ options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'true';
  */
 const browserBuild = (entryPoints) =>
 	Promise.all(
-		[
-			{
-				format: 'cjs',
-				outExtension: {
-					'.js': '.cjs',
-				},
-			},
-			esmOpts,
-			umdOpts,
-		].map((extra) =>
+		[esmOpts, umdOpts].map((extra) =>
 			esbuild.build({
 				...options,
 				...extra,

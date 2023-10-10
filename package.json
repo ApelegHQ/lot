@@ -2,27 +2,25 @@
 	"name": "@exact-realty/lot",
 	"version": "0.0.19",
 	"description": "Sandbox for isolating ECMAScript code",
-	"main": "dist/index.js",
+	"main": "dist/index.cjs",
 	"module": "./dist/index.mjs",
+	"type": "module",
 	"exports": {
 		".": {
 			"browser": {
 				"types": "./dist/exports/browser.d.ts",
-				"amd": "./dist/exports/browser.js",
 				"import": "./dist/exports/browser.mjs",
 				"require": "./dist/exports/browser.cjs",
 				"default": "./dist/exports/browser.mjs"
 			},
 			"browser-window": {
 				"types": "./dist/exports/browser-window.d.ts",
-				"amd": "./dist/exports/browser-window.js",
 				"import": "./dist/exports/browser-window.mjs",
 				"require": "./dist/exports/browser-window.cjs",
 				"default": "./dist/exports/browser-window.mjs"
 			},
 			"browser-worker": {
 				"types": "./dist/exports/browser-worker.d.ts",
-				"amd": "./dist/exports/browser-worker.js",
 				"import": "./dist/exports/browser-worker.mjs",
 				"require": "./dist/exports/browser-worker.cjs",
 				"default": "./dist/exports/browser-worker.mjs"
@@ -37,14 +35,10 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"default": "./dist/index.cjs"
 			}
 		},
 		"./bare": {
-			"amd": {
-				"types": "./dist/exports/bare.d.ts",
-				"default": "./dist/exports/bare.js"
-			},
 			"import": {
 				"types": "./dist/exports/bare.d.ts",
 				"default": "./dist/exports/bare.mjs"
@@ -55,10 +49,6 @@
 			}
 		},
 		"./browser": {
-			"amd": {
-				"types": "./dist/exports/browser.d.ts",
-				"default": "./dist/exports/browser.js"
-			},
 			"import": {
 				"types": "./dist/exports/browser.d.ts",
 				"default": "./dist/exports/browser.mjs"
@@ -69,10 +59,6 @@
 			}
 		},
 		"./browser-window": {
-			"amd": {
-				"types": "./dist/exports/browser-window.d.ts",
-				"default": "./dist/exports/browser-window.js"
-			},
 			"import": {
 				"types": "./dist/exports/browser-window.d.ts",
 				"default": "./dist/exports/browser-window.mjs"
@@ -83,10 +69,6 @@
 			}
 		},
 		"./browser-worker": {
-			"amd": {
-				"types": "./dist/exports/browser-worker.d.ts",
-				"default": "./dist/exports/browser-worker.js"
-			},
 			"import": {
 				"types": "./dist/exports/browser-worker.d.ts",
 				"default": "./dist/exports/browser-worker.mjs"
@@ -107,10 +89,6 @@
 			}
 		},
 		"./worker": {
-			"amd": {
-				"types": "./dist/exports/browser.d.ts",
-				"default": "./dist/exports/worker.js"
-			},
 			"import": {
 				"types": "./dist/exports/worker.d.ts",
 				"default": "./dist/exports/worker.mjs"

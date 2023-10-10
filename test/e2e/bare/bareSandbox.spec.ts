@@ -15,10 +15,10 @@
 
 import runNodejsTests from '@test/lib/runNodejsTests.js';
 
-import * as bare from '@dist/exports/bare.js';
+import * as bare from '@dist/exports/bare.mjs';
 
 // TODO: Import from '@dist/exports/bare'
-import { hardenGlobals, freezePrototypes } from '@dist/index.js';
+import { hardenGlobals, freezePrototypes } from '@dist/index.mjs';
 
 hardenGlobals();
 
@@ -33,5 +33,4 @@ if (process.version) {
 	}
 }
 
-// Due to Node's CJS-from-ESM implementation, the import is bare.default.default
-runNodejsTests('Bare', (bare.default as unknown as typeof bare).default);
+runNodejsTests('Bare', bare.default);
