@@ -46,8 +46,6 @@ vm.createContext = function (initSandbox) {};
  * @nosideeffects
  */
 vm.compileFunction = function (code, params, options) {};
-;
-
 /**
  * @const
  */
@@ -79,4 +77,3 @@ worker_threads.moveMessagePortToContext = function (
 	port,
 	contextifiedSandbox,
 ) {};
-;
