@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-/* Copyright © 2021 Exact Realty Limited.
+/* Copyright © 2023 Exact Realty Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,17 +30,8 @@ let closureCompilationLevel = 'WHITESPACE_ONLY';
 const exactRealtyClosureBuilderPlugin = {
 	name: '@exact-realty/closure-compiler',
 	setup(build) {
-		const origTarget = build.initialOptions.target;
-
-		void origTarget;
-
+		// const origTarget = build.initialOptions.target;
 		const origFmt = build.initialOptions.format;
-
-		if (origFmt === 'esm' && closureCompilationLevel === 'ADVANCED') {
-			// Google Closure Compiler doesn't support library exports it seems
-			// So, set format to cjs
-			build.initialOptions.format = 'cjs';
-		}
 
 		Object.assign(build.initialOptions, {
 			target: origFmt === 'esm' ? 'es2020' : 'es2015',
@@ -58,7 +49,7 @@ const exactRealtyClosureBuilderPlugin = {
 						o.path.endsWith('.mjs')
 					) {
 						const compiler = new googleClosureCompiler.compiler({
-							js_output_file: o.path,
+							js_output_file: o.path + '.tmp',
 							compilation_level: closureCompilationLevel,
 							language_in: 'ECMASCRIPT_2020',
 							language_out: 'ECMASCRIPT_2015',
@@ -71,8 +62,7 @@ const exactRealtyClosureBuilderPlugin = {
 							assume_function_wrapper: origFmt === 'esm',
 							...(origFmt === 'esm' &&
 								closureCompilationLevel === 'ADVANCED' && {
-									output_wrapper:
-										'var module={};%output%export default module.exports.default;',
+									output_wrapper: `%output%`,
 								}),
 							// chunk_output_type: 'GLOBAL_NAMESPACE',
 							/* chunk_output_type:
@@ -83,6 +73,42 @@ const exactRealtyClosureBuilderPlugin = {
 							// process_common_js_modules: true, // TODO
 							// module_resolution: 'NODE', // TODO
 						});
+
+						let text = o.text;
+
+						if (
+							origFmt === 'esm' &&
+							closureCompilationLevel === 'ADVANCED'
+						) {
+							// Google Closure Compiler doesn't support library exports it seems
+							text = text
+								.replace(
+									/export\s+default\b/g,
+									'/** @nocollapse */__reserved["%export"]["default"]=',
+								)
+								.replace(/export\s*{([^}]+)}/g, (_, p1) => {
+									return p1
+										.split(',')
+										.map(
+											(e) =>
+												'/** @nocollapse */__reserved["%export"]' +
+												(/\sas\s/.test(e)
+													? e.replace(
+															/(.+)\sas\s(.+)/,
+															(_, p1, p2) => {
+																return `[${JSON.stringify(
+																	p2.trim(),
+																)}]=${p1}`;
+															},
+													  )
+													: `[${JSON.stringify(
+															e.trim(),
+													  )}]=${e}`),
+										)
+										.join(';');
+								});
+						}
+
 						return new Promise((resolve, reject) => {
 							const process = compiler.run(
 								(exitCode, _stdout, stderr) => {
@@ -90,13 +116,49 @@ const exactRealtyClosureBuilderPlugin = {
 										// TODO: Warnings
 										resolve(
 											fs
-												.readFile(o.path)
-												.then((contents) => ({
-													path: o.path,
-													contents: contents,
-													text: contents.toString(),
-													_written: true,
-												})),
+												.readFile(o.path + '.tmp')
+												.then((contents) => {
+													const contentsString =
+														contents
+															.toString()
+															.replace(
+																/__reserved\["%export"\]\["default"\]=/g,
+																'export default ',
+															)
+															.replace(
+																/__reserved\["%export"\]\.([^=]+)=/g,
+																'export const $1=',
+															);
+
+													if (
+														contentsString.indexOf(
+															'__reserved["%export"]',
+														) !== -1
+													) {
+														throw new Error(
+															'File has unsupported exports',
+														);
+													}
+
+													return fs
+														.unlink(o.path + '.tmp')
+														.then(() =>
+															fs
+																.writeFile(
+																	o.path,
+																	contentsString,
+																)
+																.then(() => ({
+																	path: o.path,
+																	contents:
+																		Buffer.from(
+																			contents,
+																		),
+																	text: contentsString,
+																	_written: true,
+																})),
+														);
+												}),
 										);
 									} else {
 										return reject(stderr);
@@ -104,7 +166,7 @@ const exactRealtyClosureBuilderPlugin = {
 								},
 							);
 
-							process.stdin.write(o.text);
+							process.stdin.write(text);
 							process.stdin.end();
 						});
 					}

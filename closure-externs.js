@@ -1,9 +1,22 @@
+/**
+ * @externs
+ */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-var module = {};
+// For ESM export compatibility
+/** @const */
+var __reserved = {};
+/** @type {Object.<string,*>} */
+__reserved['%export'] = {};
+
+// ESBuild seems to put undefined references in CJS exports
+// These come from exports/bare.ts
+/** @const {undefined} */
+var freezePrototypes, hardenGlobals;
 
 // Node.js modules
-`/** @const */
+/** @const */
 var vm = {};
 
 /**
@@ -27,8 +40,8 @@ vm.createContext = function (initSandbox) {};
 
 /**
  * @param {string} code
- * @param {string[]} [params]
- * @param {Object.<string,*>} [options]
+ * @param {Array<string>=} params
+ * @param {Object.<string,*>=} options
  * @return {Function}
  * @nosideeffects
  */
@@ -53,7 +66,7 @@ worker_threads.workerData;
 /**
  * @constructor
  * @param {string | URL} filename
- * @param {Object.<string, *>} [options]
+ * @param {Object.<string, *>=} options
  */
 worker_threads.Worker = function (filename, options) {};
 
@@ -66,4 +79,4 @@ worker_threads.moveMessagePortToContext = function (
 	port,
 	contextifiedSandbox,
 ) {};
-`;
+;
