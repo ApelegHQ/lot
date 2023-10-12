@@ -19,6 +19,7 @@ import assertRejectsWithFactory from '@test/lib/assertRejectsWithFactory.js';
 import baseTests from '@test/lib/baseTests.json' assert { type: 'json' };
 import wrapper from '@test/lib/wrapper.js';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import type { ISandbox } from '~/types/index.js';
 
 const assertRejectsWith = assertRejectsWithFactory((predicate, c) =>

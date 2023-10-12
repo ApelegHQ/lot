@@ -15,6 +15,7 @@
 
 import '~/test/lib/buildTimeSettings.js';
 
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import setupSandboxListeners from './setupSandboxListeners.js';
 
 describe('setupSandboxListeners', () => {

@@ -14,6 +14,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { beforeEach, describe, it } from 'node:test';
 import postMessageWrapper from './postMessageWrapper.js';
 
 describe('postMessageWrapper', () => {

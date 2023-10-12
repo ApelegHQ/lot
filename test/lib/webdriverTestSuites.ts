@@ -14,6 +14,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { after, before, describe, it } from 'node:test';
 import webdriver from 'selenium-webdriver';
 import { Options as ChromeOptions } from 'selenium-webdriver/chrome.js';
 import { Options as EdgeOptions } from 'selenium-webdriver/edge.js';
@@ -58,40 +59,42 @@ export const webdriverTestSuites =
 		let driver: webdriver.WebDriver;
 		let code: string;
 
-		before(async function () {
-			this.timeout(30e3);
+		before(
+			async () => {
+				await Promise.all([
+					(async () => {
+						code = await codePromise;
+					})(),
+					(async () => {
+						driver = await new webdriver.Builder()
+							.forBrowser(browserName)
+							.setChromeOptions(chromeOptions)
+							.setEdgeOptions(edgeOptions)
+							.setFirefoxOptions(firefoxOptions)
+							.setSafariOptions(safariOptions)
+							.build();
 
-			await Promise.all([
-				(async () => {
-					code = await codePromise;
-				})(),
-				(async () => {
-					driver = await new webdriver.Builder()
-						.forBrowser(browserName)
-						.setChromeOptions(chromeOptions)
-						.setEdgeOptions(edgeOptions)
-						.setFirefoxOptions(firefoxOptions)
-						.setSafariOptions(safariOptions)
-						.build();
+						await driver.get('about:blank');
+					})(),
+				]);
 
-					await driver.get('about:blank');
-				})(),
-			]);
+				await driver.executeScript(
+					code + '; console.log("SCRIPT SUCCESSFULLY LOADED");',
+				);
+			},
+			{ timeout: 30e3 },
+		);
 
-			await driver.executeScript(
-				code + '; console.log("SCRIPT SUCCESSFULLY LOADED");',
-			);
-		});
-
-		after(async function () {
-			this.timeout(30e3);
-
-			if (driver) {
-				await driver.quit().then(() => {
-					driver = undefined as unknown as typeof driver;
-				});
-			}
-		});
+		after(
+			async () => {
+				if (driver) {
+					await driver.quit().then(() => {
+						driver = undefined as unknown as typeof driver;
+					});
+				}
+			},
+			{ timeout: 30e3 },
+		);
 
 		describe('Can run tasks', () => {
 			it('should return result for sync task', async () => {

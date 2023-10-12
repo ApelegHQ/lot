@@ -13,6 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import { describe } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import getCodeHelper from './getCodeHelper.js';
 import { enabledBrowsers, webdriverTestSuites } from './webdriverTestSuites.js';

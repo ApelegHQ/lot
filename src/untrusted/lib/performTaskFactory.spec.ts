@@ -16,13 +16,20 @@
 import '~/test/lib/buildTimeSettings.js';
 
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import performTaskFactory from './performTaskFactory.js';
 
 describe('performTaskFactory', () => {
 	it('should create a performTask instance and execute tasks successfully', async () => {
 		// Mock postMessageOutgoing to capture the data sent by performTask
 		let capturedData: unknown[] = [];
-		let postMessageOutgoingMock = (data: unknown[]) => {
+		let cleanedUp = false;
+		const postMessageOutgoingMock = (data: unknown[]) => {
+			if (cleanedUp) {
+				throw new Error(
+					'postMessageOutgoing.data should not be called after cleanup.',
+				);
+			}
 			capturedData = data;
 		};
 
@@ -62,16 +69,9 @@ describe('performTaskFactory', () => {
 
 		// Clean up the performTask instance
 		cleanup();
-
-		// Ensure that the performTask methods are revoked
-		// (mocking postMessageOutgoing.data to check if it's called or not)
-		postMessageOutgoingMock = () => {
-			throw new Error(
-				'postMessageOutgoing.data should not be called after cleanup.',
-			);
-		};
+		cleanedUp = true;
 
 		// Execute a task after cleanup, which should throw an error
-		assert.rejects(() => performTask(mockTask, ...mockData));
+		await assert.rejects(async () => performTask(mockTask, ...mockData));
 	});
 });

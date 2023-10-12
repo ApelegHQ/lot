@@ -16,6 +16,7 @@
 import './nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
 
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import getRandomSecret from './getRandomSecret.js';
 
 const multiply = (v: number[], min: number, max: number): number =>

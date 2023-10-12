@@ -16,6 +16,7 @@
 import './nodejsLoadWebcrypto.js'; // MUST BEFORE ANY LOCAL IMPORTS
 
 import assert from 'node:assert/strict';
+import { beforeEach, describe, it } from 'node:test';
 import createMessageEventListenerFactory from './createMessageEventListenerFactory.js';
 
 const destructuredPromiseFactory = (): [

@@ -13,8 +13,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import fixGlobalTypes from './fixGlobalTypes.js';
+import { describe, it } from 'node:test';
 import { Worker } from 'node:worker_threads';
+import fixGlobalTypes from './fixGlobalTypes.js';
 
 describe('fixGlobalTypes can run in an empty environment', async () => {
 	it("doesn't crash", async () => {

@@ -13,6 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import { describe, it } from 'node:test';
 import scopedTimerFunction from './scopedTimerFunction.js';
 
 describe('scopedTimerFunction', () => {

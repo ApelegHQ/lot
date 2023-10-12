@@ -1,4 +1,0 @@
-{
-	"extension": ["ts"],
-	"node-option": ["no-warnings=ExperimentalWarning", "loader=./loader.mjs"]
-}

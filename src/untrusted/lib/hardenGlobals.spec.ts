@@ -16,6 +16,7 @@
 import '~/test/lib/buildTimeSettings.js';
 
 import assert from 'node:assert/strict';
+import { before, describe, it } from 'node:test';
 import hardenGlobals, { disableURLStaticMethods } from './hardenGlobals.js';
 
 describe('Hardened functions', () => {
