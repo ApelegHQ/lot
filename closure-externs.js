@@ -4,12 +4,6 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-// For ESM export compatibility
-/** @const */
-var __reserved = {};
-/** @type {Object.<string,*>} */
-__reserved['%export'] = {};
-
 // ESBuild seems to put undefined references in CJS exports
 // These come from exports/bare.ts
 /** @const {undefined} */

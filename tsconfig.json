@@ -35,10 +35,7 @@
 		"checkJs": false
 	},
 	"ts-node": {
-		"experimentalResolver": true,
-		"compilerOptions": {
-			"module": "esnext"
-		}
+		"experimentalResolver": true
 	},
 	"references": [
 		{ "path": "src/trusted" },

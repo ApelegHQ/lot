@@ -17,186 +17,8 @@
 
 import inlineScripts from '@exact-realty/esbuild-plugin-inline-js';
 import esbuild from 'esbuild';
-import googleClosureCompiler from 'google-closure-compiler';
-import fs from 'node:fs/promises';
+import cc from '@exact-realty/esbuild-plugin-closure-compiler';
 import defaultAllowedGlobalProps from './defaultAllowedGlobalProps.config.mjs';
-import manifest from './package.json' assert { type: 'json' };
-
-let closureCompilationLevel = 'WHITESPACE_ONLY';
-
-/**
- * @type {esbuild.Plugin}
- **/
-const exactRealtyClosureBuilderPlugin = {
-	name: '@exact-realty/closure-compiler',
-	setup(build) {
-		// const origTarget = build.initialOptions.target;
-		const origFmt = build.initialOptions.format;
-
-		Object.assign(build.initialOptions, {
-			target: origFmt === 'esm' ? 'es2020' : 'es2015',
-			write: false,
-		});
-
-		build.onEnd(async (result) => {
-			if (!result.outputFiles) return;
-
-			const outputFiles = await Promise.all(
-				result.outputFiles.map((o) => {
-					if (
-						o.path.endsWith('.js') ||
-						o.path.endsWith('.cjs') ||
-						o.path.endsWith('.mjs')
-					) {
-						const compiler = new googleClosureCompiler.compiler({
-							js_output_file: o.path + '.tmp',
-							compilation_level: closureCompilationLevel,
-							language_in: 'ECMASCRIPT_2020',
-							language_out: 'ECMASCRIPT_2015',
-							rewrite_polyfills: false,
-							process_closure_primitives: false,
-							apply_input_source_maps: false,
-							warning_level: 'QUIET',
-							isolate_polyfills: true,
-							externs: './closure-externs.js',
-							assume_function_wrapper: origFmt === 'esm',
-							...(origFmt === 'esm' &&
-								closureCompilationLevel === 'ADVANCED' && {
-									output_wrapper: `%output%`,
-								}),
-							// chunk_output_type: 'GLOBAL_NAMESPACE',
-							/* chunk_output_type:
-								build.initialOptions.format === 'esm'
-									? 'ES_MODULES'
-									: 'GLOBAL_NAMESPACE', */
-							env: 'BROWSER',
-							// process_common_js_modules: true, // TODO
-							// module_resolution: 'NODE', // TODO
-						});
-
-						let text = o.text;
-
-						if (
-							origFmt === 'esm' &&
-							closureCompilationLevel === 'ADVANCED'
-						) {
-							// Google Closure Compiler doesn't support library exports it seems
-							text = text
-								.replace(
-									/export\s+default\b/g,
-									'/** @nocollapse */__reserved["%export"]["default"]=',
-								)
-								.replace(/export\s*{([^}]+)}/g, (_, p1) => {
-									return p1
-										.split(',')
-										.map(
-											(e) =>
-												'/** @nocollapse */__reserved["%export"]' +
-												(/\sas\s/.test(e)
-													? e.replace(
-															/(.+)\sas\s(.+)/,
-															(_, p1, p2) => {
-																return `[${JSON.stringify(
-																	p2.trim(),
-																)}]=${p1}`;
-															},
-													  )
-													: `[${JSON.stringify(
-															e.trim(),
-													  )}]=${e}`),
-										)
-										.join(';');
-								});
-						}
-
-						return new Promise((resolve, reject) => {
-							const process = compiler.run(
-								(exitCode, _stdout, stderr) => {
-									if (exitCode === 0) {
-										// TODO: Warnings
-										resolve(
-											fs
-												.readFile(o.path + '.tmp')
-												.then((contents) => {
-													const contentsString =
-														contents
-															.toString()
-															.replace(
-																/__reserved\["%export"\]\["default"\]=/g,
-																'export default ',
-															)
-															.replace(
-																/__reserved\["%export"\]\.([^=]+)=/g,
-																'export const $1=',
-															);
-
-													if (
-														contentsString.indexOf(
-															'__reserved["%export"]',
-														) !== -1
-													) {
-														throw new Error(
-															'File has unsupported exports',
-														);
-													}
-
-													return fs
-														.unlink(o.path + '.tmp')
-														.then(() =>
-															fs
-																.writeFile(
-																	o.path,
-																	contentsString,
-																)
-																.then(() => ({
-																	path: o.path,
-																	contents:
-																		Buffer.from(
-																			contents,
-																		),
-																	text: contentsString,
-																	_written: true,
-																})),
-														);
-												}),
-										);
-									} else {
-										return reject(stderr);
-									}
-								},
-							);
-
-							process.stdin.write(text);
-							process.stdin.end();
-						});
-					}
-
-					return o;
-				}),
-			);
-
-			/* if (outputFiles.length) {
-				await Promise.all(
-					Array.from(
-						new Set(
-							outputFiles
-								.filter((o) => !o._written)
-								.map((file) => path.dirname(file.path)),
-						),
-					).map((dir) => fs.mkdir(dir, { recursive: true })),
-				);
-
-				await Promise.all(
-					outputFiles
-						.filter((o) => !o._written)
-						.map((file) => fs.writeFile(file.path, file.contents)),
-				);
-			} */
-
-			result.outputFiles = outputFiles;
-		});
-	},
-};
 
 /**
  * @type {esbuild.Plugin}
@@ -287,43 +109,7 @@ const options = {
 	},
 };
 
-// TODO: Use Google Closure Compiler globally
 const plugins = [];
-
-const whitespace = /[ \r\n\t]/g;
-
-/**
- * Simple JS minification
- * @param {string[]} parts
- * @param  {...unknown} args
- * @returns {string}
- */
-const minify = (parts, ...args) => {
-	const dict = Object.create(null);
-	const v = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-	let c = 0;
-	return parts
-		.map((p, i) => {
-			let e = '';
-			if (i < args.length) {
-				const arg = args[i];
-				if (dict[arg]) {
-					e = dict[arg];
-				} else {
-					dict[arg] = e = v[c++];
-				}
-			}
-			return (
-				p
-					.replace(whitespace, ' ')
-					.replace(/[ ]+/g, ' ')
-					.replace(/([{(=?:",;&|+!)}])[ ]+/g, '$1')
-					.replace(/[ ]+([{(=?:",;&|+!)}])/g, '$1')
-					.replace(/[;,]\}/g, '}') + e
-			);
-		})
-		.join('');
-};
 
 plugins.push(
 	lotExportsBuilderPlugin,
@@ -354,52 +140,7 @@ const umdOpts = {
 	format: 'cjs',
 	// globalName: '__export__',
 	banner: {
-		js:
-			notice +
-			minify`
-		(function(${'fallbackPkgName'}){(function (${'global'}, ${'factory'}) {
-			if (typeof define === "function" && define["amd"]) {
-				define(["require", "exports", "module"], ${'factory'});
-			} else {
-				var ${'cjsMod'} = (typeof module === "object" && typeof module["exports"] === "object") && module;
-				var ${'req'} = (typeof require === "function")
-					? require
-					: function(n) {throw Error("Cannot find module '" + n + "'");};
-				var ${'mod'} = ${'cjsMod'} || Object.create(null, {
-					"exports": {
-						["configurable"]: true,
-						["enumerable"]: true,
-						["writable"]: true,
-						["value"]: Object.create(null),
-					},
-				});
-
-				var ${'result'} = ${'factory'}(${'req'}, ${'mod'}["exports"], ${'mod'});
-
-				if (typeof ${'result'} !== "undefined") {
-					${'mod'}["exports"] = ${'result'};
-				}
-
-				if (!${'cjsMod'}) {
-					${'global'}[${'fallbackPkgName'}] = ${'mod'}["exports"];
-				}
-			}
-		})(this, function (require, exports, module) {`,
-	},
-	footer: {
-		js: `});}).call(
-			typeof globalThis === "object"
-			? globalThis
-			: typeof self === "object"
-			? self
-			: typeof global === "object"
-			? global
-			: this,
-			${JSON.stringify(manifest.name)}
-		);`
-			.replace(/[\r\n\t ]+/g, ' ')
-			.replace(/([{(=?:",;&|+!)}])[ ]+/g, '$1')
-			.replace(/[ ]+([{(=?:",;&|+!)}])/g, '$1'),
+		js: notice,
 	},
 	outExtension: {
 		'.js': '.cjs',
@@ -417,6 +158,19 @@ await Promise.all(
 	),
 );
 
+plugins.unshift(
+	cc({
+		compilation_level: 'ADVANCED',
+		language_in: 'ECMASCRIPT_2020',
+		language_out: 'ECMASCRIPT_2015',
+		rewrite_polyfills: false,
+		process_closure_primitives: false,
+		apply_input_source_maps: false,
+		env: 'BROWSER',
+		externs: './closure-externs.js',
+	}),
+);
+
 await Promise.all(
 	[umdOpts, esmOpts].map((extra) =>
 		esbuild.build({
@@ -427,9 +181,6 @@ await Promise.all(
 		}),
 	),
 );
-
-plugins.unshift(exactRealtyClosureBuilderPlugin);
-closureCompilationLevel = 'ADVANCED';
 
 options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'true';
 options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'true';

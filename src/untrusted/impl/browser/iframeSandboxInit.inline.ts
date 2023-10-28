@@ -30,7 +30,13 @@ import {
 	sSplit,
 } from '~untrusted/lib/utils.js';
 
-if (parent === self || self === top) {
+if (
+	typeof self !== 'object' ||
+	typeof parent !== 'object' ||
+	typeof top !== 'object' ||
+	self === parent ||
+	self === top
+) {
 	throw E('Iframe cannot be detached');
 }
 
