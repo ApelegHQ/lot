@@ -23,8 +23,10 @@ if (
 	!('crypto' in globalThis) &&
 	typeof require === 'function'
 ) {
+	// Please CC
+	const webcrypto_s = 'webcrypto';
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const webcrypto = require('node:crypto')['webcrypto'];
+	const webcrypto = require('node:crypto')[webcrypto_s];
 	if (webcrypto) {
 		Object.defineProperty(globalThis, 'crypto', {
 			['enumerable']: true,
