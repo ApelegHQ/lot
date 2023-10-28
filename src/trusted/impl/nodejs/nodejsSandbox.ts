@@ -58,7 +58,7 @@ const nodejsSandbox: ISandbox = async (
 			['env', Object.create(null)],
 			['eval', true],
 			['name', sandboxId],
-			['transferList', messageChannel.port2 as ReturnType<typeof eval>],
+			['transferList', [messageChannel.port2 as ReturnType<typeof eval>]],
 		]),
 	);
 
