@@ -16,7 +16,6 @@
  */
 
 import { glob } from 'glob';
-import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 if (process.argv.length !== 3) {
@@ -31,7 +30,7 @@ const result = spawnSync(
 	[
 		'--no-warnings=ExperimentalWarning',
 		'--loader',
-		fileURLToPath(new URL('./loader.mjs', import.meta.url)),
+		new URL('./loader.mjs', import.meta.url).toString(),
 		'--test',
 		...jsfiles,
 	],
