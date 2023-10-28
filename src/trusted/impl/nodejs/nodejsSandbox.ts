@@ -34,6 +34,10 @@ const nodejsSandbox: ISandbox = async (
 		);
 	}
 
+	// Needed for CC, which is unware of these properties
+	const on = 'on';
+	const terminate = 'terminate';
+
 	const messageChannel = new MessageChannel();
 
 	const sandboxId = (0, Math.random)().toFixed(12).slice(2);
@@ -63,7 +67,7 @@ const nodejsSandbox: ISandbox = async (
 	);
 
 	const errorEventHandler = (e: unknown) => {
-		worker.terminate();
+		worker[terminate]();
 		messageChannel.port1.dispatchEvent(
 			new MessageEvent('message', {
 				['data']: [
@@ -89,15 +93,16 @@ const nodejsSandbox: ISandbox = async (
 		);
 		onDestroy();
 	};
+
 	const onDestroy = () => {
-		worker.on('error', errorEventHandler);
-		worker.on('exit', exitEventHandler);
+		worker[on]('error', errorEventHandler);
+		worker[on]('exit', exitEventHandler);
 		abort?.removeEventListener('abort', onDestroy, false);
-		worker.terminate();
+		worker[terminate]();
 	};
 
-	worker.on('error', errorEventHandler);
-	worker.on('exit', exitEventHandler);
+	worker[on]('error', errorEventHandler);
+	worker[on]('exit', exitEventHandler);
 
 	abort?.addEventListener('abort', onDestroy, false);
 

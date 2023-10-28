@@ -40,7 +40,11 @@ const {
 	setInterval: g_setInterval,
 	setTimeout: g_setTimeout,
 } = global;
-const close = process.exit.bind(process, 0);
+
+// Needed for CC
+const exit = 'exit';
+
+const close = process[exit].bind(process, 0);
 const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
 
 const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
