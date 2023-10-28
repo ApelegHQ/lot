@@ -43,6 +43,8 @@ const {
 
 // Needed for CC
 const exit = 'exit';
+const env = 'env';
+const NODE_ENV = 'NODE_ENV';
 
 const close = process[exit].bind(process, 0);
 const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
@@ -246,7 +248,7 @@ const nodejsSandbox: TNodejsSandbox = (
 		]),
 	);
 
-	vm.createContext(
+	const result = vm.createContext(
 		context,
 		g_Object.fromEntries([
 			[
@@ -258,6 +260,10 @@ const nodejsSandbox: TNodejsSandbox = (
 			],
 		]),
 	);
+
+	if (!result) {
+		throw new Error('Unable to create context');
+	}
 
 	if (__buildtimeSettings__.contextifyMessagePort) {
 		if (__buildtimeSettings__.contextifyMessagePortWorkaroundCrash) {
@@ -293,7 +299,7 @@ const nodejsSandbox: TNodejsSandbox = (
 		}
 	}
 
-	const displayErrors = process.env['NODE_ENV'] !== 'production';
+	const displayErrors = process[env][NODE_ENV] !== 'production';
 
 	// Remove properties from most built-in modules. This should somewhat
 	// limit the access to system resources in case of an escape
@@ -331,7 +337,7 @@ const nodejsSandbox: TNodejsSandbox = (
 		removeAllProperties(require('node:' + v));
 	});
 	// Prevent loading CJS modules
-	Object.defineProperty(global.module.constructor, '_load', {
+	g_Object.defineProperty(global.module.constructor, '_load', {
 		['set']: () => {},
 	});
 	// Remove references in global and process to prevent calling require, etc.
@@ -353,7 +359,7 @@ const nodejsSandbox: TNodejsSandbox = (
 		return vm.compileFunction(
 			s,
 			undefined,
-			Object.fromEntries([
+			g_Object.fromEntries([
 				['filename', sandboxId + '-usertext.vm.js'],
 				['parsingContext', context],
 			]),
