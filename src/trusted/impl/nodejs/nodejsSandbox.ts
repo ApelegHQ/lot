@@ -18,6 +18,7 @@ import { Worker } from 'node:worker_threads';
 import { ISandbox } from '~/types/index.js';
 import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
 import { INTERNAL_SOURCE_STRING } from '~untrusted/impl/nodejs/constants.js';
+import type { TNodejsSandbox } from '~untrusted/impl/nodejs/nodejsSandboxVm.inline.js';
 import type workerSandboxInner from '~untrusted/impl/worker/workerSandboxInner.js';
 import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
 
@@ -42,18 +43,24 @@ const nodejsSandbox: ISandbox = async (
 			? Object.keys(externalMethods)
 			: null;
 
-	const worker = new Worker(nodejsSandboxVm.default, {
-		['workerData']: {
-			['%id']: sandboxId,
-			['%messagePort']: messageChannel.port2,
-			['%script']: script,
-			['%externalMethodKeys']: externalMethodKeys,
-		},
-		['env']: Object.create(null),
-		['eval']: true,
-		['name']: sandboxId,
-		['transferList']: [messageChannel.port2 as ReturnType<typeof eval>],
-	});
+	const worker = new Worker(
+		nodejsSandboxVm.default,
+		Object.fromEntries([
+			[
+				'workerData',
+				[
+					sandboxId,
+					messageChannel.port2,
+					script,
+					externalMethodKeys,
+				] as Parameters<TNodejsSandbox>,
+			],
+			['env', Object.create(null)],
+			['eval', true],
+			['name', sandboxId],
+			['transferList', messageChannel.port2 as ReturnType<typeof eval>],
+		]),
+	);
 
 	const errorEventHandler = (e: unknown) => {
 		worker.terminate();

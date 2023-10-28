@@ -66,19 +66,28 @@ const oneTimeCtxValue = <T>(
 		['get']: vm.compileFunction(
 			'return function(){delete this[k];return v;};',
 			['k', 'v'],
-			{
-				['filename']: sandboxId + '-otcv.vm.js',
-				['parsingContext']: context,
-			},
+			g_Object.fromEntries([
+				['filename', sandboxId + '-otcv.vm.js'],
+				['parsingContext', context],
+			]),
 		)(k, v),
 	});
 };
 
-const nodejsSandbox = (
-	sandboxId: string,
-	messagePort: MessagePort,
-	script: string,
-	externalMethodKeys?: string[] | null | undefined,
+export type TNodejsSandbox = {
+	(
+		sandboxId: string,
+		messagePort: MessagePort,
+		script: string,
+		externalMethodKeys?: string[] | null | undefined,
+	): void;
+};
+
+const nodejsSandbox: TNodejsSandbox = (
+	sandboxId,
+	messagePort,
+	script,
+	externalMethodKeys,
 ) => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethodKeys) {
 		throw new g_TypeError(
@@ -101,92 +110,150 @@ const nodejsSandbox = (
 	// not provide with vm, as well as some utility functions for communication
 	// (addEventListener, removeEventListener, postMessage) and management
 	// (close, Function)
-	g_Object.defineProperties(context, {
-		...(!__buildtimeSettings__.contextifyMessagePort && {
-			['addEventListener']: {
-				['writable']: true,
-				['configurable']: true,
-				['value']:
-					EventTarget.prototype.addEventListener.bind(messagePort),
-			},
-			['removeEventListener']: {
-				['writable']: true,
-				['configurable']: true,
-				['value']:
-					EventTarget.prototype.removeEventListener.bind(messagePort),
-			},
-			['postMessage']: {
-				['writable']: true,
-				['configurable']: true,
-				['value']: messagePort.postMessage.bind(messagePort),
-			},
-		}),
-		['close']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: () => {
-				g_setTimeout(
-					close,
-					// Necessary small delay to ensure exceptions get delivered
-					__buildtimeSettings__.contextifyMessagePort ? 5 : 0,
-				);
-			},
-		},
-		['crypto']: {
-			['configurable']: true,
-			['enumerable']: true,
-			['value']: g_Object.create(null, {
-				['getRandomValues']: {
+	g_Object.defineProperties(
+		context,
+		g_Object.fromEntries([
+			...(!__buildtimeSettings__.contextifyMessagePort
+				? [
+						[
+							'addEventListener',
+							{
+								['writable']: true,
+								['configurable']: true,
+								['value']:
+									EventTarget.prototype.addEventListener.bind(
+										messagePort,
+									),
+							},
+						],
+						[
+							'removeEventListener',
+							{
+								['writable']: true,
+								['configurable']: true,
+								['value']:
+									EventTarget.prototype.removeEventListener.bind(
+										messagePort,
+									),
+							},
+						],
+						[
+							'postMessage',
+							{
+								['writable']: true,
+								['configurable']: true,
+								['value']:
+									messagePort.postMessage.bind(messagePort),
+							},
+						],
+				  ]
+				: []),
+			[
+				'close',
+				{
 					['writable']: true,
-					['enumerable']: true,
 					['configurable']: true,
-					['value']: getRandomValues,
+					['value']: () => {
+						g_setTimeout(
+							close,
+							// Necessary small delay to ensure exceptions get delivered
+							__buildtimeSettings__.contextifyMessagePort ? 5 : 0,
+						);
+					},
 				},
-			}),
-		},
-		['globalThis']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: context,
-		},
-		['atob']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: g_atob,
-		},
-		['btoa']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: g_btoa,
-		},
-		['clearInterval']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: scopedClearInterval,
-		},
-		['clearTimeout']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: scopedClearTimeout,
-		},
-		['setInterval']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: scopedSetInterval,
-		},
-		['setTimeout']: {
-			['writable']: true,
-			['configurable']: true,
-			['value']: scopedSetTimeout,
-		},
-	});
+			],
+			[
+				'crypto',
+				{
+					['configurable']: true,
+					['enumerable']: true,
+					['value']: g_Object.create(
+						null,
+						g_Object.fromEntries([
+							[
+								'getRandomValues',
+								{
+									['writable']: true,
+									['enumerable']: true,
+									['configurable']: true,
+									['value']: getRandomValues,
+								},
+							],
+						]),
+					),
+				},
+			],
+			[
+				'globalThis',
+				{
+					['writable']: true,
+					['configurable']: true,
+					['value']: context,
+				},
+			],
+			[
+				'atob',
+				{
+					['writable']: true,
+					['configurable']: true,
+					['value']: g_atob,
+				},
+			],
+			[
+				'btoa',
+				{
+					['writable']: true,
+					['configurable']: true,
+					['value']: g_btoa,
+				},
+			],
+			[
+				'clearInterval',
+				{
+					['writable']: true,
+					['configurable']: true,
+					['value']: scopedClearInterval,
+				},
+			],
+			[
+				'clearTimeout',
+				{
+					['writable']: true,
+					['configurable']: true,
+					['value']: scopedClearTimeout,
+				},
+			],
+			[
+				'setInterval',
+				{
+					['writable']: true,
+					['configurable']: true,
+					['value']: scopedSetInterval,
+				},
+			],
+			[
+				'setTimeout',
+				{
+					['writable']: true,
+					['configurable']: true,
+					['value']: scopedSetTimeout,
+				},
+			],
+		]),
+	);
 
-	vm.createContext(context, {
-		['codeGeneration']: {
-			['strings']: false,
-			['wasm']: false,
-		},
-	});
+	vm.createContext(
+		context,
+		g_Object.fromEntries([
+			[
+				'codeGeneration',
+				g_Object.fromEntries([
+					['strings', false],
+					['wasm', false],
+				]),
+			],
+		]),
+	);
 
 	if (__buildtimeSettings__.contextifyMessagePort) {
 		if (__buildtimeSettings__.contextifyMessagePortWorkaroundCrash) {
@@ -279,10 +346,14 @@ const nodejsSandbox = (
 	removeAllProperties(global);
 
 	const wrapperFn = createWrapperFn(script, (s: string) => {
-		return vm.compileFunction(s, undefined, {
-			['filename']: sandboxId + '-usertext.vm.js',
-			['parsingContext']: context,
-		});
+		return vm.compileFunction(
+			s,
+			undefined,
+			Object.fromEntries([
+				['filename', sandboxId + '-usertext.vm.js'],
+				['parsingContext', context],
+			]),
+		);
 	});
 
 	// Due to how the Sandbox is constructed, it will attempt to dynamically
@@ -318,18 +389,13 @@ const nodejsSandbox = (
 			');' +
 			'delete globalThis["%__user_text__"];',
 		context,
-		{
-			['displayErrors']: displayErrors,
-			['filename']: sandboxId + '-system.vm.js',
-		},
+		g_Object.fromEntries([
+			['displayErrors', displayErrors],
+			['filename', sandboxId + '-system.vm.js'],
+		]),
 	);
 };
 
 hardenGlobals();
 
-nodejsSandbox(
-	workerData['%id'],
-	workerData['%messagePort'],
-	workerData['%script'],
-	workerData['%externalMethodKeys'],
-);
+nodejsSandbox(...(workerData as Parameters<typeof nodejsSandbox>));
