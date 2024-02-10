@@ -14,12 +14,12 @@
  */
 
 import assert from 'node:assert/strict';
-import { after, before, describe, it } from 'node:test';
 import webdriver from 'selenium-webdriver';
 import { Options as ChromeOptions } from 'selenium-webdriver/chrome.js';
 import { Options as EdgeOptions } from 'selenium-webdriver/edge.js';
 import { Options as FirefoxOptions } from 'selenium-webdriver/firefox.js';
 import { Options as SafariOptions } from 'selenium-webdriver/safari.js';
+// eslint-disable-next-line prettier/prettier
 import baseTests from './baseTests.json' assert { type: 'json' };
 
 export const enabledBrowsers = () => {
@@ -54,11 +54,14 @@ const firefoxOptions = new FirefoxOptions();
 const safariOptions = new SafariOptions();
 
 export const webdriverTestSuites =
-	(codePromise: Promise<string>, browserName: string) => () => {
+	(codePromise: Promise<string>, browserName: string) =>
+	async (
+		t: Pick<typeof import('node:test'), 'before' | 'after' | 'test'>,
+	) => {
 		let driver: webdriver.WebDriver;
 		let code: string;
 
-		before(
+		t.before(
 			async () => {
 				await Promise.all([
 					(async () => {
@@ -84,7 +87,7 @@ export const webdriverTestSuites =
 			{ timeout: 30e3 },
 		);
 
-		after(
+		t.after(
 			async () => {
 				if (driver) {
 					await driver.quit().then(() => {
@@ -95,8 +98,8 @@ export const webdriverTestSuites =
 			{ timeout: 30e3 },
 		);
 
-		describe('Can run tasks', () => {
-			it('should return result for sync task', async () => {
+		await t.test('Can run tasks', async (t) => {
+			await t.test('should return result for sync task', async () => {
 				const result = await driver.executeAsyncScript(`
 			(async () => {
 				const callback = arguments[arguments.length - 1];
@@ -115,7 +118,7 @@ export const webdriverTestSuites =
 				assert.deepEqual(result, ['bar']);
 			});
 
-			it('should return result for async task', async () => {
+			await t.test('should return result for async task', async () => {
 				const result = await driver.executeAsyncScript(
 					`(async () => {
 					const callback = arguments[arguments.length - 1];
@@ -134,9 +137,11 @@ export const webdriverTestSuites =
 				assert.deepEqual(result, ['bar']);
 			});
 
-			it('should return result for multiple arguments', async () => {
-				const result = await driver.executeAsyncScript(
-					`(async () => {
+			await t.test(
+				'should return result for multiple arguments',
+				async () => {
+					const result = await driver.executeAsyncScript(
+						`(async () => {
 					const callback = arguments[arguments.length - 1];
 					try {
 						const sandbox = await m(
@@ -149,13 +154,14 @@ export const webdriverTestSuites =
 						callback([null, {name: e && e.name}]);
 					}
 				})()`,
-				);
-				assert.deepEqual(result, ['barYX']);
-			});
+					);
+					assert.deepEqual(result, ['barYX']);
+				},
+			);
 		});
 
-		describe('Error conditions', () => {
-			it('invalid syntax causes error', async () => {
+		await t.test('Error conditions', async (t) => {
+			await t.test('invalid syntax causes error', async () => {
 				const result = await driver.executeAsyncScript(
 					`(async () => {
 					const callback = arguments[arguments.length - 1];
@@ -173,15 +179,18 @@ export const webdriverTestSuites =
 				assert.deepEqual(result, [null, { name: 'SyntaxError' }]);
 			});
 
-			baseTests.forEach(([expression, errorName]: unknown[]) => {
-				if (String(expression).includes('return')) return;
-				it(`${expression} ${
-					errorName === true
-						? 'succeeds'
-						: `causes error ${JSON.stringify(errorName)}`
-				}`, async () => {
-					const result = await driver.executeAsyncScript(
-						`(async () => {
+			await Promise.all(
+				baseTests.map(([expression, errorName]: unknown[]) => {
+					if (String(expression).includes('return')) return;
+					return t.test(
+						`${expression} ${
+							errorName === true
+								? 'succeeds'
+								: `causes error ${JSON.stringify(errorName)}`
+						}`,
+						async () => {
+							const result = await driver.executeAsyncScript(
+								`(async () => {
 						const callback = arguments[arguments.length - 1];
 						try {
 							const sandbox = await m(
@@ -193,36 +202,41 @@ export const webdriverTestSuites =
 							callback([null, {name: e && e.name}]);
 						}	
 					})()`,
-					);
+							);
 
-					assert.deepEqual(
-						result,
-						errorName === true
-							? [true]
-							: [
-									null,
-									{
-										name:
-											// TODO: Handle this in a different
-											// way. ReferenceError only happens
-											// when not using globalProxy
-											Array.isArray(errorName)
-												? 'TypeError'
-												: errorName,
-									},
-								],
+							assert.deepEqual(
+								result,
+								errorName === true
+									? [true]
+									: [
+											null,
+											{
+												name:
+													// TODO: Handle this in a different
+													// way. ReferenceError only happens
+													// when not using globalProxy
+													Array.isArray(errorName)
+														? 'TypeError'
+														: errorName,
+											},
+										],
+							);
+						},
 					);
-				});
-			});
+				}),
+			);
 
-			baseTests.forEach(([expression, errorName]: unknown[]) => {
-				it(`Task with ${expression} ${
-					errorName === true
-						? 'succeeds'
-						: `causes error ${JSON.stringify(errorName)}`
-				}`, async () => {
-					const result = await driver.executeAsyncScript(
-						`(async () => {
+			await Promise.all(
+				baseTests.map(([expression, errorName]: unknown[]) => {
+					return t.test(
+						`Task with ${expression} ${
+							errorName === true
+								? 'succeeds'
+								: `causes error ${JSON.stringify(errorName)}`
+						}`,
+						async () => {
+							const result = await driver.executeAsyncScript(
+								`(async () => {
 						const callback = arguments[arguments.length - 1];
 						try {
 							const sandbox = await m(
@@ -240,34 +254,36 @@ export const webdriverTestSuites =
 							callback([null, null, {name: e && e.name}]);
 						}
 					})()`,
-					);
+							);
 
-					assert.deepEqual(
-						result,
-						errorName === true
-							? [true]
-							: errorName === 'SyntaxError'
-								? [
-										null,
-										null,
-										{
-											name: errorName,
-										},
-									]
-								: [
-										null,
-										{
-											name:
-												// TODO: Handle this in a different
-												// way. ReferenceError only happens
-												// when not using globalProxy
-												Array.isArray(errorName)
-													? 'TypeError'
-													: errorName,
-										},
-									],
+							assert.deepEqual(
+								result,
+								errorName === true
+									? [true]
+									: errorName === 'SyntaxError'
+										? [
+												null,
+												null,
+												{
+													name: errorName,
+												},
+											]
+										: [
+												null,
+												{
+													name:
+														// TODO: Handle this in a different
+														// way. ReferenceError only happens
+														// when not using globalProxy
+														Array.isArray(errorName)
+															? 'TypeError'
+															: errorName,
+												},
+											],
+							);
+						},
 					);
-				});
-			});
+				}),
+			);
 		});
 	};

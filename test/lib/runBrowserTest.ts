@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { describe } from 'node:test';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import getCodeHelper from './getCodeHelper.js';
 import { enabledBrowsers, webdriverTestSuites } from './webdriverTestSuites.js';
@@ -29,12 +29,14 @@ const runBrowserTest = (m: string, commonBundle?: boolean) => {
 				'default',
 			);
 
-	enabledBrowsers().forEach(([browserName, browserDisplayName]) => {
-		describe(
-			`Browser: ${browserDisplayName}, module: ${m}`,
-			webdriverTestSuites(code, browserName),
-		);
-	});
+	return Promise.all(
+		enabledBrowsers().map(([browserName, browserDisplayName]) => {
+			return test(
+				`Browser: ${browserDisplayName}, module: ${m}`,
+				webdriverTestSuites(code, browserName),
+			);
+		}),
+	);
 };
 
 export default runBrowserTest;
