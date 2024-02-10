@@ -1,26 +1,36 @@
 {
 	"name": "@exact-realty/lot",
-	"version": "0.0.19",
+	"version": "0.0.20",
 	"description": "Sandbox for isolating ECMAScript code",
 	"main": "dist/index.cjs",
+	"types": "dist/index.d.cts",
 	"module": "./dist/index.mjs",
 	"type": "module",
 	"exports": {
 		".": {
 			"browser": {
-				"types": "./dist/exports/browser.d.ts",
+				"types": {
+					"require": "./dist/exports/browser.d.cts",
+					"default": "./dist/exports/browser.d.ts"
+				},
 				"import": "./dist/exports/browser.mjs",
 				"require": "./dist/exports/browser.cjs",
 				"default": "./dist/exports/browser.mjs"
 			},
 			"browser-window": {
-				"types": "./dist/exports/browser-window.d.ts",
+				"types": {
+					"require": "./dist/exports/browser-window.d.cts",
+					"default": "./dist/exports/browser-window.d.ts"
+				},
 				"import": "./dist/exports/browser-window.mjs",
 				"require": "./dist/exports/browser-window.cjs",
 				"default": "./dist/exports/browser-window.mjs"
 			},
 			"browser-worker": {
-				"types": "./dist/exports/browser-worker.d.ts",
+				"types": {
+					"require": "./dist/exports/browser-worker.d.cts",
+					"default": "./dist/exports/browser-worker.d.ts"
+				},
 				"import": "./dist/exports/browser-worker.mjs",
 				"require": "./dist/exports/browser-worker.cjs",
 				"default": "./dist/exports/browser-worker.mjs"
@@ -34,7 +44,7 @@
 				"default": "./dist/index.mjs"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/index.d.cts",
 				"default": "./dist/index.cjs"
 			}
 		},
@@ -44,7 +54,7 @@
 				"default": "./dist/exports/bare.mjs"
 			},
 			"require": {
-				"types": "./dist/exports/bare.d.ts",
+				"types": "./dist/exports/bare.d.cts",
 				"default": "./dist/exports/bare.cjs"
 			}
 		},
@@ -54,7 +64,7 @@
 				"default": "./dist/exports/browser.mjs"
 			},
 			"require": {
-				"types": "./dist/exports/browser.d.ts",
+				"types": "./dist/exports/browser.d.cts",
 				"default": "./dist/exports/browser.cjs"
 			}
 		},
@@ -64,7 +74,7 @@
 				"default": "./dist/exports/browser-window.mjs"
 			},
 			"require": {
-				"types": "./dist/exports/browser-window.d.ts",
+				"types": "./dist/exports/browser-window.d.cts",
 				"default": "./dist/exports/browser-window.cjs"
 			}
 		},
@@ -74,7 +84,7 @@
 				"default": "./dist/exports/browser-worker.mjs"
 			},
 			"require": {
-				"types": "./dist/exports/browser-worker.d.ts",
+				"types": "./dist/exports/browser-worker.d.cts",
 				"default": "./dist/exports/browser-worker.cjs"
 			}
 		},
@@ -84,7 +94,7 @@
 				"default": "./dist/exports/nodejs.mjs"
 			},
 			"require": {
-				"types": "./dist/exports/nodejs.d.ts",
+				"types": "./dist/exports/nodejs.d.cts",
 				"default": "./dist/exports/nodejs.cjs"
 			}
 		},
@@ -94,7 +104,7 @@
 				"default": "./dist/exports/worker.mjs"
 			},
 			"require": {
-				"types": "./dist/exports/worker.d.ts",
+				"types": "./dist/exports/worker.d.cts",
 				"default": "./dist/exports/worker.cjs"
 			}
 		}
@@ -125,20 +135,20 @@
 	"devDependencies": {
 		"@exact-realty/esbuild-plugin-closure-compiler": "^1.0.1",
 		"@exact-realty/esbuild-plugin-inline-js": "^1.1.5",
-		"@types/selenium-webdriver": "^4.1.19",
-		"@typescript-eslint/eslint-plugin": "^6.9.0",
-		"@typescript-eslint/parser": "^6.9.0",
+		"@types/selenium-webdriver": "^4.1.21",
+		"@typescript-eslint/eslint-plugin": "^6.21.0",
+		"@typescript-eslint/parser": "^6.21.0",
 		"esbuild": "^0.19.5",
-		"eslint": "^8.52.0",
-		"eslint-config-prettier": "^9.0.0",
-		"eslint-plugin-prettier": "^5.0.1",
+		"eslint": "^8.56.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-plugin-prettier": "^5.1.3",
 		"glob": "^10.3.10",
 		"google-closure-compiler": "^20230802.0.0",
-		"prettier": "^3.0.3",
-		"selenium-webdriver": "^4.14.0",
-		"ts-node": "^10.9.1",
-		"ts-patch": "^3.0.2",
-		"typescript": "^5.2.2",
+		"prettier": "^3.2.5",
+		"selenium-webdriver": "^4.17.0",
+		"ts-node": "^10.9.2",
+		"ts-patch": "^3.1.2",
+		"typescript": "^5.3.3",
 		"typescript-transform-paths": "^3.4.6"
 	},
 	"engines": {

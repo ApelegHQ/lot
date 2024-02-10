@@ -31,7 +31,7 @@ import {
 	oGetPrototypeOf,
 } from './utils.js';
 
-import { IPerformTask, TContext } from '~/types/index.js';
+import { IPerformTask, TContext, TOp } from '~/types/index.js';
 import $global from './global.js';
 
 /**
@@ -45,10 +45,10 @@ import $global from './global.js';
  * @param externalCallMethod - The method used to perform external calls.
  * @param externalMethodsList - List of method names to be set up.
  */
-const setupExternalMethods = (
+const setupExternalMethods = <T>(
 	ctx: object,
-	externalCallMethod: IPerformTask,
-	externalMethodsList: string[],
+	externalCallMethod: IPerformTask<T>,
+	externalMethodsList: TOp<T>[],
 ) => {
 	oDefineProperties(
 		ctx,
@@ -58,7 +58,10 @@ const setupExternalMethods = (
 				{
 					['configurable']: true,
 					['enumerable']: true,
-					['value']: externalCallMethod.bind(null, external),
+					['value']: externalCallMethod.bind(
+						null,
+						external as unknown as TOp<T>,
+					),
 				},
 			]),
 		),
@@ -190,10 +193,10 @@ const descriptorToFunctionProxy = (ctx: object, a?: PropertyDescriptor) => {
  * @param externalMethodsList - List of external method names.
  * @returns The secure sandbox context.
  */
-const createContext = (
+const createContext = <T>(
 	allowedGlobals?: string[] | undefined | null,
-	externalCallMethod?: IPerformTask | null,
-	externalMethodsList?: string[] | null,
+	externalCallMethod?: IPerformTask<T> | null,
+	externalMethodsList?: TOp<T>[] | null,
 ): TContext => {
 	const allowedProps =
 		(aIsArray(allowedGlobals) && allowedGlobals) ||

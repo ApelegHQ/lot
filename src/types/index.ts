@@ -13,10 +13,33 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+export type TOp<
+	T,
+	TK = T extends object ? keyof T : string,
+> = TK extends keyof T
+	? T[TK] extends (...args: never) => unknown
+		? TK
+		: never
+	: TK;
+export type TOpArgs<
+	T,
+	TK = T extends object ? keyof T : string,
+> = TK extends keyof T
+	? T[TK] extends (...args: infer A) => unknown
+		? A
+		: never
+	: unknown[];
+export type TOpRet<
+	T,
+	TK = T extends object ? keyof T : string,
+> = TK extends keyof T
+	? Awaited<T[TK] extends (...args: never) => infer R ? R : never>
+	: unknown;
+
 /**
  * Interface representing a function to perform a task.
  */
-export interface IPerformTask {
+export interface IPerformTask<T = unknown> {
 	/**
 	 * Performs a task.
 	 *
@@ -24,14 +47,14 @@ export interface IPerformTask {
 	 * @param args - Variable list of arguments.
 	 * @returns Returns a promise resolving to the result.
 	 */
-	(op: string, ...args: unknown[]): Promise<unknown>;
+	(op: TOp<T>, ...args: TOpArgs<T>): Promise<TOpRet<T>>;
 }
 
 /**
  * Interface representing a function to execute a script in a sandboxed
  * environment.
  */
-export interface ISandbox {
+export interface ISandbox<T = unknown> {
 	/**
 	 * Executes a script in a sandbox.
 	 *
@@ -50,7 +73,7 @@ export interface ISandbox {
 		externalMethods?: Record<string, unknown> | null,
 		abort?: AbortSignal,
 		options?: TSandboxOptions,
-	): Promise<IPerformTask>;
+	): Promise<IPerformTask<T>>;
 }
 
 /**

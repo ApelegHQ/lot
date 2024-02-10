@@ -15,17 +15,18 @@
 
 import workerSandboxManager from '~untrusted/impl/worker/workerSandboxManager.js';
 import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
-import { ISandbox } from '~/types/index.js';
+import { IPerformTask, TSandboxOptions } from '~/types/index.js';
 import createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
 import createMessageEventListenerFactory from '~untrusted/lib/createMessageEventListenerFactory.js';
 
-const workerSandbox: ISandbox = async (
-	script,
-	allowedGlobals,
-	externalMethods,
-	abort,
-	options,
-) => {
+// TypeScript won't seem to allow implementing the type ISandbox<T>
+const workerSandbox = async <T>(
+	script: string,
+	allowedGlobals?: string[] | undefined | null,
+	externalMethods?: Record<string, unknown> | null,
+	abort?: AbortSignal,
+	options?: TSandboxOptions,
+): Promise<IPerformTask<T>> => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(
 			'Invalid value for externalMethods. Bidirectional messaging is disabled',

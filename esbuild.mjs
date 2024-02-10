@@ -15,9 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import cc from '@exact-realty/esbuild-plugin-closure-compiler';
 import inlineScripts from '@exact-realty/esbuild-plugin-inline-js';
 import esbuild from 'esbuild';
-import cc from '@exact-realty/esbuild-plugin-closure-compiler';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import defaultAllowedGlobalProps from './defaultAllowedGlobalProps.config.mjs';
 
 /**
@@ -216,3 +218,29 @@ options.define['__buildtimeSettings__.isolationStategyIframeSole'] = 'true';
 options.define['__buildtimeSettings__.isolationStategyIframeWorker'] = 'false';
 
 await browserBuild(['./src/exports/browser-window.ts']);
+
+const cjsDeclarationFiles = async (directoryPath) => {
+	const entries = await readdir(directoryPath, {
+		withFileTypes: true,
+		recursive: true,
+	});
+
+	await Promise.all(
+		entries
+			.filter((entry) => {
+				return entry.isFile() && entry.name.endsWith('.d.ts');
+			})
+			.map(async (file) => {
+				const name = join(file.path, file.name);
+				const newName = name.slice(0, -2) + 'cts';
+
+				const contents = await readFile(name, { encoding: 'utf-8' });
+				await writeFile(
+					newName,
+					contents.replace(/(?<=\.)js(?=['"])/g, 'cjs'),
+				);
+			}),
+	);
+};
+
+await cjsDeclarationFiles('dist');

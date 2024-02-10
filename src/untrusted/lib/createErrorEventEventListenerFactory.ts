@@ -59,12 +59,12 @@ const createErrorEventListenerFactory =
 			? (event: ErrorEvent) => {
 					if (!event.isTrusted) return;
 					handler();
-			  }
+				}
 			: (event: ErrorEvent) => {
 					if (!event.isTrusted) return;
 					// TODO get error info from event instead of sending it raw
 					postMessage([EMessageTypes.GLOBAL_ERROR, event]);
-			  };
+				};
 
 		addEventListener.call(
 			target,

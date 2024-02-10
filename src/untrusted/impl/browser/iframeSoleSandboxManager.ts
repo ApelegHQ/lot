@@ -78,7 +78,7 @@ const iframeSoleSandboxManager = async (
 							revokeRootMessageEventListener();
 							revokeRootErrorEventListener();
 							close();
-					  }
+						}
 					: undefined,
 			),
 		);

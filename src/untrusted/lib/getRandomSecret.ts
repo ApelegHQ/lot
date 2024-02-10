@@ -56,14 +56,14 @@ const bufferToHex = (buffer: Uint8Array | number[]) =>
  */
 const getRandomSecret = cGRV
 	? // If crypto.getRandomValues is available, use that.
-	  (): string =>
+		(): string =>
 			bufferToHex(
 				(cGRV as unknown as Crypto['getRandomValues'])(u8Alloc(16)),
 			)
 	: // Otherwise, use fall back to Math.random. The values might be
-	  // predictable, but it should be fine as the strings generated are not
-	  // used in contexts that require secrecy as an absolute requirement.
-	  (): string =>
+		// predictable, but it should be fine as the strings generated are not
+		// used in contexts that require secrecy as an absolute requirement.
+		(): string =>
 			bufferToHex(
 				aMap(
 					u8Alloc(16) as unknown as number[],

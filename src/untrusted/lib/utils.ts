@@ -13,8 +13,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-type TAny = ReturnType<typeof eval>;
-
 const l_Array = Array;
 const l_aP = l_Array.prototype;
 const l_Object = Object;
@@ -60,12 +58,12 @@ const l_Uint8Array = Uint8Array;
 export const aFilter = <TT, TU extends TT>(
 	a: TT[],
 	predicate: { (value: TT, index: number, array: TT[]): value is TU },
-	thisArg?: TAny,
+	thisArg?: never,
 ): TU[] => fnCall(l_aFilter, a, predicate, thisArg);
 export const aForEach = <TT>(
 	a: TT[],
 	callbackfn: { (value: TT, index: number, array: TT[]): void },
-	thisArg?: TAny,
+	thisArg?: never,
 ): void => fnCall(l_aForEach, a, callbackfn, thisArg);
 export const aFrom = l_Array.from;
 export const aIncludes = <TT>(
@@ -84,7 +82,7 @@ export const aIsArray = l_Array.isArray;
 export const aMap = <TT, TU>(
 	a: TT[],
 	callbackfn: (value: TT, index: number, array: TT[]) => TU,
-	thisArg?: TAny,
+	thisArg?: never,
 ): TU[] => fnCall(l_aMap, a, callbackfn, thisArg);
 export const aPush = <TT>(a: TT[], ...items: TT[]): number =>
 	fnApply(l_aPush, a, items);

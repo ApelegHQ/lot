@@ -229,9 +229,9 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 	const l_structuredClone =
 		typeof structuredClone === 'function'
 			? // Local copy to prevent it from being overwritten
-			  structuredClone
+				structuredClone
 			: // JSON-based shim
-			  (() => {
+				(() => {
 					// Fallback for when structuredClone is unavailable
 					// The goal is to ensure that we don't get references to the
 					// parent context. Although structuredClone would be ideal,
@@ -286,7 +286,7 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 							throw err;
 						}
 					}.bind(globalThis);
-			  })();
+				})();
 
 	// Messages are forced through structuredClone() to avoid some attack
 	// vectors that involve indirect references

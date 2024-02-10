@@ -42,13 +42,13 @@ const ERROR_TIMEOUT = __buildtimeSettings__.sandboxInitDeadlineInMs;
  * @throws {TypeError} Throws if bidirectional messaging is disabled but
  * externalMethods is provided.
  */
-const setupSandboxListeners = (
+const setupSandboxListeners = <T>(
 	messagePort: MessagePort,
 	allowUntrusted: boolean,
 	manager: { (): Promise<void> },
 	externalMethods?: Record<string, unknown> | null,
 	abort?: AbortSignal,
-): Promise<IPerformTask> => {
+): Promise<IPerformTask<T>> => {
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(
 			'Invalid value for externalMethods. Bidirectional messaging is disabled',
@@ -58,7 +58,7 @@ const setupSandboxListeners = (
 	const postMessage = messagePort.postMessage.bind(messagePort);
 
 	const [performTask, resultHandler, destroyTaskPerformer] =
-		performTaskFactory(!!abort, postMessage);
+		performTaskFactory<T>(!!abort, postMessage);
 
 	const eventListener = (event: MessageEvent) => {
 		if ((!allowUntrusted && !event.isTrusted) || !Array.isArray(event.data))

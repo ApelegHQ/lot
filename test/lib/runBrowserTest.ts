@@ -27,7 +27,7 @@ const runBrowserTest = (m: string, commonBundle?: boolean) => {
 				__dirname,
 				`../../dist/exports/${m.replace(/Sandbox$/, '')}.mjs`,
 				'default',
-		  );
+			);
 
 	enabledBrowsers().forEach(([browserName, browserDisplayName]) => {
 		describe(

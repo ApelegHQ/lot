@@ -42,7 +42,7 @@ describe('Sandbox Context Creation', () => {
 			const externalMethods = ['externalMethod1', 'externalMethod2'];
 			const mockExternalCall = async () => {};
 
-			const ctx = createContext(
+			const ctx = createContext<unknown>(
 				undefined,
 				mockExternalCall,
 				externalMethods,
@@ -58,7 +58,7 @@ describe('Sandbox Context Creation', () => {
 			const externalMethods = ['method1', 'method2'];
 			const mockExternalCall = async () => {};
 
-			setupExternalMethods(
+			setupExternalMethods<unknown>(
 				mockContext,
 				mockExternalCall,
 				externalMethods,

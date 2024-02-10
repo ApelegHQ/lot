@@ -76,7 +76,7 @@ const bareSandboxManager = async (
 							revokeRootMessageEventListener();
 							revokeRootErrorEventListener();
 							close();
-					  }
+						}
 					: undefined,
 			),
 		);

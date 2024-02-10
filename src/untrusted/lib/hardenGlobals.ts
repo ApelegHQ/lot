@@ -192,7 +192,7 @@ const hardenGlobals: { (): void } = __buildtimeSettings__.hardenGlobals
 				}
 				void e;
 			}
-	  }
+		}
 	: Boolean;
 
 /**

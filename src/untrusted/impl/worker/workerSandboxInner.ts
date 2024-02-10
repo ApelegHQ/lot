@@ -111,7 +111,7 @@ const workerSandboxInner = (
 					? () => {
 							revokeRootMessageEventListener();
 							close();
-					  }
+						}
 					: undefined,
 			),
 			allowUntrusted,

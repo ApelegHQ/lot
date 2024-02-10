@@ -152,7 +152,7 @@ const nodejsSandbox: TNodejsSandbox = (
 									messagePort.postMessage.bind(messagePort),
 							},
 						],
-				  ]
+					]
 				: []),
 			[
 				'close',

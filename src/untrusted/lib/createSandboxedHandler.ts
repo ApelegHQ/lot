@@ -99,7 +99,7 @@ const createSandboxedHandler = (
 							EMessageTypes.DESTROY,
 							EMessageTypes.RESULT,
 							EMessageTypes.ERROR,
-					  ]
+						]
 					: [EMessageTypes.REQUEST, EMessageTypes.DESTROY],
 				data[0] as EMessageTypes,
 			)

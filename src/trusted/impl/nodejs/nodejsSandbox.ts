@@ -15,19 +15,22 @@
 
 import * as nodejsSandboxVm from 'inline:~untrusted/impl/nodejs/nodejsSandboxVm.inline.js';
 import { Worker } from 'node:worker_threads';
-import { ISandbox } from '~/types/index.js';
+import { IPerformTask, TSandboxOptions } from '~/types/index.js';
 import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
 import { INTERNAL_SOURCE_STRING } from '~untrusted/impl/nodejs/constants.js';
 import type { TNodejsSandbox } from '~untrusted/impl/nodejs/nodejsSandboxVm.inline.js';
 import type workerSandboxInner from '~untrusted/impl/worker/workerSandboxInner.js';
 import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
 
-const nodejsSandbox: ISandbox = async (
-	script,
-	allowedGlobals,
-	externalMethods,
-	abort,
-) => {
+// TypeScript won't seem to allow implementing the type ISandbox<T>
+const nodejsSandbox = async <T>(
+	script: string,
+	allowedGlobals?: string[] | undefined | null,
+	externalMethods?: Record<string, unknown> | null,
+	abort?: AbortSignal,
+	options?: TSandboxOptions,
+): Promise<IPerformTask<T>> => {
+	void options;
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(
 			'Invalid value for externalMethods. Bidirectional messaging is disabled',
@@ -121,7 +124,7 @@ const nodejsSandbox: ISandbox = async (
 	messageChannel.port1.start();
 	messageChannel.port2.start();
 
-	return setupSandboxListeners(
+	return setupSandboxListeners<T>(
 		messageChannel.port1,
 		true,
 		// empty manager since data are passed as workerData

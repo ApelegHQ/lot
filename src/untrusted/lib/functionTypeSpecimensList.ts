@@ -40,12 +40,12 @@ const functionTypeSpecimensList =
 				Boolean as unknown as {
 					(v?: FunctionConstructor): v is FunctionConstructor;
 				},
-		  )
+			)
 		: [
 				function () {},
 				function* () {},
 				async function () {},
 				async function* () {},
-		  ];
+			];
 
 export default functionTypeSpecimensList;

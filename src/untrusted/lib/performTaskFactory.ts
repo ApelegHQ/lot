@@ -42,10 +42,14 @@ import proxyMaybeRevocable from './proxyMaybeRevocable.js';
  * resultHandler function, and a cleanup function to revoke the performTask
  * methods and clear pending tasks.
  */
-const performTaskFactory = (
+const performTaskFactory = <T>(
 	revocable: boolean,
 	postMessageOutgoing: MessagePort['postMessage'],
-): [IPerformTask, { (data: unknown[]): void }, { (): void }] => {
+): [
+	performTask: IPerformTask<T>,
+	resultHandler: { (data: unknown[]): void },
+	revoke: { (): void },
+] => {
 	const pendingTasks: Record<
 		string,
 		[typeof Function.prototype, typeof Function.prototype]
@@ -82,7 +86,7 @@ const performTaskFactory = (
 		}
 	};
 
-	const performTask: IPerformTask = async (op, ...args) => {
+	const performTask: IPerformTask<T> = async (op, ...args) => {
 		if (typeof op !== 'string') {
 			throw TE('Operation must be of string type');
 		}
@@ -91,7 +95,8 @@ const performTaskFactory = (
 
 		Logger.debug('Sending REQUEST for task [' + taskId + '] ' + op);
 
-		const taskPromise = new PM((resolve, reject) => {
+		// TODO: Fix type with real return type
+		const taskPromise = new PM<never>((resolve, reject) => {
 			pendingTasks[taskId] = [resolve, reject];
 		});
 

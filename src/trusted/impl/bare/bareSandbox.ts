@@ -13,7 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import { ISandbox } from '~/types/index.js';
+import { IPerformTask, TSandboxOptions } from '~/types/index.js';
 import bareSandboxManager from '~/untrusted/impl/bare/bareSandboxManager.js';
 import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
 import createErrorEventListenerFactory from '~untrusted/lib/createErrorEventEventListenerFactory.js';
@@ -21,12 +21,14 @@ import createMessageEventListenerFactory from '~untrusted/lib/createMessageEvent
 
 // TODO: wrap setTimeout and clearTimeout
 
-const bareSandbox: ISandbox = async (
-	script,
-	allowedGlobals,
-	externalMethods,
-	abort,
-) => {
+const bareSandbox = async <T>(
+	script: string,
+	allowedGlobals?: string[] | undefined | null,
+	externalMethods?: Record<string, unknown> | null,
+	abort?: AbortSignal,
+	options?: TSandboxOptions,
+): Promise<IPerformTask<T>> => {
+	void options;
 	if (!__buildtimeSettings__.bidirectionalMessaging && externalMethods) {
 		throw new TypeError(
 			'Invalid value for externalMethods. Bidirectional messaging is disabled',

@@ -47,10 +47,9 @@ const chromeOptions = new ChromeOptions();
 chromeOptions.addArguments('--headless=new');
 
 const edgeOptions = new EdgeOptions();
-edgeOptions.headless();
+edgeOptions.addArguments('--headless=new');
 
 const firefoxOptions = new FirefoxOptions();
-firefoxOptions.headless();
 
 const safariOptions = new SafariOptions();
 
@@ -211,7 +210,7 @@ export const webdriverTestSuites =
 												? 'TypeError'
 												: errorName,
 									},
-							  ],
+								],
 					);
 				});
 			});
@@ -248,25 +247,25 @@ export const webdriverTestSuites =
 						errorName === true
 							? [true]
 							: errorName === 'SyntaxError'
-							? [
-									null,
-									null,
-									{
-										name: errorName,
-									},
-							  ]
-							: [
-									null,
-									{
-										name:
-											// TODO: Handle this in a different
-											// way. ReferenceError only happens
-											// when not using globalProxy
-											Array.isArray(errorName)
-												? 'TypeError'
-												: errorName,
-									},
-							  ],
+								? [
+										null,
+										null,
+										{
+											name: errorName,
+										},
+									]
+								: [
+										null,
+										{
+											name:
+												// TODO: Handle this in a different
+												// way. ReferenceError only happens
+												// when not using globalProxy
+												Array.isArray(errorName)
+													? 'TypeError'
+													: errorName,
+										},
+									],
 					);
 				});
 			});

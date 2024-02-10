@@ -15,7 +15,7 @@
 
 import * as iframeSandboxInit from 'inline:~untrusted/impl/browser/iframeSandboxInit.inline.js';
 import setupSandboxListeners from '~trusted/lib/setupSandboxListeners.js';
-import { ISandbox } from '~/types/index.js';
+import { IPerformTask, TSandboxOptions } from '~/types/index.js';
 import type iframeSandboxInner from '~untrusted/impl/browser/iframeSandboxInner.js';
 import getRandomSecret from '~untrusted/lib/getRandomSecret.js';
 
@@ -41,13 +41,13 @@ const safeXml = (
 	return String.raw(template, ...substitutions);
 };
 
-const browserSandbox: ISandbox = async (
-	script,
-	allowedGlobals,
-	externalMethods,
-	abort,
-	options,
-) => {
+const browserSandbox = async <T>(
+	script: string,
+	allowedGlobals?: string[] | undefined | null,
+	externalMethods?: Record<string, unknown> | null,
+	abort?: AbortSignal,
+	options?: TSandboxOptions,
+): Promise<IPerformTask<T>> => {
 	if (
 		!__buildtimeSettings__.isolationStategyIframeSole &&
 		!__buildtimeSettings__.isolationStategyIframeWorker
@@ -105,10 +105,10 @@ const browserSandbox: ISandbox = async (
 			__buildtimeSettings__.isolationStategyIframeWorker
 			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src blob:`
 			: __buildtimeSettings__.isolationStategyIframeSole
-			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src 'none'`
-			: __buildtimeSettings__.isolationStategyIframeWorker
-			? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval'; script-src-attr 'none'; worker-src blob:`
-			: "default-src 'none'",
+				? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic'; script-src-attr 'none'; worker-src 'none'`
+				: __buildtimeSettings__.isolationStategyIframeWorker
+					? `default-src 'none'; script-src 'nonce-${nonce}' '${iframeSandboxInit.sri}' 'unsafe-eval'; script-src-attr 'none'; worker-src blob:`
+					: "default-src 'none'",
 	);
 	const iframeSrcUrl = self.URL.createObjectURL(blob);
 	iframe.setAttribute('role', 'none');
@@ -202,7 +202,7 @@ const browserSandbox: ISandbox = async (
 
 	abort?.addEventListener('abort', onDestroy, false);
 
-	return setupSandboxListeners(
+	return setupSandboxListeners<T>(
 		messageChannel.port1,
 		false,
 		Promise.resolve.bind(Promise),

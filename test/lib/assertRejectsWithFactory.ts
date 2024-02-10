@@ -30,7 +30,7 @@ const assertRejectsWithFactory =
 			globalThis[n as keyof typeof globalThis] === Error
 				? (globalThis[
 						n as unknown as keyof typeof globalThis
-				  ] as unknown as ErrorConstructor)
+					] as unknown as ErrorConstructor)
 				: Error,
 		);
 

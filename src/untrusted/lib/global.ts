@@ -17,9 +17,9 @@ const g =
 	typeof globalThis !== 'undefined'
 		? globalThis
 		: typeof self !== 'undefined'
-		? self
-		: typeof global !== 'undefined'
-		? global
-		: ({} as unknown as typeof globalThis);
+			? self
+			: typeof global !== 'undefined'
+				? global
+				: ({} as unknown as typeof globalThis);
 
 export default g;
