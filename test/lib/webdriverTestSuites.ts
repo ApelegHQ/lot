@@ -27,11 +27,9 @@ export const enabledBrowsers = () => {
 		process.env.WEBDRIVER_BROWSERS?.split(/[ ,;]/) ??
 			[
 				webdriver.Browser.CHROME,
-				(process.platform === 'win32' && webdriver.Browser.EDGE) ||
-					undefined,
+				webdriver.Browser.EDGE,
 				webdriver.Browser.FIREFOX,
-				(process.platform === 'darwin' && webdriver.Browser.SAFARI) ||
-					undefined,
+				webdriver.Browser.SAFARI,
 			].filter(Boolean),
 	);
 
@@ -68,23 +66,50 @@ export const webdriverTestSuites =
 						code = await codePromise;
 					})(),
 					(async () => {
-						driver = await new webdriver.Builder()
-							.forBrowser(browserName)
-							.setChromeOptions(chromeOptions)
-							.setEdgeOptions(edgeOptions)
-							.setFirefoxOptions(firefoxOptions)
-							.setSafariOptions(safariOptions)
-							.build();
+						try {
+							const driver_ = await new webdriver.Builder()
+								.forBrowser(browserName)
+								.setChromeOptions(chromeOptions)
+								.setEdgeOptions(edgeOptions)
+								.setFirefoxOptions(firefoxOptions)
+								.setSafariOptions(safariOptions)
+								.build();
 
-						await driver.get('about:blank');
+							await driver_.get('about:blank');
+
+							driver = driver_;
+						} catch (e) {
+							if (
+								e &&
+								e instanceof Error &&
+								(e.message.includes(
+									'Unable to obtain browser driver',
+								) ||
+									(e.name === 'WebDriverError' &&
+										e.message.includes(
+											'unknown error: cannot find',
+										)) ||
+									e.name === 'SessionNotCreatedError')
+							) {
+								return;
+							}
+							throw e;
+						}
 					})(),
 				]);
+
+				if (!driver) {
+					(t as unknown as Record<string, typeof Boolean>)['skip'](
+						'Driver unavailable',
+					);
+					return;
+				}
 
 				await driver.executeScript(
 					code + '; console.log("SCRIPT SUCCESSFULLY LOADED");',
 				);
 			},
-			{ timeout: 30e3 },
+			{ timeout: 12e4 },
 		);
 
 		t.after(
@@ -99,6 +124,11 @@ export const webdriverTestSuites =
 		);
 
 		await t.test('Can run tasks', async (t) => {
+			if (!driver) {
+				t.skip();
+				return;
+			}
+
 			await t.test('should return result for sync task', async () => {
 				const result = await driver.executeAsyncScript(`
 			(async () => {
@@ -161,6 +191,11 @@ export const webdriverTestSuites =
 		});
 
 		await t.test('Error conditions', async (t) => {
+			if (!driver) {
+				t.skip();
+				return;
+			}
+
 			await t.test('invalid syntax causes error', async () => {
 				const result = await driver.executeAsyncScript(
 					`(async () => {

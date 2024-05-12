@@ -122,33 +122,15 @@ const workerSandboxManager = async (
 		const revokeRootMessageEventListener = createMessageEventListener(
 			messagePort,
 			(data: unknown[]) => {
-				if (
-					[
-						EMessageTypes.REQUEST,
-						EMessageTypes.RESULT,
-						EMessageTypes.ERROR,
-					].includes(data[0] as EMessageTypes)
-				) {
+				if (data[0] === EMessageTypes.REQUEST) {
 					if (data[0] === EMessageTypes.REQUEST) {
 						Logger.debug(
-							'Forwarding REQUEST from parent to worker for task [' +
-								data[1] +
-								'] ' +
+							'Forwarding REQUEST from parent to worker for task' +
 								data[2],
-						);
-					} else {
-						Logger.debug(
-							'Forwarding ' +
-								(data[0] === EMessageTypes.RESULT
-									? 'RESULT'
-									: 'ERROR') +
-								' from parent to worker for task [' +
-								data[1] +
-								']',
 						);
 					}
 
-					worker.postMessage(data);
+					worker.postMessage(data, [data[1] as MessagePort]);
 				} else if (data[0] === EMessageTypes.DESTROY) {
 					Logger.debug('Received DESTROY from parent');
 

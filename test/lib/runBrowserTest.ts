@@ -20,7 +20,7 @@ import { enabledBrowsers, webdriverTestSuites } from './webdriverTestSuites.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-const runBrowserTest = (m: string, commonBundle?: boolean) => {
+const runBrowserTest = async (m: string, commonBundle?: boolean) => {
 	const code = commonBundle
 		? getCodeHelper(__dirname, '../../dist/index.mjs', m)
 		: getCodeHelper(
@@ -29,14 +29,12 @@ const runBrowserTest = (m: string, commonBundle?: boolean) => {
 				'default',
 			);
 
-	return Promise.all(
-		enabledBrowsers().map(([browserName, browserDisplayName]) => {
-			return test(
-				`Browser: ${browserDisplayName}, module: ${m}`,
-				webdriverTestSuites(code, browserName),
-			);
-		}),
-	);
+	for (const [browserName, browserDisplayName] of enabledBrowsers()) {
+		await test(
+			`Browser: ${browserDisplayName}, module: ${m}`,
+			webdriverTestSuites(code, browserName),
+		);
+	}
 };
 
 export default runBrowserTest;

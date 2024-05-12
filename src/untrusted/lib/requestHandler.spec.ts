@@ -45,19 +45,28 @@ describe('requestHandler', () => {
 			multiply: (a: number, b: number) => a * b,
 		};
 
-		const id = 'task123';
+		const ch = new MessageChannel();
 		const op = 'add';
 		const args = [2, 3];
 
-		requestHandler(postMessageStub, ctx, id, op, ...args);
-
 		// Check that postMessage was called with the expected result message
-		assert.deepEqual(postMessageStub.calls, [
-			{ args: [[EMessageTypes.RESULT, id, 5]] },
-		]);
+		return new Promise<void>((resolve, reject) => {
+			ch.port1.onmessage = (ev) => {
+				try {
+					assert.deepEqual(ev.data, [EMessageTypes.RESULT, 5]);
+					resolve();
+				} catch (e) {
+					reject(e);
+				}
+			};
+			ch.port1.onmessageerror = (ev) => {
+				reject(ev.data);
+			};
+			requestHandler(ctx, ch.port2, op, ...args);
+		});
 	});
 
-	it('should handle asynchronous task execution and send the result', async () => {
+	it('should handle asynchronous task execution and send the result', () => {
 		const ctx = {
 			async asyncTask(v: string) {
 				return new Promise((resolve) => {
@@ -66,19 +75,28 @@ describe('requestHandler', () => {
 			},
 		};
 
-		const id = 'task456';
+		const ch = new MessageChannel();
 		const op = 'asyncTask';
 		const args: unknown[] = ['a'];
 
-		requestHandler(postMessageStub, ctx, id, op, ...args);
-
-		// Wait for the asynchronous result to be sent via postMessage
-		await new Promise((resolve) => setTimeout(resolve, 40));
-
 		// Check that postMessage was called with the expected result message
-		assert.deepEqual(postMessageStub.calls, [
-			{ args: [[EMessageTypes.RESULT, id, 'Async result: a']] },
-		]);
+		return new Promise<void>((resolve, reject) => {
+			ch.port1.onmessage = (ev) => {
+				try {
+					assert.deepEqual(ev.data, [
+						EMessageTypes.RESULT,
+						'Async result: a',
+					]);
+					resolve();
+				} catch (e) {
+					reject(e);
+				}
+			};
+			ch.port1.onmessageerror = (ev) => {
+				reject(ev.data);
+			};
+			requestHandler(ctx, ch.port2, op, ...args);
+		});
 	});
 
 	it('should handle an undefined operation and send an error message', () => {
@@ -86,32 +104,42 @@ describe('requestHandler', () => {
 			add: (a: number, b: number) => a + b,
 		};
 
-		const id = 'task789';
+		const ch = new MessageChannel();
 
 		// Operation 'subtract' is not defined in the context.
 		const op = 'subtract';
 
-		requestHandler(postMessageStub, ctx, id, op);
+		return new Promise<void>((resolve, reject) => {
+			ch.port1.onmessage = (ev) => {
+				try {
+					assert.ok(Array.isArray(ev.data));
+					assert.equal(ev.data.length, 2);
+					assert.equal(ev.data[0], EMessageTypes.ERROR);
 
-		assert.equal(postMessageStub.calls.length, 1);
-		assert.equal(postMessageStub.calls[0].args.length, 1);
-		assert.ok(Array.isArray(postMessageStub.calls[0].args[0]));
-		assert.equal((postMessageStub.calls[0].args[0] as unknown[]).length, 3);
-		assert.deepEqual(
-			(postMessageStub.calls[0].args[0] as unknown[]).slice(0, 2),
-			[EMessageTypes.ERROR, id],
-		);
-		assert.ok(Array.isArray(postMessageStub.calls[0].args[0][2]));
-		assert.throws(
-			() => {
-				throw reconstructErrorInformation(
-					(postMessageStub.calls[0].args[0] as unknown[])[2],
-				);
-			},
-			{
-				name: 'ReferenceError',
-				message: `${op} is not defined`,
-			},
-		);
+					assert.throws(
+						() => {
+							throw reconstructErrorInformation(
+								(ev.data as unknown[])[1],
+							);
+						},
+						{
+							name: 'ReferenceError',
+							message: `${op} is not defined`,
+						},
+					);
+
+					resolve();
+				} catch (e) {
+					reject(e);
+				}
+			};
+			ch.port1.onmessageerror = (ev) => {
+				reject(ev.data);
+			};
+
+			requestHandler(ctx, ch.port2, op);
+		}).finally(() => {
+			assert.equal(postMessageStub.calls.length, 0);
+		});
 	});
 });

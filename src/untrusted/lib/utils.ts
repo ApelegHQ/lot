@@ -38,6 +38,7 @@ const l_cGRV = l_crypto?.getRandomValues;
 export const S = String;
 export const E = Error;
 export const EE = EvalError;
+export const MC = MessageChannel;
 export const PM = Promise;
 export const PX = Proxy;
 export const RE = ReferenceError;

@@ -14,6 +14,7 @@
  */
 
 import {
+	aForEach,
 	aFrom,
 	aIndexOf,
 	aIsArray,
@@ -120,7 +121,8 @@ const nativeWrapperFactory =
 // environment
 // Then, the parent needs to delete these functions, which it can do when
 // it receives SANDBOX_READY in the next step
-['atob', 'btoa', 'close', 'clearInterval', 'clearTimeout'].forEach(
+aForEach(
+	['atob', 'btoa', 'close', 'clearInterval', 'clearTimeout'],
 	nativeWrapperFactory(
 		globalThis as unknown as Parameters<typeof nativeWrapperFactory>[0],
 	),
@@ -299,6 +301,23 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 			typeof Function.prototype
 		>();
 
+		/** Wrapper for structuredClone to preserve the MessagePort argument */
+		const cloneMsgData =
+			typeof structuredClone === 'function'
+				? l_structuredClone
+				: (data: unknown) => {
+						const clonedData = l_structuredClone(data);
+						if (
+							aIsArray(data) &&
+							aIsArray(clonedData) &&
+							clonedData[0] === EMessageTypes.REQUEST &&
+							typeof clonedData[1] === 'object'
+						) {
+							clonedData[1] = data[1];
+						}
+						return clonedData;
+					};
+
 		/**
 		 * Wrapper function for the `addEventListener` method.
 		 * This ensures that messages passed to the listeners are cloned to
@@ -321,7 +340,7 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 					if (ev.type !== 'message') return;
 
 					oDefineProperty(ev, 'data', {
-						['value']: l_structuredClone((ev as MessageEvent).data),
+						['value']: cloneMsgData((ev as MessageEvent).data),
 					});
 					listener(ev);
 				};
@@ -426,7 +445,7 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 	}.bind(globalThis);
 })();
 
-['setInterval', 'setTimeout'].forEach((v) => {
+aForEach(['setInterval', 'setTimeout'], (v) => {
 	const setTimer = (
 		globalThis as unknown as Record<
 			string,
@@ -464,6 +483,32 @@ if (__buildtimeSettings__.contextifyMessagePort) {
 		}
 	}.bind(globalThis);
 });
+
+if (__buildtimeSettings__.bidirectionalMessaging && isNaN(1)) {
+	(() => {
+		const mc = globalThis.MessageChannel;
+
+		if (typeof mc !== 'function') return;
+
+		const wmc = function (this: MessageChannel) {
+			try {
+				const r = new mc();
+
+				aForEach(['port1', 'port2'], (v: keyof MessageChannel) => {
+					oDefineProperty(this, v, {
+						configurable: true,
+						enumerable: true,
+						get: () => r[v],
+					});
+				});
+			} catch (e) {
+				throw recreateError(e);
+			}
+		} as unknown as typeof MessageChannel;
+
+		globalThis.MessageChannel = wmc;
+	})();
+}
 
 Logger.info('Worker started, registering event listener');
 

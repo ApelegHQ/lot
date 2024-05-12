@@ -37,7 +37,7 @@ const nodejsSandbox = async <T>(
 		);
 	}
 
-	// Needed for CC, which is unware of these properties
+	// Needed for Closure Compiler, which is unaware of these properties
 	const on = 'on';
 	const terminate = 'terminate';
 

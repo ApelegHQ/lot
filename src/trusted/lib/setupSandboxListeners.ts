@@ -57,8 +57,10 @@ const setupSandboxListeners = <T>(
 
 	const postMessage = messagePort.postMessage.bind(messagePort);
 
-	const [performTask, resultHandler, destroyTaskPerformer] =
-		performTaskFactory<T>(!!abort, postMessage);
+	const [performTask, destroyTaskPerformer] = performTaskFactory<T>(
+		!!abort,
+		postMessage,
+	);
 
 	const eventListener = (event: MessageEvent) => {
 		if ((!allowUntrusted && !event.isTrusted) || !Array.isArray(event.data))
@@ -68,35 +70,23 @@ const setupSandboxListeners = <T>(
 
 		if (__buildtimeSettings__.bidirectionalMessaging) {
 			if (data[0] === EMessageTypes.REQUEST) {
-				Logger.debug(
-					'Received REQUEST for task [' + data[1] + '] ' + data[2],
-				);
+				Logger.debug('Received REQUEST for task ' + data[2]);
 
 				if (!externalMethods) {
 					// This situation should not be possible
 					Logger.debug(
-						'Received REQUEST for task [' +
-							data[1] +
-							'] ' +
+						'Received REQUEST for task ' +
 							data[2] +
 							', but there are no external methods configured',
 					);
 					return;
 				}
 
-				requestHandler(
-					postMessage,
-					externalMethods,
-					data[1],
-					data[2],
-					data[3],
-				);
+				requestHandler(externalMethods, data[1], data[2], data[3]);
 
 				return;
 			}
 		}
-
-		resultHandler(data);
 	};
 
 	const onDestroy = () => {

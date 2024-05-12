@@ -92,17 +92,7 @@ const createSandboxedHandler = (
 
 	const handler = (data: unknown[]) => {
 		if (
-			!aIncludes(
-				__buildtimeSettings__.bidirectionalMessaging
-					? [
-							EMessageTypes.REQUEST,
-							EMessageTypes.DESTROY,
-							EMessageTypes.RESULT,
-							EMessageTypes.ERROR,
-						]
-					: [EMessageTypes.REQUEST, EMessageTypes.DESTROY],
-				data[0] as EMessageTypes,
-			)
+			!aIncludes([EMessageTypes.REQUEST, EMessageTypes.DESTROY], data[0])
 		) {
 			return;
 		}
@@ -117,7 +107,7 @@ const createSandboxedHandler = (
 				postMessage = Boolean;
 
 				if (__buildtimeSettings__.bidirectionalMessaging) {
-					performTaskMethods?.[2]();
+					performTaskMethods?.[1]();
 				}
 
 				cleanup();
@@ -125,15 +115,12 @@ const createSandboxedHandler = (
 				return;
 			}
 			case EMessageTypes.REQUEST: {
-				Logger.debug(
-					'Received REQUEST for task [' + data[1] + '] ' + data[2],
-				);
+				Logger.debug('Received REQUEST for task ' + data[2]);
 
 				if (!ctx?.['module']?.['exports']) {
 					try {
 						postMessage([
 							EMessageTypes.ERROR,
-							data[1],
 							extractErrorInformation(
 								RE(`${data[2]} is not defined`),
 							),
@@ -145,20 +132,12 @@ const createSandboxedHandler = (
 				}
 
 				requestHandler(
-					postMessage,
 					ctx['module']['exports'],
-					data[1],
+					data[1] as MessagePort,
 					data[2],
 					...aSlice(data, 3),
 				);
 
-				return;
-			}
-			case EMessageTypes.RESULT:
-			case EMessageTypes.ERROR: {
-				if (__buildtimeSettings__.bidirectionalMessaging) {
-					performTaskMethods?.[1](data);
-				}
 				return;
 			}
 		}

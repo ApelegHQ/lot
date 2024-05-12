@@ -23,7 +23,6 @@ import { fnApply, oHasOwnProperty, RE, TE } from './utils.js';
  * The result or error of the task execution is sent back via the postMessage
  * function.
  *
- * @param postMessage - The function to send messages back to the caller.
  * @param ctx - The context object containing the operations that can be
  * executed.
  * @param id - The unique identifier for the task.
@@ -33,18 +32,26 @@ import { fnApply, oHasOwnProperty, RE, TE } from './utils.js';
  * @returns This function does not return a value directly, but uses the postMessage function to send results or errors.
  */
 const requestHandler = (
-	postMessage: { (data: unknown[]): void },
 	ctx: unknown,
-	id: unknown,
+	port: MessagePort,
 	op: unknown,
 	...args: unknown[]
 ): void => {
-	if (typeof id !== 'string' || typeof op !== 'string') {
-		Logger.trace('Rejecting REQUEST, invalid id or op', [id, op]);
+	if (typeof port !== 'object' || typeof op !== 'string') {
+		Logger.trace('Rejecting REQUEST, invalid port or op', [op]);
 		return;
 	}
 
-	Logger.debug('Handling REQUEST for task [' + id + '] ' + op);
+	Logger.debug('Handling REQUEST for task ' + op);
+
+	const postAndClose: typeof MessagePort.prototype.postMessage = (
+		...args
+	) => {
+		port['postMessage'](
+			...(args as unknown as Parameters<(typeof port)['postMessage']>),
+		);
+		port['close']();
+	};
 
 	try {
 		if (!ctx || !oHasOwnProperty(ctx, op)) {
@@ -69,14 +76,10 @@ const requestHandler = (
 		) {
 			const thenable = result['then']((result: unknown) => {
 				Logger.debug(
-					'Sending RESULT from executing task [' +
-						id +
-						'] ' +
-						op +
-						' (async)',
+					'Sending RESULT from executing task ' + op + ' (async)',
 				);
 
-				postMessage([EMessageTypes.RESULT, id, result]);
+				postAndClose([EMessageTypes.RESULT, result]);
 			});
 
 			if (
@@ -87,37 +90,26 @@ const requestHandler = (
 			) {
 				thenable['catch']((e: unknown) => {
 					Logger.debug(
-						'Sending ERROR from executing task [' +
-							id +
-							'] ' +
-							op +
-							' (async)',
+						'Sending ERROR from executing task ' + op + ' (async)',
 					);
 
-					postMessage([
+					postAndClose([
 						EMessageTypes.ERROR,
-						id,
 						extractErrorInformation(e),
 					]);
 				});
 			}
 		} else {
 			Logger.debug(
-				'Sending RESULT from executing task [' +
-					id +
-					'] ' +
-					op +
-					' (sync)',
+				'Sending RESULT from executing task ' + op + ' (sync)',
 			);
 
-			postMessage([EMessageTypes.RESULT, id, result]);
+			postAndClose([EMessageTypes.RESULT, result]);
 		}
 	} catch (e) {
-		Logger.debug(
-			'Sending ERROR from executing task [' + id + '] ' + op + ' (sync)',
-		);
+		Logger.debug('Sending ERROR from executing task ' + op + ' (sync)');
 
-		postMessage([EMessageTypes.ERROR, id, extractErrorInformation(e)]);
+		postAndClose([EMessageTypes.ERROR, extractErrorInformation(e)]);
 	}
 };
 

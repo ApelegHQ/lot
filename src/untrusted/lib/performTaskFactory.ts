@@ -13,23 +13,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import {
-	aForEach,
-	aIncludes,
-	aIsArray,
-	aMap,
-	E,
-	oCreate,
-	oFreeze,
-	oHasOwnProperty,
-	oKeys,
-	PM,
-	TE,
-} from './utils.js';
+import { aIncludes, aIsArray, aPush, E, MC, PM, TE } from './utils.js';
 
 import type { IPerformTask } from '~/types/index.js';
 import { reconstructErrorInformation } from './errorModem.js';
-import getRandomSecret from './getRandomSecret.js';
 import * as Logger from './Logger.js';
 import proxyMaybeRevocable from './proxyMaybeRevocable.js';
 
@@ -45,91 +32,100 @@ import proxyMaybeRevocable from './proxyMaybeRevocable.js';
 const performTaskFactory = <T>(
 	revocable: boolean,
 	postMessageOutgoing: MessagePort['postMessage'],
-): [
-	performTask: IPerformTask<T>,
-	resultHandler: { (data: unknown[]): void },
-	revoke: { (): void },
-] => {
-	const pendingTasks: Record<
-		string,
-		[typeof Function.prototype, typeof Function.prototype]
-	> = oCreate(null);
-
-	const resultHandler = (data: unknown[]) => {
-		if (
-			!aIsArray(data) ||
-			!aIncludes(
-				[EMessageTypes.RESULT, EMessageTypes.ERROR],
-				data[0] as EMessageTypes,
-			) ||
-			typeof data[1] !== 'string' ||
-			!oHasOwnProperty(pendingTasks, data[1] as PropertyKey)
-		)
-			return;
-
-		Logger.debug(
-			'Received ' +
-				(data[0] === EMessageTypes.RESULT ? 'RESULT' : 'ERROR') +
-				' from executing task [' +
-				data[1] +
-				']',
-		);
-
-		const thisTask = pendingTasks[data[1]];
-
-		delete pendingTasks[data[1]];
-
-		if (data[0] === EMessageTypes.RESULT) {
-			thisTask[0](data[2]);
-		} else {
-			thisTask[1](reconstructErrorInformation(data[2]));
-		}
-	};
+): [performTask: IPerformTask<T>, revoke: { (): void }] => {
+	const unresolved: [MessagePort, typeof Boolean][] = [];
 
 	const performTask: IPerformTask<T> = async (op, ...args) => {
 		if (typeof op !== 'string') {
 			throw TE('Operation must be of string type');
 		}
 
-		const taskId = getRandomSecret();
-
-		Logger.debug('Sending REQUEST for task [' + taskId + '] ' + op);
+		Logger.debug('Sending REQUEST for task ' + op);
 
 		// TODO: Fix type with real return type
 		const taskPromise = new PM<never>((resolve, reject) => {
-			pendingTasks[taskId] = [resolve, reject];
-		});
+			const channel = new MC();
+			const incomingPort = channel['port1'];
+			const outgoingPort = channel['port2'];
+			aPush(unresolved, [incomingPort, reject]);
+			const markAsResolved = () => {
+				incomingPort.close();
+				const idx = unresolved.findIndex((v) => {
+					return v[0] === incomingPort;
+				});
+				if (idx !== -1) {
+					unresolved.splice(idx, 1);
+				}
+			};
+			incomingPort.onmessage = (ev) => {
+				const data = ev['data'];
+				if (
+					!aIsArray(data) ||
+					!aIncludes(
+						[EMessageTypes.RESULT, EMessageTypes.ERROR],
+						data[0] as EMessageTypes,
+					)
+				)
+					return;
 
-		try {
-			postMessageOutgoing([EMessageTypes.REQUEST, taskId, op, ...args]);
-		} catch (e) {
-			pendingTasks[taskId][1](e);
-		}
+				Logger.debug(
+					'Received ' +
+						(data[0] === EMessageTypes.RESULT
+							? 'RESULT'
+							: 'ERROR') +
+						' from executing task',
+				);
+
+				if (data[0] === EMessageTypes.RESULT) {
+					resolve(data[1]);
+				} else {
+					reject(reconstructErrorInformation(data[1]));
+				}
+				markAsResolved();
+			};
+			incomingPort.onmessageerror = (ev) => {
+				Logger.debug(
+					'Error receiving task result after executing task',
+				);
+
+				reject(ev['data']);
+				markAsResolved();
+			};
+			incomingPort.start();
+			try {
+				postMessageOutgoing(
+					[EMessageTypes.REQUEST, outgoingPort, op, ...args],
+					[outgoingPort],
+				);
+			} catch (e) {
+				reject(e);
+				markAsResolved();
+			}
+		});
 
 		return taskPromise;
 	};
 
-	const performTaskMethods: [typeof performTask, typeof resultHandler] = [
+	const performTaskProxy = proxyMaybeRevocable(
+		revocable || null,
 		performTask,
-		resultHandler,
-	];
-
-	const performTaskMethodsProxy = aMap(performTaskMethods, (m) =>
-		proxyMaybeRevocable(revocable || null, m, {}),
+		{},
 	);
 
 	return [
-		performTaskMethodsProxy[0].proxy as typeof performTask,
-		performTaskMethodsProxy[1].proxy as typeof resultHandler,
+		performTaskProxy['proxy'],
 		() => {
-			performTaskMethodsProxy[0].revoke();
-			performTaskMethodsProxy[1].revoke();
-			const error = E('Task cancelled');
-			aForEach(oKeys(pendingTasks), (id) => {
-				pendingTasks[id][1](error);
-				delete pendingTasks[id];
+			performTaskProxy.revoke();
+			const e = new E('Task aborted');
+			// Abort all pending tasks
+			unresolved.splice(0).forEach((x) => {
+				try {
+					x[1](e);
+					x[0].close();
+				} catch (e) {
+					void e;
+				}
 			});
-			oFreeze(pendingTasks);
 		},
 	];
 };

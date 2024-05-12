@@ -22,10 +22,12 @@ import {
 	moveMessagePortToContext,
 	workerData,
 } from 'node:worker_threads';
+import type { MessagePort as WTMessagePort } from 'node:worker_threads';
 import createWrapperFn from '~untrusted/lib/createWrapperFn.js';
 import hardenGlobals from '~untrusted/lib/hardenGlobals.js';
 import scopedTimerFunction from '~untrusted/lib/scopedTimerFunction.js';
 import { INTERNAL_SOURCE_STRING } from './constants.js';
+import { MC, aIsArray } from '~/untrusted/lib/utils.js';
 
 if (isMainThread) throw new Error('Invalid environment');
 
@@ -245,6 +247,40 @@ const nodejsSandbox: TNodejsSandbox = (
 					['value']: scopedSetTimeout,
 				},
 			],
+			...(__buildtimeSettings__.bidirectionalMessaging
+				? [
+						[
+							'MessageChannel',
+							{
+								['writable']: true,
+								['configurable']: true,
+								['value']:
+									__buildtimeSettings__.contextifyMessagePort
+										? function (this: {
+												['port1']: WTMessagePort;
+												['port2']: WTMessagePort;
+											}) {
+												const mc = new MC();
+												this['port1'] =
+													moveMessagePortToContext(
+														mc[
+															'port1'
+														] as unknown as WTMessagePort,
+														context,
+													);
+												this['port2'] =
+													moveMessagePortToContext(
+														mc[
+															'port2'
+														] as unknown as WTMessagePort,
+														context,
+													);
+											}
+										: MC,
+							},
+						],
+					]
+				: []),
 		]),
 	);
 
@@ -267,14 +303,43 @@ const nodejsSandbox: TNodejsSandbox = (
 
 	if (__buildtimeSettings__.contextifyMessagePort) {
 		if (__buildtimeSettings__.contextifyMessagePortWorkaroundCrash) {
-			const messageChannel = new MessageChannel();
+			const messageChannel = new MC();
 
-			messageChannel.port1.onmessage = (ev) => {
-				messagePort.postMessage(ev.data);
+			messageChannel['port1'].onmessage = (ev) => {
+				if (
+					aIsArray(ev.data) &&
+					ev.data[0] === EMessageTypes.REQUEST &&
+					typeof ev.data[1] === 'object'
+				) {
+					messagePort.postMessage(ev.data, [ev.data[1]]);
+				} else {
+					messagePort.postMessage(ev.data);
+				}
 			};
 
 			messagePort.onmessage = (ev) => {
-				messageChannel.port1.postMessage(ev.data);
+				if (
+					aIsArray(ev.data) &&
+					ev.data[0] === EMessageTypes.REQUEST &&
+					typeof ev.data[1] === 'object'
+				) {
+					const innerMessageChannel = new MC();
+					const origMessagePort = ev.data[1];
+					ev.data[1] = moveMessagePortToContext(
+						innerMessageChannel[
+							'port2'
+						] as unknown as WTMessagePort,
+						context,
+					);
+					innerMessageChannel['port1'].onmessage = (ev) => {
+						origMessagePort.postMessage(ev.data);
+						innerMessageChannel['port1'].close();
+					};
+					innerMessageChannel['port1'].start();
+					messageChannel['port1'].postMessage(ev.data, [ev.data[1]]);
+				} else {
+					messageChannel['port1'].postMessage(ev.data);
+				}
 			};
 
 			oneTimeCtxValue(
@@ -282,7 +347,7 @@ const nodejsSandbox: TNodejsSandbox = (
 				context,
 				'%__messagePort__',
 				moveMessagePortToContext(
-					messageChannel.port2 as ReturnType<typeof eval>,
+					messageChannel['port2'] as ReturnType<typeof eval>,
 					context,
 				),
 			);

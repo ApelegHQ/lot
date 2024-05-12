@@ -33,13 +33,12 @@ describe('performTaskFactory', () => {
 			capturedData = data;
 		};
 
-		const [performTask, resultHandler, cleanup] = performTaskFactory(
+		const [performTask, cleanup] = performTaskFactory(
 			true,
 			postMessageOutgoingMock,
 		);
 
 		assert(typeof performTask === 'function');
-		assert(typeof resultHandler === 'function');
 
 		const mockData = [1, 2, 3];
 		const mockTask = 'mockTask';
@@ -48,20 +47,22 @@ describe('performTaskFactory', () => {
 		const taskPromise = performTask(mockTask, ...mockData);
 
 		assert.ok(Array.isArray(capturedData));
-		const taskId = capturedData[1];
-		capturedData[1] = '%[[TASK_ID]]';
+		const taskPort = capturedData[1];
+
+		assert.equal(typeof taskPort, 'object');
+		assert.ok(taskPort instanceof MessagePort);
 
 		// Ensure that the data were sent correctly
 		assert.deepEqual(capturedData, [
 			EMessageTypes.REQUEST,
-			capturedData[1],
+			taskPort,
 			mockTask,
 			...mockData,
 		]);
 
 		// Simulate receiving a result from the worker
 		const mockResult = 'mockResult';
-		resultHandler([EMessageTypes.RESULT, taskId, mockResult]);
+		taskPort.postMessage([EMessageTypes.RESULT, mockResult]);
 
 		// Ensure that the task promise resolves with the correct result
 		const result = await taskPromise;
