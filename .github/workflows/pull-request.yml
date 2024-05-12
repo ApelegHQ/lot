@@ -51,3 +51,24 @@ jobs:
       - run: deno test --import-map=import_map.json test
         env:
           DENO_NO_PACKAGE_JSON: 1
+
+  run-tests-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'dragonwell'
+          java-version: '11'
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: '~1.36'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: deno test --import-map=import_map.json test
+        env:
+          DENO_NO_PACKAGE_JSON: 1

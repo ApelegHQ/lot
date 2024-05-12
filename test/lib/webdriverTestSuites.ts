@@ -48,6 +48,7 @@ const edgeOptions = new EdgeOptions();
 edgeOptions.addArguments('--headless=new');
 
 const firefoxOptions = new FirefoxOptions();
+firefoxOptions.addArguments('--headless');
 
 const safariOptions = new SafariOptions();
 
