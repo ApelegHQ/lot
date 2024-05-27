@@ -1,6 +1,6 @@
 {
 	"name": "@exact-realty/lot",
-	"version": "0.0.20",
+	"version": "0.0.21",
 	"description": "Sandbox for isolating ECMAScript code",
 	"main": "dist/index.cjs",
 	"types": "dist/index.d.cts",

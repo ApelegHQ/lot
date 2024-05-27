@@ -210,13 +210,15 @@ const disableURLStaticMethods = () => {
 				['writable']: true,
 				['enumerable']: true,
 				['configurable']: true,
-				['value']: String.bind(null),
+				['value']: function () {
+					return '';
+				}.bind(null),
 			},
 			['revokeObjectURL']: {
 				['writable']: true,
 				['enumerable']: true,
 				['configurable']: true,
-				['value']: String.prototype.at.bind(''),
+				['value']: function () {}.bind(null),
 			},
 		});
 };
