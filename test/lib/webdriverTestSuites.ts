@@ -20,7 +20,7 @@ import { Options as EdgeOptions } from 'selenium-webdriver/edge.js';
 import { Options as FirefoxOptions } from 'selenium-webdriver/firefox.js';
 import { Options as SafariOptions } from 'selenium-webdriver/safari.js';
 // eslint-disable-next-line prettier/prettier
-import baseTests from './baseTests.json' assert { type: 'json' };
+import baseTests from './baseTests.json' with { type: 'json' };
 
 export const enabledBrowsers = () => {
 	const webdriverBrowsers = new Set(

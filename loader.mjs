@@ -17,7 +17,7 @@ import module from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolve as resolveTs } from 'ts-node/esm';
-import importMap from './import_map.json' assert { type: 'json' };
+import importMap from './import_map.json' with { type: 'json' };
 
 export * from 'ts-node/esm';
 
