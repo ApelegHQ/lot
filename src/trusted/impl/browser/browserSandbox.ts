@@ -81,7 +81,9 @@ const browserSandbox = async <T>(
 	) as HTMLIFrameElement;
 	const iframeContainer = document.createElementNS(
 		'http://www.w3.org/1999/xhtml',
-		self.customElements ? 'ecmacript-sandbox' : 'div',
+		self.customElements
+			? 'uuid-eff5c9aa-665d-43ee-8eff-0c9fbe0a21ed'
+			: 'div',
 	);
 	iframeContainer.setAttribute('role', 'none');
 	const blob = new Blob([html], { ['type']: 'application/xhtml+xml' });
@@ -120,9 +122,12 @@ const browserSandbox = async <T>(
 
 	/* List of CSS rules to attempt to ensure the iframe is never visible */
 	const iframeStyles: [string, string][] = [
+		['clip-path', 'circle(0)'],
 		['display', 'none'],
+		['height', '0'],
+		['overflow', 'hidden'],
 		['position', 'absolute'],
-		['transform', 'scale(0)'],
+		['width', '0'],
 	];
 	iframeStyles.forEach((descriptor) => {
 		iframeContainer.style.setProperty(

@@ -138,6 +138,31 @@ const esmOpts = {
 	},
 };
 
+const cjsOpts = {
+	format: 'cjs',
+	banner: {
+		js: notice + `(function(require){`,
+	},
+	// This function is used to load the necessary file and execute it.
+	// It checks if the file is an ES module and returns its default export or
+	// the named export accordingly.
+	// This is to avoid weird `.default` exports, as the current implementation
+	// does not properly handle non-default exports. However, non-default
+	// exports are not currently in use, so this issue is not a concern.
+	footer: {
+		js:
+			'})(function(path){' +
+			'var m=require(path);' +
+			'if(Object.prototype.hasOwnProperty.call(m,"__esModule")&&m.__esModule&&Object.prototype.hasOwnProperty.call(m,"default"))' +
+			'return m.default;' +
+			'return m;' +
+			'});',
+	},
+	outExtension: {
+		'.js': '.cjs',
+	},
+};
+
 const umdOpts = {
 	format: 'cjs',
 	// globalName: '__export__',
@@ -150,7 +175,7 @@ const umdOpts = {
 };
 
 await Promise.all(
-	[umdOpts, esmOpts].map((extra) =>
+	[cjsOpts, esmOpts].map((extra) =>
 		esbuild.build({
 			...options,
 			...extra,
