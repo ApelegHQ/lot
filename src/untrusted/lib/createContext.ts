@@ -22,6 +22,7 @@ import {
 	aMap,
 	aPush,
 	fnApply,
+	fnCall,
 	oCreate,
 	oDefineProperties,
 	oDefineProperty,
@@ -166,7 +167,7 @@ const descriptorToFunctionProxy = (ctx: object, a?: PropertyDescriptor) => {
 	if (typeof a['value'] === 'function') {
 		a['value'] = createGlobalFunctionProxy(ctx, a['value']);
 	} else if (typeof a['get'] === 'function') {
-		const v = a['get'].call($global);
+		const v = fnCall(a['get'], $global);
 		if (typeof v === 'function') {
 			const nameDescriptor = oGetOwnPropertyDescriptor(a['get'], 'name');
 			const newGetter = (() => createGlobalFunctionProxy(ctx, v)).bind(
@@ -176,6 +177,11 @@ const descriptorToFunctionProxy = (ctx: object, a?: PropertyDescriptor) => {
 				oDefineProperty(newGetter, 'name', nameDescriptor);
 			}
 			a['get'] = newGetter;
+		} else {
+			a['get'] = (() => v).bind(null);
+		}
+		if (typeof a['set'] === 'function') {
+			a['set'] = (() => {}).bind(null);
 		}
 	}
 	return a;

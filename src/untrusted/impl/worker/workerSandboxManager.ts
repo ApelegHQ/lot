@@ -158,35 +158,14 @@ const workerSandboxManager = async (
 		const revokeWorkerMessageEventListener = createMessageEventListener(
 			worker,
 			(data: unknown[]) => {
-				if (
-					![
-						EMessageTypes.REQUEST,
-						EMessageTypes.RESULT,
-						EMessageTypes.ERROR,
-					].includes(data[0] as EMessageTypes)
-				)
-					return;
+				if (EMessageTypes.REQUEST !== data[0]) return;
 
-				if (data[0] === EMessageTypes.REQUEST) {
-					Logger.debug(
-						'Forwarding REQUEST from worker to parent for executing task [' +
-							data[1] +
-							'] ' +
-							data[2],
-					);
-				} else {
-					Logger.debug(
-						'Forwarding ' +
-							(data[0] === EMessageTypes.RESULT
-								? 'RESULT'
-								: 'ERROR') +
-							' from worker to parent from executing task [' +
-							data[1] +
-							']',
-					);
-				}
+				Logger.debug(
+					'Forwarding REQUEST from worker to parent for executing task' +
+						data[2],
+				);
 
-				postMessageOutgoing(data);
+				postMessageOutgoing(data, [data[1] as unknown as MessagePort]);
 			},
 		);
 
