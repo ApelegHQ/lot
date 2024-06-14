@@ -75,7 +75,9 @@ const parentOrigin =
 	'ancestorOrigins' in location &&
 	location['ancestorOrigins'] &&
 	location['ancestorOrigins'][0] &&
-	location['ancestorOrigins'][0] !== 'null'
+	location['ancestorOrigins'][0] !== 'null' &&
+	// `file://` URLs seem to be problematic as window.origin can be `null`
+	/^https?:/i.test(location['ancestorOrigins'][0])
 		? location['ancestorOrigins'][0]
 		: '*';
 

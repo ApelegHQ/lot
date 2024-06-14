@@ -82,7 +82,12 @@ const setupSandboxListeners = <T>(
 					return;
 				}
 
-				requestHandler(externalMethods, data[1], data[2], data[3]);
+				requestHandler(
+					externalMethods,
+					data[1],
+					data[2],
+					...data.slice(3),
+				);
 
 				return;
 			}

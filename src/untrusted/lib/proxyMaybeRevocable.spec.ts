@@ -24,9 +24,10 @@ describe('proxyMaybeRevocable', () => {
 			get: (obj, prop) => (prop in obj ? obj[prop] : 42),
 		};
 
-		const { proxy, revoke } = proxyMaybeRevocable(true, target, handler);
+		const [proxy, revoke] = proxyMaybeRevocable(true, target, handler);
 
 		assert.equal(proxy.someNonExistentProp, 42);
+		assert.ok(typeof revoke === 'function');
 
 		revoke();
 
@@ -41,10 +42,9 @@ describe('proxyMaybeRevocable', () => {
 			get: (obj, prop) => (prop in obj ? obj[prop] : 42),
 		};
 
-		const { proxy, revoke } = proxyMaybeRevocable(false, target, handler);
+		const [proxy, revoke] = proxyMaybeRevocable(false, target, handler);
 		assert.equal(proxy.someNonExistentProp, 42);
-
-		revoke();
+		assert.ok(!revoke);
 
 		assert.equal(proxy.someNonExistentProp, 42);
 	});
@@ -53,6 +53,6 @@ describe('proxyMaybeRevocable', () => {
 		const someObject = {};
 		const result = proxyMaybeRevocable(null, someObject, someObject);
 
-		assert.strictEqual(result.proxy, someObject);
+		assert.strictEqual(result[0], someObject);
 	});
 });

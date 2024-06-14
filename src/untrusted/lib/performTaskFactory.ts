@@ -106,16 +106,18 @@ const performTaskFactory = <T>(
 		return taskPromise;
 	};
 
-	const performTaskProxy = proxyMaybeRevocable(
+	const [performTaskProxy, revoke] = proxyMaybeRevocable(
 		revocable || null,
 		performTask,
 		{},
 	);
 
 	return [
-		performTaskProxy['proxy'],
+		performTaskProxy,
 		() => {
-			performTaskProxy.revoke();
+			if (revoke) {
+				revoke();
+			}
 			const e = new E('Task aborted');
 			// Abort all pending tasks
 			unresolved.splice(0).forEach((x) => {

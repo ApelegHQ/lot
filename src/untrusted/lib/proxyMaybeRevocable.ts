@@ -20,10 +20,7 @@ type TProxyMaybeRevocable = {
 		revocable: boolean | null,
 		target: T,
 		handler: ProxyHandler<T>,
-	): {
-		proxy: T;
-		revoke: () => void;
-	};
+	): [T] | [T, () => void];
 };
 
 /**
@@ -43,12 +40,11 @@ type TProxyMaybeRevocable = {
  */
 const proxyMaybeRevocable: TProxyMaybeRevocable = (revocable, ...args) => {
 	if (revocable) {
-		return Proxy.revocable(...args);
+		const r = Proxy.revocable(...args);
+		return [r['proxy'], r['revoke'].bind(r)];
 	}
-	return {
-		['proxy']: revocable === null ? args[0] : new PX(...args),
-		['revoke']: Boolean,
-	};
+
+	return [revocable === null ? args[0] : new PX(...args)];
 };
 
 export default proxyMaybeRevocable;
