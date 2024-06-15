@@ -57,7 +57,11 @@ const performTaskFactory = <T>(
 					unresolved.splice(idx, 1);
 				}
 			};
-			incomingPort.onmessage = (ev) => {
+			// The following const definitions prevent Google Closure Compiler
+			// from mangling the event handler names
+			const onmessage = 'onmessage';
+			const onmessageerror = 'onmessageerror';
+			incomingPort[onmessage] = (ev) => {
 				const data = ev['data'];
 				if (
 					!aIsArray(data) ||
@@ -73,7 +77,8 @@ const performTaskFactory = <T>(
 						(data[0] === EMessageTypes.RESULT
 							? 'RESULT'
 							: 'ERROR') +
-						' from executing task',
+						' from executing task ' +
+						op,
 				);
 
 				if (data[0] === EMessageTypes.RESULT) {
@@ -83,12 +88,12 @@ const performTaskFactory = <T>(
 				}
 				markAsResolved();
 			};
-			incomingPort.onmessageerror = (ev) => {
+			incomingPort[onmessageerror] = () => {
 				Logger.debug(
-					'Error receiving task result after executing task',
+					'Error decoding task result after executing task ' + op,
 				);
 
-				reject(ev['data']);
+				reject(new E('Error decoding task result'));
 				markAsResolved();
 			};
 			incomingPort.start();

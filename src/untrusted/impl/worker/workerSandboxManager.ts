@@ -161,7 +161,7 @@ const workerSandboxManager = async (
 				if (EMessageTypes.REQUEST !== data[0]) return;
 
 				Logger.debug(
-					'Forwarding REQUEST from worker to parent for executing task' +
+					'Forwarding REQUEST from worker to parent for executing task ' +
 						data[2],
 				);
 
