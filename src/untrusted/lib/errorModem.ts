@@ -13,6 +13,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+import $global from '~untrusted/lib/global.js';
 import {
 	aForEach,
 	aIncludes,
@@ -124,10 +125,10 @@ const reconstructErrorInformation = (d: unknown, depth?: number) => {
 		typeof d[2] === 'string'
 	) {
 		const errorClass =
-			oHasOwnProperty(globalThis, d[0] as PropertyKey) &&
-			typeof globalThis[d[0] as 'Error'] === 'function' &&
-			globalThis[d[0] as 'Error'].prototype instanceof E
-				? globalThis[d[0] as 'Error']
+			oHasOwnProperty($global, d[0] as PropertyKey) &&
+			typeof $global[d[0] as 'Error'] === 'function' &&
+			$global[d[0] as 'Error'].prototype instanceof E
+				? $global[d[0] as 'Error']
 				: E;
 
 		const e = oCreate(errorClass.prototype);

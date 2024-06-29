@@ -17,12 +17,13 @@ import singleUseFunctionConstructor from '~/untrusted/lib/singleUseFunctionConst
 
 import { aIsArray } from '~untrusted/lib/utils.js';
 
+import * as Logger from '~untrusted/lib/Logger.js';
 import createSandboxedHandler from '~untrusted/lib/createSandboxedHandler.js';
 import { extractErrorInformation } from '~untrusted/lib/errorModem.js';
+import $global from '~untrusted/lib/global.js';
 import hardenGlobals, {
 	disableURLStaticMethods,
 } from '~untrusted/lib/hardenGlobals.js';
-import * as Logger from '~untrusted/lib/Logger.js';
 import recursivelyDeleteProperty from '~untrusted/lib/recursivelyDeleteProperty.js';
 
 /**
@@ -55,10 +56,10 @@ const createMessageEventListener = (() => {
 			handler(event.data);
 		};
 
-		globalThis.addEventListener('message', eventListener);
+		$global.addEventListener('message', eventListener);
 
 		return () => {
-			globalThis.removeEventListener('message', eventListener);
+			$global.removeEventListener('message', eventListener);
 		};
 	};
 })();
@@ -86,15 +87,15 @@ const workerSandboxInner = (
 	allowedGlobals: string[] | undefined | null,
 	externalMethodsList: string[] | undefined | null,
 ) => {
-	const postMessage = globalThis['postMessage'].bind(globalThis);
-	const close = globalThis['close'].bind(globalThis);
+	const _postMessage = $global['postMessage'].bind($global);
+	const _close = $global['close'].bind($global);
 
 	try {
 		Logger.info('Setting up worker sandbox.');
 
 		// Remove methods from DedicatedWorkerGlobalScope
-		recursivelyDeleteProperty(globalThis, 'close');
-		recursivelyDeleteProperty(globalThis, 'postMessage');
+		recursivelyDeleteProperty($global, 'close');
+		recursivelyDeleteProperty($global, 'postMessage');
 
 		hardenGlobals();
 		disableURLStaticMethods();
@@ -105,12 +106,12 @@ const workerSandboxInner = (
 				script,
 				allowedGlobals,
 				externalMethodsList,
-				postMessage,
+				_postMessage,
 				Boolean,
 				revocable
 					? () => {
 							revokeRootMessageEventListener();
-							close();
+							_close();
 						}
 					: undefined,
 			),
@@ -120,14 +121,14 @@ const workerSandboxInner = (
 		Logger.info(
 			'Finished setting up worker sandbox. Sending SANDBOX_READY to parent.',
 		);
-		postMessage([EMessageTypes.SANDBOX_READY]);
+		_postMessage([EMessageTypes.SANDBOX_READY]);
 	} catch (e) {
 		Logger.warn(
 			'Error setting up worker sandbox. Sending GLOBAL_ERROR to parent.',
 		);
 
-		postMessage([EMessageTypes.GLOBAL_ERROR, extractErrorInformation(e)]);
-		close();
+		_postMessage([EMessageTypes.GLOBAL_ERROR, extractErrorInformation(e)]);
+		_close();
 	}
 };
 

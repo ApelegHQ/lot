@@ -16,6 +16,7 @@
 import { aIsArray, aSlice, fnApply } from '~untrusted/lib/utils.js';
 
 import * as Logger from '~untrusted/lib/Logger.js';
+import $global from '~untrusted/lib/global.js';
 import workerSandboxInner from './workerSandboxInner.js';
 
 const listener = (event: MessageEvent) => {
@@ -27,11 +28,11 @@ const listener = (event: MessageEvent) => {
 		return;
 
 	Logger.info('Received SANDBOX_READY from parent. Creating sandbox.');
-	globalThis.removeEventListener('message', listener, false);
+	$global.removeEventListener('message', listener, false);
 	// Set allowUntrusted to false
 	event.data[2] = false;
 	fnApply(workerSandboxInner, null, aSlice(event.data, 1));
 };
 
 Logger.info('Worker started, registering event listener');
-globalThis.addEventListener('message', listener, false);
+$global.addEventListener('message', listener, false);

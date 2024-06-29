@@ -368,47 +368,53 @@ const nodejsSandbox: TNodejsSandbox = (
 
 	// Remove properties from most built-in modules. This should somewhat
 	// limit the access to system resources in case of an escape
-	(module.constructor as unknown as { builtinModules?: string[] })[
-		'builtinModules'
-	]?.forEach((v) => {
-		if (
-			[
-				'assert/strict',
-				'async_hooks',
-				'buffer',
-				'events',
-				'diagnostics_channel',
-				'_http_agent',
-				'_http_common',
-				'_http_outgoing',
-				'_http_server',
-				'inspector',
-				'module',
-				'net',
-				'path',
-				'path/posix',
-				'path/win32',
-				'perf_hooks',
-				'process',
-				'stream',
-				'readline',
-				'trace_events',
-				'v8',
-				'vm',
-			].includes(v)
-		)
-			return;
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		removeAllProperties(require('node:' + v));
-	});
-	// Prevent loading CJS modules
-	g_Object.defineProperty(global.module.constructor, '_load', {
-		['set']: () => {},
-	});
+	if (typeof module === 'object') {
+		const _module = module;
+		(_module.constructor as unknown as { builtinModules?: string[] })[
+			'builtinModules'
+		]?.forEach((v) => {
+			if (
+				[
+					'assert/strict',
+					'async_hooks',
+					'buffer',
+					'events',
+					'diagnostics_channel',
+					'_http_agent',
+					'_http_common',
+					'_http_outgoing',
+					'_http_server',
+					'inspector',
+					'module',
+					'net',
+					'path',
+					'path/posix',
+					'path/win32',
+					'perf_hooks',
+					'process',
+					'stream',
+					'readline',
+					'trace_events',
+					'v8',
+					'vm',
+				].includes(v)
+			)
+				return;
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
+			removeAllProperties(require('node:' + v));
+		});
+
+		// Prevent loading CJS modules
+		g_Object.defineProperty(_module.constructor, '_load', {
+			['set']: () => {},
+		});
+	}
+
 	// Remove references in global and process to prevent calling require, etc.
 	removeAllProperties(process, [
 		'_fatalException',
 		'debugPort',
+		'env',
 		'exit',
 		'hrtime',
 		'nextTick',
@@ -417,8 +423,47 @@ const nodejsSandbox: TNodejsSandbox = (
 		'stderr',
 		'stdin',
 		'stdout',
+		// version & versions seems to be required by new Undici
+		'version',
+		'versions',
 	]);
-	removeAllProperties(global);
+	// The following seem to be required by 'node:internal/deps/undici/undici'
+	// Stack trace:
+	// at BuiltinModule.compileForInternalLoader (node:internal/bootstrap/realm:398:7)
+	// at requireBuiltin (node:internal/bootstrap/realm:429:14)
+	// at lazyMessageEvent (node:internal/worker/io:90:27)
+	// at MessagePort.value (node:internal/worker/io:131:19)
+	// at createEvent (node:internal/event_target:759:35)
+	removeAllProperties(global, [
+		'global',
+		'globalThis',
+		'performance',
+		'AbortSignal',
+		'Array',
+		'Boolean',
+		'Buffer',
+		'Date',
+		'Error',
+		'Event',
+		'EventTarget',
+		'FinalizationRegistry',
+		'FormData',
+		'JSON',
+		'Map',
+		'Number',
+		'Object',
+		'ReadableStream',
+		'Reflect',
+		'Set',
+		'String',
+		'Symbol',
+		'TextEncoder',
+		'TextDecoder',
+		'URLSearchParams',
+		'WeakMap',
+		'WeakRef',
+		'WebAssembly',
+	]);
 
 	const wrapperFn = createWrapperFn(script, (s: string) => {
 		return vm.compileFunction(

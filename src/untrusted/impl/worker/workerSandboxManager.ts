@@ -48,7 +48,7 @@ const createWorker = (
 	const blob = new Blob([workerSandboxInit.default], {
 		['type']: 'text/javascript',
 	});
-	const workerSrcUrl = globalThis.URL.createObjectURL(blob);
+	const workerSrcUrl = URL.createObjectURL(blob);
 	// Option name extracted as string constant to avoid name mangling
 	const typeOptName = 'workerType';
 	const worker = new Worker(
@@ -68,10 +68,7 @@ const createWorker = (
 		...Parameters<typeof workerSandboxInner>,
 	]);
 
-	const revokeWorkerSrcUrl = globalThis.URL.revokeObjectURL.bind(
-		null,
-		workerSrcUrl,
-	);
+	const revokeWorkerSrcUrl = URL.revokeObjectURL.bind(null, workerSrcUrl);
 
 	return [worker, revokeWorkerSrcUrl];
 };
