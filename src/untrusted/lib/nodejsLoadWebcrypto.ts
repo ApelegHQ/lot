@@ -1,4 +1,4 @@
-/* Copyright © 2023 Exact Realty Limited.
+/* Copyright © 2023 Apeleg Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ if (
 ) {
 	// Please CC
 	const webcrypto_s = 'webcrypto';
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	const webcrypto = require('node:crypto')[webcrypto_s];
 	if (webcrypto) {
 		Object.defineProperty(globalThis, 'crypto', {

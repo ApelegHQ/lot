@@ -1,4 +1,4 @@
-/* Copyright © 2023 Exact Realty Limited.
+/* Copyright © 2023 Apeleg Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,7 +52,7 @@ const close = process[exit].bind(process, 0);
 const getRandomValues = globalThis.crypto.getRandomValues.bind(crypto);
 
 const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
-	o &&
+	if (o) {
 		g_Object
 			.entries(g_Object.getOwnPropertyDescriptors(o))
 			.forEach(([name, descriptor]) => {
@@ -61,6 +61,7 @@ const removeAllProperties = (o: unknown, keep?: PropertyKey[]) => {
 					delete (o as ReturnType<typeof eval>)[name];
 				}
 			});
+	}
 };
 
 const oneTimeCtxValue = <T>(
@@ -400,7 +401,7 @@ const nodejsSandbox: TNodejsSandbox = (
 				].includes(v)
 			)
 				return;
-			// eslint-disable-next-line @typescript-eslint/no-var-requires
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
 			removeAllProperties(require('node:' + v));
 		});
 

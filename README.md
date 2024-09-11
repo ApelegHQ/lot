@@ -1,13 +1,13 @@
-# 🏜️ @exact-realty/lot 🏖️
+# 🏜️ @apeleghq/lot 🏖️
 
  [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
  [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
  [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=bugs)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
  [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
  [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Exact-Realty_ecmascript-sandbox&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Exact-Realty_ecmascript-sandbox)
- ![NPM Downloads](https://img.shields.io/npm/dw/@exact-realty/lot?style=flat-square)
+ ![NPM Downloads](https://img.shields.io/npm/dw/@apeleghq/lot?style=flat-square)
 
-Welcome to `@exact-realty/lot` — the versatile ECMAScript sandbox
+Welcome to `@apeleghq/lot` — the versatile ECMAScript sandbox
 you've been looking for!
 
 Our sandbox supports multiple runtimes and allows for bidirectional
@@ -33,11 +33,11 @@ in various environments.
 To install, run:
 
 ```sh
-npm install "@exact-realty/lot"
+npm install "@apeleghq/lot"
 ```
 
 ```sh
-yarn add "@exact-realty/lot"
+yarn add "@apeleghq/lot"
 ```
 
 ### 📚 Usage
@@ -47,7 +47,7 @@ it with your code and any additional parameters. Here's an example using
 `browserSandbox`:
 
 ```js
-import { browserSandbox } from '@exact-realty/lot';
+import { browserSandbox } from '@apeleghq/lot';
 
 const sandbox = await browserSandbox(`
   /* sandboxed code*/;

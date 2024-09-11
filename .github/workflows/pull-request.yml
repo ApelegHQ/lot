@@ -10,14 +10,14 @@ on:
       - master
 
 jobs:
-  run-tests-macos-18:
-    name: 'macOS (Node 18, Deno 1.36, Java 21)'
+  run-tests-macos-20:
+    name: 'macOS (Node 20, Deno 1.36, Java 21)'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
-          node-version: '18'
+          node-version: '20'
       - uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
         with:
           distribution: 'microsoft'
@@ -32,14 +32,14 @@ jobs:
         env:
           DENO_NO_PACKAGE_JSON: 1
 
-  run-tests-windows-18:
-    name: 'Windows (Node 18, Deno 1.36, Java 21)'
+  run-tests-windows-20:
+    name: 'Windows (Node 20, Deno 1.36, Java 21)'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
-          node-version: '18'
+          node-version: '20'
       - uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
         with:
           distribution: 'semeru'
@@ -54,30 +54,8 @@ jobs:
         env:
           DENO_NO_PACKAGE_JSON: 1
 
-  run-tests-ubuntu-18:
-    name: 'Ubuntu (Node 18, Deno 1.36, Java 21)'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-        with:
-          node-version: '18'
-      - uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
-        with:
-          distribution: 'oracle'
-          java-version: '21'
-      - uses: denoland/setup-deno@041b854f97b325bd60e53e9dc2de9cb9f9ac0cba
-        with:
-          deno-version: '~1.36'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - run: deno test --import-map=import_map.json test
-        env:
-          DENO_NO_PACKAGE_JSON: 1
-
   run-tests-ubuntu-20:
-    name: 'Ubuntu (Node 20, Deno 1.40, Java 21)'
+    name: 'Ubuntu (Node 20, Deno 1.36, Java 21)'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
@@ -86,11 +64,11 @@ jobs:
           node-version: '20'
       - uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
         with:
-          distribution: 'corretto'
+          distribution: 'oracle'
           java-version: '21'
       - uses: denoland/setup-deno@041b854f97b325bd60e53e9dc2de9cb9f9ac0cba
         with:
-          deno-version: '~1.40'
+          deno-version: '~1.36'
       - run: npm ci
       - run: npm run lint
       - run: npm test

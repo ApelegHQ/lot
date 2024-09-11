@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-/* Copyright © 2023 Exact Realty Limited.
+/* Copyright © 2023 Apeleg Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-import cc from '@exact-realty/esbuild-plugin-closure-compiler';
-import inlineScripts from '@exact-realty/esbuild-plugin-inline-js';
+import cc from '@apeleghq/esbuild-plugin-closure-compiler';
+import inlineScripts from '@apeleghq/esbuild-plugin-inline-js';
 import esbuild from 'esbuild';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -26,7 +26,7 @@ import defaultAllowedGlobalProps from './defaultAllowedGlobalProps.config.mjs';
  * @type {esbuild.Plugin}
  **/
 const lotExportsBuilderPlugin = {
-	name: '@exact-realty/lot/exports',
+	name: '@apeleghq/lot/exports',
 	setup(build) {
 		const extension = (() => {
 			switch (build.initialOptions.format) {
@@ -126,7 +126,7 @@ plugins.push(
 options.plugins = plugins;
 
 const notice =
-	'/** @copyright Copyright (C) 2023 Exact Realty Limited. All rights reserved. */';
+	'/** @copyright Copyright (C) 2023 Apeleg Limited. All rights reserved. */';
 
 const esmOpts = {
 	format: 'esm',

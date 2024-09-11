@@ -1,4 +1,4 @@
-/* Copyright © 2023 Exact Realty Limited.
+/* Copyright © 2023 Apeleg Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -146,7 +146,9 @@ const fixGlobalTypes = () => {
 	}
 
 	try {
-		typeof decodeURI === 'function' && void decodeURI('%');
+		if (typeof decodeURI === 'function') {
+			decodeURI('%');
+		}
 	} catch (e) {
 		if (e) {
 			if (typeof URIError !== 'function' || !(e instanceof URIError)) {

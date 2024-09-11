@@ -1,4 +1,4 @@
-/* Copyright © 2021 Exact Realty Limited.
+/* Copyright © 2021 Apeleg Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,4 +65,24 @@ module.exports = {
 			},
 		],
 	},
+	overrides: [
+		{
+			files: ['*.js', '*.schema.json', 'package.json', '*.d.ts'],
+			rules: {
+				'@typescript-eslint/naming-convention': 'off',
+			},
+		},
+		{
+			files: ['*.json', 'closure-externs.js'],
+			rules: {
+				'@typescript-eslint/no-unused-expressions': 'off',
+			},
+		},
+		{
+			files: ['*.cjs', '*.cts'],
+			rules: {
+				'@typescript-eslint/no-require-imports': 'off',
+			},
+		},
+	],
 };

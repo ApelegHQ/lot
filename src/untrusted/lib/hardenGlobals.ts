@@ -1,4 +1,4 @@
-/* Copyright © 2023 Exact Realty Limited.
+/* Copyright © 2023 Apeleg Limited.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -204,7 +204,7 @@ const hardenGlobals: { (): void } = __buildtimeSettings__.hardenGlobals
  * behaviour.
  */
 const disableURLStaticMethods = () => {
-	global.URL &&
+	if (global.URL) {
 		oDefineProperties(global.URL, {
 			['createObjectURL']: {
 				['writable']: true,
@@ -221,6 +221,7 @@ const disableURLStaticMethods = () => {
 				['value']: function () {}.bind(null),
 			},
 		});
+	}
 };
 
 export default hardenGlobals;
