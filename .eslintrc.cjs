@@ -27,7 +27,6 @@ module.exports = {
 	settings: {
 		'import/resolver': {
 			alias: {
-				// eslint-disable-next-line @typescript-eslint/no-var-requires
 				map: Object.entries(require('./import_map.json').imports),
 				extensions: ['.cjs', '.mjs', '.mts', '.js', '.json', '.tsx'],
 			},
@@ -65,24 +64,4 @@ module.exports = {
 			},
 		],
 	},
-	overrides: [
-		{
-			files: ['*.js', '*.schema.json', 'package.json', '*.d.ts'],
-			rules: {
-				'@typescript-eslint/naming-convention': 'off',
-			},
-		},
-		{
-			files: ['*.json', 'closure-externs.js'],
-			rules: {
-				'@typescript-eslint/no-unused-expressions': 'off',
-			},
-		},
-		{
-			files: ['*.cjs', '*.cts'],
-			rules: {
-				'@typescript-eslint/no-require-imports': 'off',
-			},
-		},
-	],
 };
